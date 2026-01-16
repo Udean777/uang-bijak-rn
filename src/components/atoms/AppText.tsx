@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { cn } from "@/src/utils/cn";
 import React from "react";
 import { Text, TextProps } from "react-native";
@@ -18,7 +20,10 @@ export const AppText: React.FC<AppTextProps> = ({
   style,
   ...props
 }) => {
-  const baseStyle = "font-sans";
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+
+  const baseStyle = "font-jakarta";
 
   const variants = {
     h1: "text-3xl leading-tight",
@@ -30,17 +35,17 @@ export const AppText: React.FC<AppTextProps> = ({
   };
 
   const weights = {
-    regular: "font-normal",
-    medium: "font-medium",
-    semibold: "font-semibold",
-    bold: "font-bold",
+    regular: "font-jakarta",
+    medium: "font-jakartaMedium",
+    semibold: "font-jakartaSemiBold",
+    bold: "font-jakartaBold",
   };
 
   const colors = {
-    default: "text-gray-900",
-    primary: "text-blue-600",
-    secondary: "text-gray-500",
-    error: "text-red-500",
+    default: "text-white",
+    primary: "text-primary",
+    secondary: "text-secondary",
+    error: "text-danger",
     white: "text-white",
   };
 
@@ -53,7 +58,7 @@ export const AppText: React.FC<AppTextProps> = ({
         colors[color],
         className
       )}
-      style={style}
+      style={[{ color: color === "default" ? theme.text : color }, style]}
       {...props}
     >
       {children}

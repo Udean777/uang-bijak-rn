@@ -12,6 +12,7 @@ export const useFinancialHealth = () => {
     savings: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [barData, setBarData] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -45,6 +46,23 @@ export const useFinancialHealth = () => {
         const totalExpense = totalNeeds + totalWants;
         const totalSavings = totalIncome - totalExpense;
         const displaySavings = totalSavings > 0 ? totalSavings : 0;
+
+        const incomeBar = {
+          value: totalIncome,
+          label: "Masuk",
+          frontColor: "#10B981", // Green
+          spacing: 20,
+          labelTextStyle: { color: "gray", fontSize: 12 },
+        };
+
+        const expenseBar = {
+          value: totalExpense,
+          label: "Keluar",
+          frontColor: "#EF4444", // Red
+          labelTextStyle: { color: "gray", fontSize: 12 },
+        };
+
+        setBarData([incomeBar, expenseBar]);
 
         setSummary({
           income: totalIncome,
@@ -86,5 +104,5 @@ export const useFinancialHealth = () => {
     return () => unsubscribe();
   }, [user]);
 
-  return { chartData: data, summary, isLoading };
+  return { chartData: data, barData, summary, isLoading };
 };

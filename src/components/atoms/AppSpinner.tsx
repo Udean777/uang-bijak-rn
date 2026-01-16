@@ -1,10 +1,17 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
 import { ActivityIndicator } from "react-native";
 
 export const AppSpinner = ({
-  color = "#2563EB",
+  color,
   size = "small",
 }: {
   color?: string;
   size?: "small" | "large";
-}) => <ActivityIndicator size={size} color={color} />;
+}) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+
+  return <ActivityIndicator size={size} color={color || theme.primary} />;
+};

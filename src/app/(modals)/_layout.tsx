@@ -19,6 +19,22 @@ export default function ModalsLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="add-subscription"
+        options={{
+          presentation: "modal",
+          headerTitle: "Tambah Subs",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="transaction-detail"
+        options={{
+          presentation: "modal",
+          headerTitle: "Detail Transaksi",
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

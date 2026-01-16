@@ -3,9 +3,12 @@ import { CreateWalletPayload, Wallet } from "@/src/types/wallet";
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
 
@@ -48,5 +51,29 @@ export const WalletService = {
     });
 
     return unsubscribe;
+  },
+
+  updateWallet: async (
+    walletId: string,
+    data: Partial<CreateWalletPayload>
+  ) => {
+    try {
+      const walletRef = doc(db, COLLECTION, walletId);
+
+      await updateDoc(walletRef, {
+        ...data,
+        updatedAt: Date.now(),
+      });
+    } catch (error: any) {
+      throw new Error("Gagal update dompet: " + error.message);
+    }
+  },
+
+  deleteWallet: async (walletId: string) => {
+    try {
+      await deleteDoc(doc(db, COLLECTION, walletId));
+    } catch (error: any) {
+      throw new Error("Gagal hapus dompet: " + error.message);
+    }
   },
 };

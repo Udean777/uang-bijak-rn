@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -16,6 +18,8 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   onClose,
 }) => {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
 
   const handleClose = () => {
     if (onClose) onClose();
@@ -23,23 +27,26 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   };
 
   return (
-    <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-100 bg-white">
+    <View
+      className="flex-row items-center justify-between px-5 py-4 border-b"
+      style={{
+        backgroundColor: theme.background,
+        borderBottomColor: theme.divider,
+      }}
+    >
       <View>
         <AppText variant="h3" weight="bold">
           {title}
         </AppText>
-        {subtitle && (
-          <AppText variant="caption" color="secondary">
-            {subtitle}
-          </AppText>
-        )}
+        {subtitle && <AppText variant="caption">{subtitle}</AppText>}
       </View>
 
       <TouchableOpacity
         onPress={handleClose}
-        className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+        className="w-8 h-8 rounded-full items-center justify-center"
+        style={{ backgroundColor: theme.surface }}
       >
-        <Ionicons name="close" size={20} color="#374151" />
+        <Ionicons name="close" size={20} color={theme.text} />
       </TouchableOpacity>
     </View>
   );

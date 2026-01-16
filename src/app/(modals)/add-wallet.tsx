@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
@@ -31,6 +33,9 @@ const COLORS = [
 export default function AddWalletScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
 
   const [name, setName] = useState("");
   const [initialBalance, setInitialBalance] = useState("");
@@ -63,7 +68,8 @@ export default function AddWalletScreen() {
         text2: "Dompet baru telah dibuat.",
       });
 
-      setTimeout(() => router.back(), 1000);
+      // Kembali ke halaman sebelumnya
+      router.back();
     } catch (error: any) {
       Toast.show({ type: "error", text1: "Gagal", text2: error.message });
     } finally {
@@ -82,21 +88,27 @@ export default function AddWalletScreen() {
   }) => (
     <TouchableOpacity
       onPress={() => setSelectedType(type)}
-      className={`flex-1 items-center p-3 rounded-xl border ${
-        selectedType === type
-          ? "bg-blue-50 border-blue-600"
-          : "bg-white border-gray-200"
-      }`}
+      className="flex-1 items-center p-3 rounded-xl border"
+      style={{
+        backgroundColor:
+          selectedType === type
+            ? isDark
+              ? "rgba(37, 99, 235, 0.1)"
+              : "#EFF6FF"
+            : theme.surface,
+        borderColor: selectedType === type ? "#2563EB" : theme.border,
+      }}
     >
       <Ionicons
         name={icon}
         size={24}
-        color={selectedType === type ? "#2563EB" : "#9CA3AF"}
+        color={selectedType === type ? "#2563EB" : theme.icon}
       />
       <AppText
         variant="caption"
         className="mt-2"
         weight={selectedType === type ? "bold" : "regular"}
+        style={{ color: selectedType === type ? "#2563EB" : theme.text }}
       >
         {label}
       </AppText>
@@ -104,8 +116,10 @@ export default function AddWalletScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <ScreenLoader visible={isLoading} text="Membuat Dompet..." />
+
+      {/* Header standar tanpa custom close */}
       <ModalHeader title="Tambah Dompet" subtitle="Atur sumber dana baru" />
 
       <KeyboardAvoidingView
@@ -113,30 +127,45 @@ export default function AddWalletScreen() {
         className="flex-1"
       >
         <ScrollView className="flex-1 p-5">
+          {/* Card Preview */}
           <View
             className="w-full h-40 rounded-2xl p-5 justify-between mb-8 shadow-sm"
-            style={{ backgroundColor: selectedColor }}
+            style={{
+              backgroundColor: selectedColor,
+              shadowOpacity: isDark ? 0.3 : 0.1,
+            }}
           >
             <View className="flex-row justify-between">
               <Ionicons name="wallet" size={24} color="white" />
-              <AppText className="text-white/80 uppercase font-bold text-xs">
+              <AppText
+                className="uppercase font-bold text-xs"
+                color="white"
+                style={{ opacity: 0.8 }}
+              >
                 {selectedType}
               </AppText>
             </View>
             <View>
-              <AppText className="text-white/80 text-sm">Saldo</AppText>
-              <AppText className="text-white text-3xl font-bold">
+              <AppText
+                className="text-sm"
+                color="white"
+                style={{ opacity: 0.8 }}
+              >
+                Saldo Awal
+              </AppText>
+              <AppText className="text-3xl font-bold" color="white">
                 Rp{" "}
                 {initialBalance
                   ? parseInt(initialBalance).toLocaleString("id-ID")
                   : "0"}
               </AppText>
-              <AppText className="text-white font-medium mt-2">
+              <AppText className="font-medium mt-2" color="white">
                 {name || "Nama Dompet"}
               </AppText>
             </View>
           </View>
 
+          {/* Form Inputs */}
           <View className="gap-y-4">
             <AppInput
               label="Nama Dompet"
@@ -153,7 +182,7 @@ export default function AddWalletScreen() {
             />
 
             <View>
-              <AppText variant="label" className="mb-2 text-gray-700">
+              <AppText variant="label" className="mb-2" color="secondary">
                 Tipe Akun
               </AppText>
               <View className="flex-row gap-3">
@@ -168,7 +197,7 @@ export default function AddWalletScreen() {
             </View>
 
             <View>
-              <AppText variant="label" className="mb-2 text-gray-700">
+              <AppText variant="label" className="mb-2" color="secondary">
                 Warna
               </AppText>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -177,7 +206,11 @@ export default function AddWalletScreen() {
                     key={color}
                     onPress={() => setSelectedColor(color)}
                     className={`w-10 h-10 rounded-full mr-3 border-2 ${selectedColor === color ? "border-gray-800" : "border-transparent"}`}
-                    style={{ backgroundColor: color }}
+                    style={{
+                      backgroundColor: color,
+                      borderColor:
+                        selectedColor === color ? theme.text : "transparent",
+                    }}
                   />
                 ))}
               </ScrollView>
@@ -185,7 +218,10 @@ export default function AddWalletScreen() {
           </View>
         </ScrollView>
 
-        <View className="p-5 border-t border-gray-100 pb-8">
+        <View
+          className="p-5 border-t pb-8"
+          style={{ borderTopColor: theme.divider }}
+        >
           <AppButton title="Simpan Dompet" onPress={handleSave} />
         </View>
       </KeyboardAvoidingView>

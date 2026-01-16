@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { cn } from "@/src/utils/cn";
 import React from "react";
 import {
@@ -9,6 +11,7 @@ import {
 
 interface AppCardProps extends ViewProps {
   onPress?: () => void;
+  onLongPress?: () => void;
   variant?: "elevated" | "outlined" | "flat";
 }
 
@@ -16,23 +19,49 @@ export const AppCard: React.FC<AppCardProps> = ({
   children,
   className,
   onPress,
+  onLongPress,
   variant = "elevated",
+  style,
   ...props
 }) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
+
   const variants = {
-    elevated: "bg-white shadow-sm shadow-gray-200 border border-gray-100", // Shadow halus
-    outlined: "bg-transparent border border-gray-200",
-    flat: "bg-gray-50",
+    elevated: {
+      backgroundColor: theme.card,
+      borderColor: theme.border,
+      borderWidth: 1,
+      elevation: isDark ? 0 : 2,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.05,
+      shadowRadius: 8,
+    },
+    outlined: {
+      backgroundColor: "transparent",
+      borderColor: theme.border,
+      borderWidth: 1,
+    },
+    flat: {
+      backgroundColor: theme.surface,
+    },
   };
 
-  const commonClasses = cn("rounded-2xl p-4", variants[variant], className);
+  const commonClasses = cn("rounded-2xl p-4", className);
+  const variantStyle = variants[variant];
 
-  if (onPress) {
+  const isInteractive = onPress || onLongPress;
+
+  if (isInteractive) {
     return (
       <TouchableOpacity
         className={commonClasses}
         onPress={onPress}
+        onLongPress={onLongPress}
         activeOpacity={0.7}
+        style={[variantStyle, style]}
         {...(props as TouchableOpacityProps)}
       >
         {children}
@@ -41,7 +70,7 @@ export const AppCard: React.FC<AppCardProps> = ({
   }
 
   return (
-    <View className={commonClasses} {...props}>
+    <View className={commonClasses} style={[variantStyle, style]} {...props}>
       {children}
     </View>
   );

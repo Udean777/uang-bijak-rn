@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { cn } from "@/src/utils/cn";
 import React from "react";
 import {
@@ -24,16 +26,25 @@ export const AppButton: React.FC<AppButtonProps> = ({
   disabled,
   className,
   leftIcon,
+  style,
   ...props
 }) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+
   const containerBase = "flex-row items-center justify-center rounded-xl";
 
   const containerVariants = {
-    primary: "bg-blue-600 border border-blue-600",
-    secondary: "bg-blue-100 border border-blue-100",
-    outline: "bg-transparent border border-gray-300",
+    primary: "bg-primary border border-primary",
+    secondary:
+      "bg-blue-100 dark:bg-blue-900 border border-blue-100 dark:border-blue-900",
+    outline: "bg-transparent border",
     ghost: "bg-transparent border-transparent",
-    danger: "bg-red-600 border border-red-600",
+    danger: "bg-danger border border-danger",
+  };
+
+  const variantStyles = {
+    outline: { borderColor: theme.border },
   };
 
   const sizes = {
@@ -46,7 +57,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
     primary: "white",
     secondary: "primary",
     outline: "default",
-    ghost: "primary",
+    ghost: "white",
     danger: "white",
   } as const;
 
@@ -61,19 +72,23 @@ export const AppButton: React.FC<AppButtonProps> = ({
         isDisabled && "opacity-50",
         className
       )}
+      style={[variantStyles[variant as keyof typeof variantStyles], style]}
       disabled={isDisabled}
       activeOpacity={0.7}
       {...props}
     >
       {isLoading ? (
-        <ActivityIndicator color={variant === "outline" ? "#2563EB" : "#fff"} />
+        <ActivityIndicator
+          color={variant === "outline" ? theme.primary : theme.textInverse}
+        />
       ) : (
         <>
           {leftIcon && <View className="mr-2">{leftIcon}</View>}
           <AppText
             weight="bold"
             color={textColors[variant]}
-            className="text-center"
+            variant="body"
+            className="text-center py-2"
           >
             {title}
           </AppText>

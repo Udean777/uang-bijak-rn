@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
@@ -19,6 +21,8 @@ import Toast from "react-native-toast-message";
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -82,7 +86,8 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-white"
+      className="flex-1"
+      style={{ backgroundColor: theme.background }}
     >
       <ScrollView
         contentContainerStyle={{
@@ -95,9 +100,7 @@ export default function LoginScreen() {
           <AppText variant="h1" weight="bold" className="mb-2">
             Selamat Datang 👋
           </AppText>
-          <AppText variant="body" color="secondary">
-            Masuk untuk mengelola keuangan Anda.
-          </AppText>
+          <AppText variant="body">Masuk untuk mengelola keuangan Anda.</AppText>
         </View>
 
         <View className="gap-y-2">
@@ -126,11 +129,17 @@ export default function LoginScreen() {
         </View>
 
         <View className="flex-row items-center my-6">
-          <View className="flex-1 h-[1px] bg-gray-200" />
-          <AppText variant="caption" color="secondary" className="mx-4">
+          <View
+            className="flex-1 h-[1px]"
+            style={{ backgroundColor: theme.border }}
+          />
+          <AppText variant="caption" className="mx-4">
             atau
           </AppText>
-          <View className="flex-1 h-[1px] bg-gray-200" />
+          <View
+            className="flex-1 h-[1px]"
+            style={{ backgroundColor: theme.border }}
+          />
         </View>
 
         <AppButton
@@ -138,16 +147,16 @@ export default function LoginScreen() {
           variant="outline"
           disabled={!request || isLoading}
           onPress={() => promptAsync()}
-          leftIcon={<Ionicons name="logo-google" size={20} color="black" />}
+          leftIcon={
+            <Ionicons name="logo-google" size={20} color={theme.text} />
+          }
         />
 
         <View className="flex-row justify-center mt-8">
-          <AppText color="secondary">Belum punya akun? </AppText>
+          <AppText>Belum punya akun? </AppText>
           <Link href="/(auth)/register" asChild>
             <TouchableOpacity>
-              <AppText color="primary" weight="bold">
-                Daftar Sekarang
-              </AppText>
+              <AppText weight="bold">Daftar Sekarang</AppText>
             </TouchableOpacity>
           </Link>
         </View>

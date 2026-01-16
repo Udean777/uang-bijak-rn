@@ -1,48 +1,132 @@
+import { Colors } from "@/constants/theme";
 import "@/global.css";
-import { Slot, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useState } from "react";
+import { useColorScheme } from "react-native";
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from "react-native-reanimated";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
-import { toastConfig } from "../components/molecules/ToastConfig";
 import { AuthProvider } from "../features/auth/context/AuthContext";
 import { useAuth } from "../features/auth/hooks/useAuth";
 
-const MainLayout = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
+
+SplashScreen.preventAutoHideAsync();
+
+function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
+  const { user, isLoading, hasSeenOnboarding } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted || isLoading || hasSeenOnboarding === null || !fontsLoaded)
+      return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inOnboarding = segments[0] === "onboarding";
 
-    if (isAuthenticated && inAuthGroup) {
-      router.replace("/(tabs)");
-    } else if (!isAuthenticated && !inAuthGroup) {
-      router.replace("/(auth)/login");
+    if (user) {
+      if (inAuthGroup || inOnboarding) {
+        router.replace("/(tabs)");
+      }
+    } else {
+      if (hasSeenOnboarding === true) {
+        if (!inAuthGroup) router.replace("/(auth)/login");
+      } else {
+        if (!inOnboarding) router.replace("/onboarding");
+      }
     }
-  }, [isAuthenticated, segments, isLoading]);
+  }, [
+    user,
+    isLoading,
+    isMounted,
+    hasSeenOnboarding,
+    segments,
+    fontsLoaded,
+    router,
+  ]);
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" color="#2563EB" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (!isLoading && hasSeenOnboarding !== null && fontsLoaded && isMounted) {
+      const inAuthGroup = segments[0] === "(auth)";
+      const inTabsGroup = segments[0] === "(tabs)";
+      const inOnboarding = segments[0] === "onboarding";
+      const inModalsGroup = segments[0] === "(modals)";
+      const inSubGroup = segments[0] === "(sub)";
 
-  return <Slot />;
-};
+      const isCorrectRoute =
+        (user && (inTabsGroup || inModalsGroup || inSubGroup)) ||
+        (!user && hasSeenOnboarding && inAuthGroup) ||
+        (!user && !hasSeenOnboarding && inOnboarding);
+
+      if (isCorrectRoute) {
+        SplashScreen.hideAsync().catch(() => {
+          // Ignore error if splash screen is already hidden
+        });
+      }
+    }
+  }, [isLoading, hasSeenOnboarding, fontsLoaded, user, segments, isMounted]);
+
+  if (isLoading || hasSeenOnboarding === null || !fontsLoaded) return null;
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(modals)" />
+      <Stack.Screen name="(sub)" />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const [loaded] = useFonts({
+    JakartaSans: require("../../assets/fonts/PlusJakartaSans-Regular.ttf"),
+    JakartaSansBold: require("../../assets/fonts/PlusJakartaSans-Bold.ttf"),
+    JakartaSansExtraBold: require("../../assets/fonts/PlusJakartaSans-ExtraBold.ttf"),
+    JakartaSansSemiBold: require("../../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
+    JakartaSansMedium: require("../../assets/fonts/PlusJakartaSans-Medium.ttf"),
+    JakartaSansLight: require("../../assets/fonts/PlusJakartaSans-Light.ttf"),
+  });
+
+  if (!loaded) return null;
+
   return (
-    <SafeAreaView className="flex-1">
-      <AuthProvider>
-        <MainLayout />
-        <Toast config={toastConfig} />
-      </AuthProvider>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView
+        className="flex-1"
+        style={{ backgroundColor: theme.background }}
+      >
+        <AuthProvider>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <InitialLayout fontsLoaded={loaded} />
+            <Toast />
+          </ThemeProvider>
+        </AuthProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
