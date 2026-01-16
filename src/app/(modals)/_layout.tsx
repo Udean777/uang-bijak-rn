@@ -19,6 +19,14 @@ export default function ModalsLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="add-subscription"
+        options={{
+          presentation: "modal",
+          headerTitle: "Tambah Subs",
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

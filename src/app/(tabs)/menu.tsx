@@ -1,12 +1,82 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+
+import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
-import { View } from "react-native";
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { SubscriptionList } from "@/src/features/subscriptions/components/SubscriptionList";
+import { AuthService } from "@/src/services/authService";
 
 export default function MenuScreen() {
+  const router = useRouter();
+  const { userProfile } = useAuth();
+
+  const handleLogout = async () => {
+    await AuthService.logout();
+  };
+
   return (
-    <View className="flex-1 justify-center items-center bg-white">
-      <AppText variant="h3" weight="bold">
-        Halaman Menu (Subscriptions & Settings)
-      </AppText>
+    <View className="flex-1 bg-gray-50 pt-12">
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        className="px-5"
+      >
+        <View className="flex-row items-center mb-8">
+          <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mr-4">
+            <AppText variant="h2" weight="bold" className="text-blue-600">
+              {userProfile?.displayName?.charAt(0) || "U"}
+            </AppText>
+          </View>
+          <View>
+            <AppText variant="h2" weight="bold">
+              {userProfile?.displayName || "User"}
+            </AppText>
+            <AppText color="secondary">{userProfile?.email}</AppText>
+          </View>
+        </View>
+
+        <View className="mb-8">
+          <View className="flex-row justify-between items-center mb-4">
+            <AppText variant="h3" weight="bold">
+              Langganan & Tagihan
+            </AppText>
+            <TouchableOpacity
+              onPress={() => router.push("/(modals)/add-subscription")}
+            >
+              <AppText color="primary" weight="bold">
+                + Tambah
+              </AppText>
+            </TouchableOpacity>
+          </View>
+
+          <SubscriptionList />
+        </View>
+
+        <View className="mb-6">
+          <AppText variant="h3" weight="bold" className="mb-4">
+            Akun
+          </AppText>
+
+          <AppButton
+            title="Keluar Aplikasi"
+            variant="danger"
+            className="border-red-200"
+            onPress={handleLogout}
+            leftIcon={
+              <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+            }
+          />
+          <AppText
+            variant="caption"
+            color="secondary"
+            className="text-center mt-4"
+          >
+            Versi Aplikasi 1.0.0 (MVP)
+          </AppText>
+        </View>
+      </ScrollView>
     </View>
   );
 }
