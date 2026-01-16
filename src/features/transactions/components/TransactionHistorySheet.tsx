@@ -74,11 +74,7 @@ export const TransactionHistorySheet = ({
           : {}
       }
     >
-      <AppText
-        variant="caption"
-        weight={active ? "bold" : "regular"}
-        color={active ? "primary" : "secondary"}
-      >
+      <AppText variant="caption" weight={active ? "bold" : "regular"}>
         {label}
       </AppText>
     </TouchableOpacity>

@@ -5,6 +5,7 @@ export default function SubLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="wallet-detail" />
       <Stack.Screen name="wishlist" />
+      <Stack.Screen name="manage-templates" />
     </Stack>
   );
 }

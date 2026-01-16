@@ -77,7 +77,7 @@ export default function MenuScreen() {
           <SubscriptionList />
         </View>
 
-        <View className="mb-8">
+        <View className="mb-4">
           <View className="flex-row justify-between items-center mb-4">
             <AppText variant="h3" weight="bold">
               Fitur Cerdas
@@ -111,6 +111,33 @@ export default function MenuScreen() {
             <Ionicons name="chevron-forward" size={20} color={theme.icon} />
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          onPress={() => router.push("/(sub)/manage-templates")}
+          className="flex-row items-center justify-between p-4 rounded-2xl border mb-4"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+          }}
+        >
+          <View className="flex-row items-center gap-4">
+            <View
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(245, 158, 11, 0.15)"
+                  : "#FEF3C7",
+              }}
+            >
+              <Ionicons name="flash" size={20} color="#F59E0B" />
+            </View>
+            <View>
+              <AppText weight="bold">Shortcut Transaksi</AppText>
+              <AppText variant="caption">Template input cepat</AppText>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+        </TouchableOpacity>
 
         <View className="mb-6">
           <AppText variant="h3" weight="bold" className="mb-4">

@@ -2,6 +2,7 @@ import { Colors } from "@/constants/theme";
 import { useThemeControl } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { SafeToSpendCard } from "@/src/features/auth/components/SafeToSpendCard";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
@@ -10,7 +11,9 @@ import { TransactionItem } from "@/src/features/transactions/components/Transact
 import { WalletCard } from "@/src/features/wallets/components/WalletCard";
 import { useWallets } from "@/src/features/wallets/hooks/useWallets";
 import { BudgetService } from "@/src/services/budgetService";
+import { TemplateService } from "@/src/services/templateService";
 import { TransactionService } from "@/src/services/transactionService";
+import { TransactionTemplate } from "@/src/types/template";
 import { Transaction } from "@/src/types/transaction";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -21,6 +24,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -43,8 +47,23 @@ export default function HomeScreen() {
   );
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [showHistorySheet, setShowHistorySheet] = useState(false);
+  const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
+
+  // Template Verification State
+  const [templateToConfirm, setTemplateToConfirm] = useState<{
+    template: TransactionTemplate;
+    walletName: string;
+  } | null>(null);
+  const [isConfirmVisible, setConfirmVisible] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = TemplateService.subscribeTemplates(user.uid, setTemplates);
+    return () => unsub();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -88,6 +107,40 @@ export default function HomeScreen() {
       pathname: "/(modals)/transaction-detail",
       params: { data: JSON.stringify(item) },
     });
+  };
+
+  const handleUseTemplate = (template: TransactionTemplate) => {
+    const wallet = wallets.find((w) => w.id === template.walletId);
+    if (!wallet) {
+      Toast.show({ type: "error", text1: "Dompet tidak ditemukan" });
+      return;
+    }
+    setTemplateToConfirm({ template, walletName: wallet.name });
+    setConfirmVisible(true);
+  };
+
+  const handleConfirmTemplate = async () => {
+    if (!templateToConfirm) return;
+
+    setConfirmLoading(true);
+    const { template } = templateToConfirm;
+    try {
+      await TransactionService.addTransaction(user!.uid, {
+        walletId: template.walletId,
+        amount: template.amount,
+        type: template.type,
+        category: template.category,
+        classification: "want",
+        date: new Date(),
+        note: "Transaksi Cepat",
+      });
+      Toast.show({ type: "success", text1: "Tersimpan!" });
+      setConfirmVisible(false);
+    } catch (e) {
+      Toast.show({ type: "error", text1: "Gagal menyimpan" });
+    } finally {
+      setConfirmLoading(false);
+    }
   };
 
   if (walletsLoading) {
@@ -227,6 +280,62 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
+        {templates.length > 0 && (
+          <View className="mb-8">
+            <View className="flex-row justify-between items-center mb-4">
+              <View className="flex-row items-center gap-2">
+                <Ionicons name="flash" size={18} color="#F59E0B" />
+                <AppText variant="h3" weight="bold">
+                  Akses Cepat
+                </AppText>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.push("/(sub)/manage-templates")}
+              >
+                <AppText variant="label" color="primary">
+                  Kelola
+                </AppText>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="-mx-5 px-5"
+            >
+              {templates.map((tpl) => (
+                <TouchableOpacity
+                  key={tpl.id}
+                  onPress={() => handleUseTemplate(tpl)}
+                  className="mr-3 p-3 rounded-2xl border flex-row items-center gap-3 pr-5 shadow-sm"
+                  style={{
+                    backgroundColor: theme.card,
+                    borderColor: theme.border,
+                    shadowOpacity: isDark ? 0.2 : 0.05,
+                  }}
+                >
+                  <View
+                    className="w-10 h-10 rounded-full items-center justify-center"
+                    style={{
+                      backgroundColor: isDark
+                        ? "rgba(234, 88, 12, 0.15)"
+                        : "#FFEDD5",
+                    }}
+                  >
+                    <Ionicons name="flash-outline" size={20} color="#EA580C" />
+                  </View>
+                  <View>
+                    <AppText weight="bold">{tpl.name}</AppText>
+                    <AppText variant="caption">
+                      Rp {tpl.amount.toLocaleString()}
+                    </AppText>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         <View className="mb-32">
           <View className="flex-row justify-between items-center mb-4">
             <AppText variant="h3" weight="bold">
@@ -295,6 +404,21 @@ export default function HomeScreen() {
         transactions={allTransactions}
         loading={loadingTransactions}
         onTransactionPress={handleTransactionPress}
+      />
+
+      <ConfirmDialog
+        visible={isConfirmVisible}
+        title="Input Cepat ⚡"
+        message={
+          templateToConfirm
+            ? `Catat ${templateToConfirm.template.name} (${templateToConfirm.template.amount.toLocaleString()}) dari ${templateToConfirm.walletName}?`
+            : ""
+        }
+        onConfirm={handleConfirmTemplate}
+        onCancel={() => setConfirmVisible(false)}
+        confirmText="Ya, Catat"
+        cancelText="Batal"
+        isLoading={confirmLoading}
       />
     </View>
   );
