@@ -1,7 +1,7 @@
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { WalletService } from "@/src/services/walletService";
 import { Wallet } from "@/src/types/wallet";
 import { useEffect, useState } from "react";
-import { useAuth } from "../../auth/hooks/useAuth";
 
 export const useWallets = () => {
   const { user } = useAuth();
@@ -12,6 +12,7 @@ export const useWallets = () => {
   useEffect(() => {
     if (!user) return;
 
+    setIsLoading(true);
     const unsubscribe = WalletService.subscribeWallets(user.uid, (data) => {
       setWallets(data);
 
@@ -22,7 +23,7 @@ export const useWallets = () => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   return { wallets, totalBalance, isLoading };
 };

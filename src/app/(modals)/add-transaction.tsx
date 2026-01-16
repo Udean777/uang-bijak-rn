@@ -19,7 +19,7 @@ const CATEGORIES = [
   "Lainnya",
 ];
 
-export const AddTransactionScreen = () => {
+export default function AddTransactionScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { wallets } = useWallets();
@@ -223,4 +223,4 @@ export const AddTransactionScreen = () => {
       </View>
     </View>
   );
-};
+}

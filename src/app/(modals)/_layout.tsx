@@ -11,6 +11,14 @@ export default function ModalsLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="add-wallet"
+        options={{
+          presentation: "modal",
+          headerTitle: "Tambah Dompet",
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

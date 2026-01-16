@@ -1,82 +1,93 @@
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
-  UserProfile,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
-import { RegisterPayload } from "../types/user";
+import { RegisterPayload, UserProfile } from "../types/user";
 
 export const AuthService = {
-  register: async ({
-    email,
-    password,
-    fullName,
-  }: RegisterPayload): Promise<void> => {
+  login: async (email: string, pass: string) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      await AuthService._updateLastLogin(cred.user.uid);
+    } catch (error: any) {
+      throw new Error("Email atau password salah.");
+    }
+  },
+
+  register: async ({ email, password, fullName }: RegisterPayload) => {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: fullName });
+
+      await AuthService._createUserProfile(cred.user.uid, {
         email,
-        password
-      );
-      const user = userCredential.user;
-
-      await updateProfile(user, { displayName: fullName });
-
-      const newUserProfile: UserProfile = {
-        uid: user.uid,
-        email: user.email || "",
         displayName: fullName,
         photoURL: "",
-        createdAt: Date.now(),
-        lastLoginAt: Date.now(),
-        preferences: {
-          currency: "IDR",
-          language: "id",
-          theme: "system",
-        },
-      };
-
-      await setDoc(doc(db, "users", user.uid), newUserProfile);
-    } catch (error: any) {
-      throw new Error(error.message || "Gagal mendaftar");
-    }
-  },
-
-  login: async (email: string, password: string): Promise<void> => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      updateDoc(doc(db, "users", userCredential.user.uid), {
-        lastLoginAt: Date.now(),
       });
     } catch (error: any) {
-      throw new Error("Email atau password salah");
+      throw new Error(error.message || "Gagal mendaftar.");
     }
   },
 
-  logout: async (): Promise<void> => {
+  loginWithGoogle: async (idToken: string) => {
     try {
-      await signOut(auth);
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+
+      const user = userCredential.user;
+
+      await AuthService._handleSocialUser(user);
     } catch (error: any) {
-      throw new Error(error.message || "Gagal logout");
+      throw new Error("Gagal login Google: " + error.message);
     }
   },
 
-  getUserProfile: async (uid: string): Promise<UserProfile | null> => {
-    const docRef = doc(db, "users", uid);
-    const docSnap = await getDoc(docRef);
+  _handleSocialUser: async (user: any) => {
+    const userDocRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userDocRef);
 
-    if (docSnap.exists()) {
-      return docSnap.data() as UserProfile;
+    if (!userDoc.exists()) {
+      await AuthService._createUserProfile(user.uid, {
+        email: user.email,
+        displayName: user.displayName || "User",
+        photoURL: user.photoURL || "",
+      });
     } else {
-      return null;
+      await AuthService._updateLastLogin(user.uid);
     }
+  },
+
+  _createUserProfile: async (uid: string, data: any) => {
+    await setDoc(doc(db, "users", uid), {
+      uid,
+      ...data,
+      createdAt: Date.now(),
+      lastLoginAt: Date.now(),
+      preferences: { currency: "IDR", theme: "system" },
+    });
+  },
+
+  _updateLastLogin: async (uid: string) => {
+    await updateDoc(doc(db, "users", uid), { lastLoginAt: Date.now() });
+  },
+
+  logout: async () => {
+    await signOut(auth);
+  },
+
+  getUserProfile: async (uid: string): Promise<UserProfile> => {
+    const userDocRef = doc(db, "users", uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      return userDoc.data() as UserProfile;
+    }
+    throw new Error("Profil akun tidak ditemukan.");
   },
 };

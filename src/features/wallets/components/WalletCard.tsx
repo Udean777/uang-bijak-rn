@@ -1,52 +1,53 @@
+import { AppText } from "@/src/components/atoms/AppText";
 import { Wallet } from "@/src/types/wallet";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 
-const formatRupiah = (amount: number) => {
-  return new Intl.NumberFormat("id-ID", {
+const formatRupiah = (val: number) =>
+  new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
-  }).format(amount);
-};
+  }).format(val);
 
 interface Props {
   wallet: Wallet;
-  onPress: (wallet: Wallet) => void;
+  onPress?: (wallet: Wallet) => void;
 }
 
 export const WalletCard: React.FC<Props> = ({ wallet, onPress }) => {
   return (
     <TouchableOpacity
-      onPress={() => onPress(wallet)}
-      className="p-4 mb-3 rounded-2xl border border-gray-100 shadow-sm bg-white"
+      onPress={() => onPress && onPress(wallet)}
+      activeOpacity={0.7}
+      className="mb-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm flex-row justify-between items-center"
     >
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <View
-            className="w-10 h-10 rounded-full justify-center items-center opacity-20"
-            style={{ backgroundColor: wallet.color }}
-          >
-            <View
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: wallet.color, opacity: 1 }}
-            />
-          </View>
-
-          <View>
-            <Text className="text-gray-500 text-xs font-medium uppercase tracking-wider">
-              {wallet.type}
-            </Text>
-            <Text className="text-gray-800 text-lg font-bold">
-              {wallet.name}
-            </Text>
-          </View>
+      <View className="flex-row items-center gap-4">
+        <View
+          className="w-12 h-12 rounded-xl items-center justify-center opacity-90"
+          style={{ backgroundColor: wallet.color }}
+        >
+          <Ionicons name="wallet" size={24} color="white" />
         </View>
 
-        <Text className="text-gray-900 text-lg font-semibold">
-          {formatRupiah(wallet.balance)}
-        </Text>
+        <View>
+          <AppText
+            variant="caption"
+            color="secondary"
+            className="uppercase tracking-wider"
+          >
+            {wallet.type}
+          </AppText>
+          <AppText variant="body" weight="bold" className="text-gray-900">
+            {wallet.name}
+          </AppText>
+        </View>
       </View>
+
+      <AppText variant="h3" weight="bold" color="primary">
+        {formatRupiah(wallet.balance)}
+      </AppText>
     </TouchableOpacity>
   );
 };

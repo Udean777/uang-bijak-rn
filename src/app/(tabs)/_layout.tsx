@@ -19,7 +19,16 @@ export default function TabLayout() {
           ios: {
             position: "absolute",
           },
-          default: {},
+          default: {
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            borderTopWidth: 1,
+            borderTopColor: "#E5E7EB",
+            elevation: 0,
+            shadowColor: "transparent",
+          },
         }),
       }}
     >

@@ -15,7 +15,7 @@ export const TransactionService = {
     try {
       await runTransaction(db, async (transaction) => {
         const newtxRef = doc(collection(db, COLLECTION));
-        const walletRef = doc(collection(db, WALLET_COLLECTION, data.walletId));
+        const walletRef = doc(db, WALLET_COLLECTION, data.walletId);
 
         const walletDoc = await transaction.get(walletRef);
 

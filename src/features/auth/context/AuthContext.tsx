@@ -1,6 +1,7 @@
 import { auth } from "@/src/config/firebase";
 import { AuthService } from "@/src/services/authService";
-import { onAuthStateChanged, User, UserProfile } from "firebase/auth";
+import { UserProfile } from "@/src/types/user";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { createContext, ReactNode, useEffect, useState } from "react";
 
 interface AuthContextType {
@@ -29,10 +30,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (currentUser) {
         try {
           const profile = await AuthService.getUserProfile(currentUser.uid);
-
           setUserProfile(profile);
         } catch (error) {
-          console.error("Gagal mengambil profil user", error);
+          console.error("Gagal ambil profil", error);
         }
       } else {
         setUserProfile(null);
@@ -41,9 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     });
 
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   return (

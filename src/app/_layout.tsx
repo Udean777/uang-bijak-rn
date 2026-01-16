@@ -1,6 +1,8 @@
 import "@/global.css";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "../components/molecules/ToastConfig";
 import { AuthProvider } from "../features/auth/context/AuthContext";
@@ -16,22 +18,31 @@ const MainLayout = () => {
 
     const inAuthGroup = segments[0] === "(auth)";
 
-    if (!isAuthenticated && !inAuthGroup) {
+    if (isAuthenticated && inAuthGroup) {
+      router.replace("/(tabs)");
+    } else if (!isAuthenticated && !inAuthGroup) {
       router.replace("/(auth)/login");
-    } else if (isAuthenticated && inAuthGroup) {
-      router.replace("/");
     }
   }, [isAuthenticated, segments, isLoading]);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
 
   return <Slot />;
 };
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <MainLayout />
-
-      <Toast config={toastConfig} />
-    </AuthProvider>
+    <SafeAreaView className="flex-1">
+      <AuthProvider>
+        <MainLayout />
+        <Toast config={toastConfig} />
+      </AuthProvider>
+    </SafeAreaView>
   );
 }
