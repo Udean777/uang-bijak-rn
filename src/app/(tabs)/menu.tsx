@@ -1,9 +1,5 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
-
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
@@ -11,8 +7,13 @@ import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { AddSubscriptionSheet } from "@/src/features/subscriptions/components/AddSubscriptionSheet";
 import { SubscriptionList } from "@/src/features/subscriptions/components/SubscriptionList";
 import { AuthService } from "@/src/services/authService";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
 
 export default function MenuScreen() {
+  const router = useRouter();
   const { userProfile } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +75,41 @@ export default function MenuScreen() {
           </View>
 
           <SubscriptionList />
+        </View>
+
+        <View className="mb-8">
+          <View className="flex-row justify-between items-center mb-4">
+            <AppText variant="h3" weight="bold">
+              Fitur Cerdas
+            </AppText>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => router.push("/(sub)/wishlist")}
+            className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+            style={{
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+            }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(147, 51, 234, 0.15)"
+                    : "#F3E8FF",
+                }}
+              >
+                <Ionicons name="heart" size={20} color="#9333EA" />
+              </View>
+              <View>
+                <AppText weight="bold">Wishlist & Timer</AppText>
+                <AppText variant="caption">Cegah belanja impulsif</AppText>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+          </TouchableOpacity>
         </View>
 
         <View className="mb-6">
