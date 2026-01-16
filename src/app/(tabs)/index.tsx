@@ -1,7 +1,7 @@
-import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppCard } from "@/src/components/atoms/AppCard";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
+import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { SafeToSpendCard } from "@/src/features/auth/components/SafeToSpendCard";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
@@ -31,7 +31,6 @@ export default function HomeScreen() {
   >("safe");
   const [remainingDays, setRemainingDays] = useState(0);
   const [budgetLoading, setBudgetLoading] = useState(true);
-
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
     []
   );
@@ -41,7 +40,6 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (!user) return;
-
     const fetchBudget = async () => {
       const now = new Date();
       const daysInMonth = new Date(
@@ -54,32 +52,25 @@ export default function HomeScreen() {
       setRemainingDays(left);
 
       const needs = await BudgetService.calculateMonthlyNeeds(user.uid);
-
       const disposable = totalBalance - needs;
       const safe = disposable > 0 ? disposable / left : 0;
 
       setSafeDaily(safe);
-
       if (safe < 50000) setBudgetStatus("danger");
       else if (safe < 100000) setBudgetStatus("warning");
       else setBudgetStatus("safe");
-
       setBudgetLoading(false);
     };
-
     fetchBudget();
   }, [user, totalBalance]);
 
   useEffect(() => {
     if (!user) return;
-
     const unsub = TransactionService.subscribeTransactions(user.uid, (data) => {
       const sorted = data.sort((a, b) => b.date - a.date).slice(0, 5);
-
       setRecentTransactions(sorted);
       setLoadingTransactions(false);
     });
-
     return () => unsub();
   }, [user]);
 
@@ -89,6 +80,46 @@ export default function HomeScreen() {
       params: { data: JSON.stringify(item) },
     });
   };
+
+  if (walletsLoading) {
+    return (
+      <View className="flex-1 bg-white justify-center items-center p-5">
+        <Skeleton variant="circle" width={80} height={80} className="mb-4" />
+        <Skeleton variant="box" width="60%" height={20} className="mb-2" />
+        <Skeleton variant="box" width="40%" height={20} />
+      </View>
+    );
+  }
+
+  if (wallets.length === 0) {
+    return (
+      <View className="flex-1 bg-white px-5">
+        <View className="flex-row items-center gap-3 mb-10">
+          <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center">
+            <AppText weight="bold" color="primary">
+              {userProfile?.displayName?.charAt(0) || "U"}
+            </AppText>
+          </View>
+          <View>
+            <AppText color="secondary">Halo,</AppText>
+            <AppText weight="bold" variant="h3">
+              {userProfile?.displayName || "Pengguna Baru"}
+            </AppText>
+          </View>
+        </View>
+
+        <View className="flex-1 justify-center -mt-20">
+          <EmptyState
+            title="Mulai Perjalanan Keuanganmu"
+            message="Kamu belum memiliki dompet. Yuk, buat dompet pertamamu untuk mulai mencatat pemasukan dan pengeluaran!"
+            icon="wallet"
+            actionLabel="Buat Dompet Sekarang"
+            onAction={() => router.push("/(modals)/add-wallet")}
+          />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -117,7 +148,7 @@ export default function HomeScreen() {
 
         <View className="mb-8">
           <SafeToSpendCard
-            isLoading={budgetLoading || walletsLoading}
+            isLoading={budgetLoading}
             status={budgetStatus}
             safeDaily={safeDaily}
             totalBalance={totalBalance}
@@ -138,39 +169,23 @@ export default function HomeScreen() {
               </AppText>
             </TouchableOpacity>
           </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {walletsLoading ? (
-              <Skeleton
-                variant="box"
-                width={200}
-                height={120}
-                className="mr-4 rounded-2xl"
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="-mx-5 px-5"
+          >
+            {wallets.map((wallet) => (
+              <WalletCard
+                key={wallet.id}
+                wallet={wallet}
+                onPress={(w) =>
+                  router.push({
+                    pathname: "/(sub)/wallet-detail",
+                    params: { data: JSON.stringify(w) },
+                  })
+                }
               />
-            ) : wallets.length === 0 ? (
-              <AppCard
-                variant="outlined"
-                className="w-64 p-5 items-center justify-center mr-4 border-dashed bg-white/50"
-              >
-                <Ionicons name="wallet-outline" size={24} color="#9CA3AF" />
-                <AppText color="secondary" className="mt-2">
-                  Belum ada dompet
-                </AppText>
-              </AppCard>
-            ) : (
-              wallets.map((wallet) => (
-                <WalletCard
-                  key={wallet.id}
-                  wallet={wallet}
-                  onPress={(w) =>
-                    router.push({
-                      pathname: "/(sub)/wallet-detail",
-                      params: { data: JSON.stringify(w) },
-                    })
-                  }
-                />
-              ))
-            )}
+            ))}
           </ScrollView>
         </View>
 
@@ -206,7 +221,7 @@ export default function HomeScreen() {
           ) : recentTransactions.length === 0 ? (
             <AppCard
               variant="flat"
-              className="p-8 items-center bg-white border border-gray-100 border-dashed"
+              className="p-6 items-center bg-white border border-gray-100 border-dashed"
             >
               <Ionicons name="receipt-outline" size={32} color="#E5E7EB" />
               <AppText
@@ -214,7 +229,7 @@ export default function HomeScreen() {
                 variant="caption"
                 className="mt-2 text-center text-gray-400"
               >
-                Belum ada transaksi terbaru.
+                Belum ada transaksi.{"\n"}Tekan tombol (+) untuk mencatat.
               </AppText>
             </AppCard>
           ) : (
@@ -234,15 +249,6 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
-
-      <View className="absolute bottom-6 right-5">
-        <AppButton
-          title="Transaksi"
-          leftIcon={<Ionicons name="add" size={24} color="white" />}
-          className="rounded-full shadow-lg shadow-blue-500/40 px-6 py-4"
-          onPress={() => router.push("/(modals)/add-transaction")}
-        />
-      </View>
     </View>
   );
 }

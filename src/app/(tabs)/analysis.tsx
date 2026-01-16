@@ -1,4 +1,5 @@
 import { AppText } from "@/src/components/atoms/AppText";
+import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { TransactionService } from "@/src/services/transactionService";
@@ -118,8 +119,7 @@ export default function AnalysisScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header Bulan */}
-      <View className="px-5 pt-12 pb-4 flex-row justify-between items-center border-b border-gray-100">
+      <View className="px-5 pb-4 flex-row justify-between items-center border-b border-gray-100">
         <AppText variant="h2" weight="bold">
           Analisis
         </AppText>
@@ -140,7 +140,6 @@ export default function AnalysisScreen() {
       </View>
 
       <ScrollView className="flex-1 px-5 pt-6">
-        {/* Summary Card */}
         <View className="flex-row gap-4 mb-8">
           <View className="flex-1 bg-green-50 p-4 rounded-2xl border border-green-100">
             <View className="flex-row items-center gap-2 mb-2">
@@ -166,7 +165,6 @@ export default function AnalysisScreen() {
           </View>
         </View>
 
-        {/* Chart Section */}
         {totalExpense > 0 ? (
           <View className="items-center">
             <View className="items-center justify-center">
@@ -189,16 +187,15 @@ export default function AnalysisScreen() {
                 centerLabelComponent={() => <View />}
               />
             </View>
-
-            {/* List Kategori */}
             <View className="w-full mb-10">{renderLegendComponent()}</View>
           </View>
         ) : (
-          <View className="items-center py-10 opacity-50">
-            <Ionicons name="pie-chart-outline" size={80} color="gray" />
-            <AppText className="mt-4 text-center text-gray-500">
-              Belum ada pengeluaran di bulan ini.
-            </AppText>
+          <View className="mt-10">
+            <EmptyState
+              title="Belum Ada Data"
+              message={`Belum ada pengeluaran tercatat di bulan ${currentMonth.toLocaleDateString("id-ID", { month: "long" })}.`}
+              icon="pie-chart-outline"
+            />
           </View>
         )}
       </ScrollView>

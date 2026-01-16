@@ -18,7 +18,7 @@ export const AppText: React.FC<AppTextProps> = ({
   style,
   ...props
 }) => {
-  const baseStyle = "font-sans";
+  const baseStyle = "font-jakarta";
 
   const variants = {
     h1: "text-3xl leading-tight",
@@ -30,10 +30,10 @@ export const AppText: React.FC<AppTextProps> = ({
   };
 
   const weights = {
-    regular: "font-normal",
-    medium: "font-medium",
-    semibold: "font-semibold",
-    bold: "font-bold",
+    regular: "font-jakarta",
+    medium: "font-jakartaMedium",
+    semibold: "font-jakartaSemiBold",
+    bold: "font-jakartaBold",
   };
 
   const colors = {
