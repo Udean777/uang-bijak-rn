@@ -1,11 +1,17 @@
 import {
   collection,
   doc,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  QuerySnapshot,
   runTransaction,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
-import { CreateTransactionPayload } from "../types/transaction";
+import { CreateTransactionPayload, Transaction } from "../types/transaction";
 
 const COLLECTION = "transactions";
 const WALLET_COLLECTION = "wallets";
@@ -50,5 +56,28 @@ export const TransactionService = {
       console.error("Transaction Failed: ", error);
       throw new Error(error.message || "Gagal menyimpan transaksi");
     }
+  },
+
+  subscribeTransactions: (
+    userId: string,
+    callback: (data: Transaction[]) => void
+  ) => {
+    const q = query(
+      collection(db, COLLECTION),
+      where("userId", "==", userId),
+      orderBy("date", "desc"),
+      limit(50)
+    );
+
+    return onSnapshot(q, (snapshot: QuerySnapshot) => {
+      const transactions = snapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          }) as Transaction
+      );
+      callback(transactions);
+    });
   },
 };
