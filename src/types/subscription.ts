@@ -4,6 +4,7 @@ export interface Subscription {
   name: string;
   cost: number;
   dueDate: number;
+  nextPaymentDate: number;
   isActive: boolean;
   color?: string;
 }

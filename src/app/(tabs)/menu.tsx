@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { SubscriptionList } from "@/src/features/subscriptions/components/SubscriptionList";
 import { AuthService } from "@/src/services/authService";
@@ -12,13 +13,26 @@ import { AuthService } from "@/src/services/authService";
 export default function MenuScreen() {
   const router = useRouter();
   const { userProfile } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onLogoutPress = () => {
+    setShowLogoutDialog(true);
+  };
 
   const handleLogout = async () => {
+    setIsLoading(true);
+    setShowLogoutDialog(false);
     await AuthService.logout();
+    setIsLoading(false);
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutDialog(false);
   };
 
   return (
-    <View className="flex-1 bg-gray-50 pt-12">
+    <View className="flex-1 bg-gray-50 ">
       <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         className="px-5"
@@ -63,7 +77,7 @@ export default function MenuScreen() {
             title="Keluar Aplikasi"
             variant="danger"
             className="border-red-200"
-            onPress={handleLogout}
+            onPress={onLogoutPress}
             leftIcon={
               <Ionicons name="log-out-outline" size={20} color="#DC2626" />
             }
@@ -77,6 +91,18 @@ export default function MenuScreen() {
           </AppText>
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={showLogoutDialog}
+        title="Keluar Aplikasi?"
+        message="Anda yakin ingin keluar dari aplikasi?"
+        confirmText="Keluar"
+        cancelText="Batal"
+        variant="danger"
+        isLoading={isLoading}
+        onConfirm={handleLogout}
+        onCancel={handleCancelLogout}
+      />
     </View>
   );
 }

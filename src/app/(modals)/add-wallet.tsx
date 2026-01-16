@@ -7,8 +7,8 @@ import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { WalletService } from "@/src/services/walletService";
 import { WalletType } from "@/src/types/wallet";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -31,12 +31,32 @@ const COLORS = [
 export default function AddWalletScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const params = useLocalSearchParams();
 
   const [name, setName] = useState("");
   const [initialBalance, setInitialBalance] = useState("");
   const [selectedType, setSelectedType] = useState<WalletType>("bank");
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editWalletId, setEditWalletId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (params.editData) {
+      try {
+        const data = JSON.parse(params.editData as string);
+        setIsEditMode(true);
+        setEditWalletId(data.id);
+
+        setName(data.name);
+        setInitialBalance(data.balance.toString());
+        setSelectedType(data.type);
+        setSelectedColor(data.color);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [params.editData]);
 
   const handleSave = async () => {
     if (!name || !initialBalance) {
@@ -50,20 +70,33 @@ export default function AddWalletScreen() {
 
     setIsLoading(true);
     try {
-      await WalletService.createWallet(user!.uid, {
-        name,
-        type: selectedType,
-        initialBalance: parseFloat(initialBalance),
-        color: selectedColor,
-      });
+      if (isEditMode && editWalletId) {
+        await WalletService.updateWallet(editWalletId, {
+          name,
+          type: selectedType,
+          color: selectedColor,
+          balance: parseFloat(initialBalance),
+        } as any);
 
-      Toast.show({
-        type: "success",
-        text1: "Berhasil!",
-        text2: "Dompet baru telah dibuat.",
-      });
+        Toast.show({ type: "success", text1: "Dompet Diupdate" });
 
-      setTimeout(() => router.back(), 1000);
+        router.dismissAll();
+      } else {
+        await WalletService.createWallet(user!.uid, {
+          name,
+          type: selectedType,
+          initialBalance: parseFloat(initialBalance),
+          color: selectedColor,
+        });
+
+        Toast.show({
+          type: "success",
+          text1: "Berhasil!",
+          text2: "Dompet baru telah dibuat.",
+        });
+
+        setTimeout(() => router.back(), 1000);
+      }
     } catch (error: any) {
       Toast.show({ type: "error", text1: "Gagal", text2: error.message });
     } finally {
@@ -106,7 +139,10 @@ export default function AddWalletScreen() {
   return (
     <View className="flex-1 bg-white">
       <ScreenLoader visible={isLoading} text="Membuat Dompet..." />
-      <ModalHeader title="Tambah Dompet" subtitle="Atur sumber dana baru" />
+      <ModalHeader
+        title={isEditMode ? "Edit Dompet" : "Tambah Dompet"}
+        subtitle="Atur sumber dana baru"
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -145,7 +181,7 @@ export default function AddWalletScreen() {
               onChangeText={setName}
             />
             <AppInput
-              label="Saldo Awal"
+              label={isEditMode ? "Koreksi Saldo Saat Ini" : "Saldo Awal"}
               placeholder="0"
               keyboardType="numeric"
               value={initialBalance}
@@ -186,7 +222,10 @@ export default function AddWalletScreen() {
         </ScrollView>
 
         <View className="p-5 border-t border-gray-100 pb-8">
-          <AppButton title="Simpan Dompet" onPress={handleSave} />
+          <AppButton
+            title={isEditMode ? "Simpan Perubahan" : "Simpan Dompet"}
+            onPress={handleSave}
+          />
         </View>
       </KeyboardAvoidingView>
     </View>

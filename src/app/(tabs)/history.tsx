@@ -3,15 +3,17 @@ import { Skeleton } from "@/src/components/atoms/Skeleton";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
 import { useTransactions } from "@/src/features/transactions/hooks/useTransactions";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { SectionList, View } from "react-native";
 
 export default function HistoryScreen() {
+  const router = useRouter();
   const { sections, isLoading } = useTransactions();
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-gray-50 p-5 pt-12">
+      <View className="flex-1 bg-gray-50 p-5 ">
         <AppText variant="h2" weight="bold" className="mb-6">
           Riwayat Transaksi
         </AppText>
@@ -63,7 +65,12 @@ export default function HistoryScreen() {
             <View className="rounded-xl overflow-hidden shadow-sm">
               <TransactionItem
                 transaction={item}
-                onPress={(t) => console.log("Detail", t.id)}
+                onPress={(t) =>
+                  router.push({
+                    pathname: "/(modals)/transaction-detail",
+                    params: { data: JSON.stringify(t) },
+                  })
+                }
               />
             </View>
           </View>

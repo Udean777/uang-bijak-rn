@@ -11,16 +11,46 @@ import {
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
 
 const COLLECTION = "subscriptions";
 
+const calculateInitialNextPayment = (day: number): number => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  let targetDate = new Date(currentYear, currentMonth, day);
+
+  if (targetDate.getTime() < now.getTime()) {
+    targetDate = new Date(currentYear, currentMonth + 1, day);
+  }
+
+  return targetDate.getTime();
+};
+
+const getNextMonthDate = (
+  currentTimestamp: number,
+  fixedDay: number
+): number => {
+  const date = new Date(currentTimestamp);
+  date.setMonth(date.getMonth() + 1);
+
+  date.setDate(fixedDay);
+
+  return date.getTime();
+};
+
 export const SubscriptionService = {
   addSubscription: async (userId: string, data: CreateSubscriptionPayload) => {
+    const nextPayment = calculateInitialNextPayment(data.dueDate);
+
     await addDoc(collection(db, COLLECTION), {
       userId,
       ...data,
+      nextPaymentDate: nextPayment,
       isActive: true,
       createdAt: Date.now(),
     });
@@ -50,5 +80,23 @@ export const SubscriptionService = {
 
   deleteSubscription: async (id: string) => {
     await deleteDoc(doc(db, COLLECTION, id));
+  },
+
+  renewSubscription: async (
+    id: string,
+    currentNextPayment: number,
+    fixedDay: number
+  ) => {
+    try {
+      const subRef = doc(db, COLLECTION, id);
+      const newDate = getNextMonthDate(currentNextPayment, fixedDay);
+
+      await updateDoc(subRef, {
+        nextPaymentDate: newDate,
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   },
 };

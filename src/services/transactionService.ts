@@ -80,4 +80,84 @@ export const TransactionService = {
       callback(transactions);
     });
   },
+
+  deleteTransaction: async (transactionId: string, oldData: Transaction) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        const txRef = doc(db, COLLECTION, transactionId);
+        const walletRef = doc(db, "wallets", oldData.walletId);
+
+        const walletDoc = await transaction.get(walletRef);
+        if (!walletDoc.exists()) throw new Error("Dompet tidak ditemukan");
+
+        const currentBalance = walletDoc.data().balance;
+        let newBalance = currentBalance;
+
+        if (oldData.type === "expense") {
+          newBalance += oldData.amount;
+        } else if (oldData.type === "income") {
+          newBalance -= oldData.amount;
+        }
+
+        transaction.update(walletRef, { balance: newBalance });
+        transaction.delete(txRef);
+      });
+    } catch (error: any) {
+      throw new Error("Gagal menghapus: " + error.message);
+    }
+  },
+
+  updateTransaction: async (
+    transactionId: string,
+    oldData: Transaction,
+    newData: CreateTransactionPayload
+  ) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        const txRef = doc(db, COLLECTION, transactionId);
+        const oldWalletRef = doc(db, "wallets", oldData.walletId);
+        const newWalletRef = doc(db, "wallets", newData.walletId);
+
+        if (oldData.walletId === newData.walletId) {
+          const walletDoc = await transaction.get(oldWalletRef);
+          if (!walletDoc.exists()) throw new Error("Dompet tidak ditemukan");
+
+          let balance = walletDoc.data().balance;
+
+          if (oldData.type === "expense") balance += oldData.amount;
+          else balance -= oldData.amount;
+
+          if (newData.type === "expense") balance -= newData.amount;
+          else balance += newData.amount;
+
+          transaction.update(oldWalletRef, { balance });
+        } else {
+          const oldWalletDoc = await transaction.get(oldWalletRef);
+          const newWalletDoc = await transaction.get(newWalletRef);
+
+          if (!oldWalletDoc.exists() || !newWalletDoc.exists())
+            throw new Error("Dompet tidak ditemukan");
+
+          let oldBalance = oldWalletDoc.data().balance;
+          if (oldData.type === "expense") oldBalance += oldData.amount;
+          else oldBalance -= oldData.amount;
+
+          let newBalance = newWalletDoc.data().balance;
+          if (newData.type === "expense") newBalance -= newData.amount;
+          else newBalance += newData.amount;
+
+          transaction.update(oldWalletRef, { balance: oldBalance });
+          transaction.update(newWalletRef, { balance: newBalance });
+        }
+
+        transaction.update(txRef, {
+          ...newData,
+          date: newData.date.getTime(),
+          updatedAt: serverTimestamp(),
+        });
+      });
+    } catch (error: any) {
+      throw new Error("Gagal mengupdate: " + error.message);
+    }
+  },
 };

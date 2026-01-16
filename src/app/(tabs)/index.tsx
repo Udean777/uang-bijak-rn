@@ -7,14 +7,15 @@ import { useSafeToSpend } from "@/src/features/budgeting/hooks/useSafeToSpend";
 import { WalletCard } from "@/src/features/wallets/components/WalletCard";
 import { WalletCardSkeleton } from "@/src/features/wallets/components/WalletCardSkeleton";
 import { useWallets } from "@/src/features/wallets/hooks/useWallets";
-import { AuthService } from "@/src/services/authService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
+  Modal,
   RefreshControl,
   ScrollView,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -36,12 +37,24 @@ export default function HomeScreen() {
     isLoading: isCalcLoading,
   } = useSafeToSpend();
 
+  const [showInfo, setShowInfo] = useState(false);
+
   const isLoading = isWalletLoading || isCalcLoading;
 
   const statusColors = {
     safe: "bg-green-600",
     warning: "bg-yellow-500",
     danger: "bg-red-600",
+  };
+
+  const formatRupiah = (value: number) => {
+    // Math.floor digunakan untuk membulatkan ke bawah (hapus desimal)
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0, // Paksa tidak ada koma
+    }).format(Math.floor(value));
   };
 
   return (
@@ -60,12 +73,8 @@ export default function HomeScreen() {
               <Skeleton variant="text" width={150} height={24} />
             )}
           </View>
-          <View className="flex-row gap-2 w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
+          <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
             <Ionicons name="notifications-outline" size={20} color="black" />
-
-            <TouchableOpacity onPress={() => AuthService.logout()}>
-              <Ionicons name="log-out-outline" size={20} color="red" />
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -82,13 +91,29 @@ export default function HomeScreen() {
           >
             <View className="flex-row justify-between items-start">
               <View>
-                <AppText variant="label" className="text-white/80 mb-1">
-                  Safe-to-Spend (Harian)
-                </AppText>
+                {/* HEADER DENGAN ICON INFO */}
+                <View className="flex-row items-center gap-2 mb-1">
+                  <AppText variant="label" className="text-white/80">
+                    Safe-to-Spend (Harian)
+                  </AppText>
+
+                  {/* Tombol Info (i) */}
+                  <TouchableOpacity onPress={() => setShowInfo(true)}>
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={18}
+                      color="white"
+                      style={{ opacity: 0.8 }}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* NILAI DIBULATKAN */}
                 <AppText variant="h1" weight="bold" color="white">
                   {formatRupiah(safeDaily)}
                 </AppText>
               </View>
+
               <View className="bg-white/20 px-3 py-1 rounded-full">
                 <AppText variant="caption" weight="bold" color="white">
                   {remainingDays} Hari Tersisa
@@ -167,7 +192,12 @@ export default function HomeScreen() {
               <WalletCard
                 key={wallet.id}
                 wallet={wallet}
-                onPress={(w) => console.log("Open Wallet Detail", w.id)}
+                onPress={(w) =>
+                  router.push({
+                    pathname: "/(sub)/wallet-detail",
+                    params: { data: JSON.stringify(w) },
+                  })
+                }
               />
             ))
           ) : (
@@ -211,6 +241,61 @@ export default function HomeScreen() {
           </AppCard>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showInfo}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowInfo(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowInfo(false)}>
+          <View className="flex-1 bg-black/50 justify-center items-center p-6">
+            <TouchableWithoutFeedback>
+              <View className="bg-white p-6 rounded-2xl w-full max-w-sm shadow-xl">
+                <View className="flex-row items-center gap-2 mb-3">
+                  <Ionicons name="shield-checkmark" size={24} color="#10B981" />
+                  <AppText variant="h3" weight="bold">
+                    Apa itu Safe-to-Spend?
+                  </AppText>
+                </View>
+
+                <AppText className="text-gray-600 leading-6 mb-4">
+                  Ini adalah <AppText weight="bold">batas maksimal</AppText>{" "}
+                  uang yang boleh kamu keluarkan hari ini agar gajimu cukup
+                  sampai akhir bulan.
+                </AppText>
+
+                <View className="bg-blue-50 p-3 rounded-xl mb-4 border border-blue-100">
+                  <AppText
+                    variant="caption"
+                    className="text-blue-800 font-medium text-center"
+                  >
+                    Rumus: (Total Saldo) ÷ (Sisa Hari)
+                  </AppText>
+                </View>
+
+                <AppText
+                  variant="caption"
+                  color="secondary"
+                  className="italic mb-6"
+                >
+                  Tips: Jika kamu belanja di bawah angka ini, sisa jatahnya akan
+                  ditabung untuk besok!
+                </AppText>
+
+                <TouchableOpacity
+                  onPress={() => setShowInfo(false)}
+                  className="bg-gray-900 py-3 rounded-xl items-center"
+                >
+                  <AppText color="white" weight="bold">
+                    Saya Mengerti
+                  </AppText>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 }
