@@ -94,7 +94,7 @@ export default function OnboardingScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
-      <View className="mt-12 px-6 items-end">
+      <View className="px-6 items-end">
         <TouchableOpacity onPress={handleFinish}>
           <AppText weight="bold" color="primary">
             Lewati

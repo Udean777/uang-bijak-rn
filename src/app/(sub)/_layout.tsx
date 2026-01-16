@@ -6,6 +6,7 @@ export default function SubLayout() {
       <Stack.Screen name="wallet-detail" />
       <Stack.Screen name="wishlist" />
       <Stack.Screen name="manage-templates" />
+      <Stack.Screen name="debts" />
     </Stack>
   );
 }

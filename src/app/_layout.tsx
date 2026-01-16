@@ -10,11 +10,19 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
-import "react-native-reanimated";
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { AuthProvider } from "../features/auth/context/AuthContext";
 import { useAuth } from "../features/auth/hooks/useAuth";
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,10 +41,7 @@ function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
       return;
 
     const inAuthGroup = segments[0] === "(auth)";
-    const inTabsGroup = segments[0] === "(tabs)";
     const inOnboarding = segments[0] === "onboarding";
-    const inModalsGroup = segments[0] === "(modals)";
-    const inSubGroup = segments[0] === "(sub)";
 
     if (user) {
       if (inAuthGroup || inOnboarding) {
@@ -73,7 +78,11 @@ function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
         (!user && !hasSeenOnboarding && inOnboarding);
 
       if (isCorrectRoute) {
-        SplashScreen.hideAsync();
+        try {
+          SplashScreen.hideAsync();
+        } catch (e) {
+          // Ignore error if splash screen is already hidden
+        }
       }
     }
   }, [isLoading, hasSeenOnboarding, fontsLoaded, user, segments, isMounted]);

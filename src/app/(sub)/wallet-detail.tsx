@@ -160,16 +160,22 @@ export default function WalletDetailScreen() {
             <View className="bg-white/20 p-3 rounded-xl">
               <Ionicons name="wallet" size={32} color="white" />
             </View>
-            <AppText className="text-white/80 font-bold uppercase tracking-widest">
+            <AppText
+              weight="bold"
+              color="white"
+              className="uppercase tracking-widest"
+            >
               {wallet.type}
             </AppText>
           </View>
 
-          <AppText className="text-white/80 mb-1">Saldo Saat Ini</AppText>
-          <AppText className="text-white text-4xl font-bold mb-2">
+          <AppText color="white" weight="bold" className="mb-1">
+            Saldo Saat Ini
+          </AppText>
+          <AppText color="white" weight="bold" variant="h1" className="mb-2">
             {formatRupiah(wallet.balance)}
           </AppText>
-          <AppText className="text-white text-lg font-medium">
+          <AppText color="white" weight="medium" variant="h3">
             {wallet.name}
           </AppText>
         </View>

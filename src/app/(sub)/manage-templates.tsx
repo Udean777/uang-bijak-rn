@@ -1,3 +1,14 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { AppButton } from "@/src/components/atoms/AppButton";
+import { AppInput } from "@/src/components/atoms/AppInput";
+import { AppText } from "@/src/components/atoms/AppText";
+import { EmptyState } from "@/src/components/molecules/EmptyState";
+import { ModalHeader } from "@/src/components/molecules/ModalHeader";
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { useWallets } from "@/src/features/wallets/hooks/useWallets";
+import { TemplateService } from "@/src/services/templateService";
+import { TransactionTemplate } from "@/src/types/template";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -11,19 +22,6 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-import { AppButton } from "@/src/components/atoms/AppButton";
-import { AppInput } from "@/src/components/atoms/AppInput";
-import { AppText } from "@/src/components/atoms/AppText";
-import { EmptyState } from "@/src/components/molecules/EmptyState";
-import { ModalHeader } from "@/src/components/molecules/ModalHeader";
-
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { useWallets } from "@/src/features/wallets/hooks/useWallets";
-import { TemplateService } from "@/src/services/templateService";
-import { TransactionTemplate } from "@/src/types/template";
-
 export default function ManageTemplatesScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -36,7 +34,6 @@ export default function ManageTemplatesScreen() {
   const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
   const [isModalVisible, setModalVisible] = useState(false);
 
-  // Form State
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Makan");
@@ -49,7 +46,6 @@ export default function ManageTemplatesScreen() {
     return () => unsub();
   }, [user]);
 
-  // Set default wallet saat modal buka
   useEffect(() => {
     if (wallets.length > 0 && !selectedWalletId)
       setSelectedWalletId(wallets[0].id);
@@ -66,10 +62,10 @@ export default function ManageTemplatesScreen() {
         userId: user!.uid,
         name,
         amount: parseFloat(amount),
-        type: "expense", // Shortcut biasanya untuk pengeluaran rutin
+        type: "expense",
         category,
         walletId: selectedWalletId,
-        icon: "flash", // Default icon
+        icon: "flash",
       });
       Toast.show({ type: "success", text1: "Shortcut dibuat!" });
       setModalVisible(false);

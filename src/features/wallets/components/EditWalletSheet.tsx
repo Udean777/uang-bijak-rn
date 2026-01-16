@@ -168,15 +168,23 @@ export const EditWalletSheet = ({
                   >
                     <View className="flex-row justify-between">
                       <Ionicons name="wallet" size={24} color="white" />
-                      <AppText className="text-white font-bold uppercase">
+                      <AppText
+                        weight="bold"
+                        color="white"
+                        className="uppercase"
+                      >
                         {selectedType}
                       </AppText>
                     </View>
                     <View>
-                      <AppText className="text-white/80 text-xs">
+                      <AppText
+                        weight="medium"
+                        color="white"
+                        className="text-xs"
+                      >
                         Preview Saldo
                       </AppText>
-                      <AppText className="text-white text-2xl font-bold">
+                      <AppText weight="bold" color="white" className="text-2xl">
                         Rp{" "}
                         {balance
                           ? parseFloat(balance).toLocaleString("id-ID")

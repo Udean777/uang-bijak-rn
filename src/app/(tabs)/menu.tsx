@@ -77,44 +77,69 @@ export default function MenuScreen() {
           <SubscriptionList />
         </View>
 
-        <View className="mb-4">
-          <View className="flex-row justify-between items-center mb-4">
-            <AppText variant="h3" weight="bold">
-              Fitur Cerdas
-            </AppText>
-          </View>
-
-          <TouchableOpacity
-            onPress={() => router.push("/(sub)/wishlist")}
-            className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
-            style={{
-              backgroundColor: theme.card,
-              borderColor: theme.border,
-            }}
-          >
-            <View className="flex-row items-center gap-4">
-              <View
-                className="w-10 h-10 rounded-full items-center justify-center"
-                style={{
-                  backgroundColor: isDark
-                    ? "rgba(147, 51, 234, 0.15)"
-                    : "#F3E8FF",
-                }}
-              >
-                <Ionicons name="heart" size={20} color="#9333EA" />
-              </View>
-              <View>
-                <AppText weight="bold">Wishlist & Timer</AppText>
-                <AppText variant="caption">Cegah belanja impulsif</AppText>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.icon} />
-          </TouchableOpacity>
+        <View className="flex-row justify-between items-center mb-4">
+          <AppText variant="h3" weight="bold">
+            Fitur Cerdas
+          </AppText>
         </View>
 
         <TouchableOpacity
+          onPress={() => router.push("/(sub)/wishlist")}
+          className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+          }}
+        >
+          <View className="flex-row items-center gap-4">
+            <View
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(147, 51, 234, 0.15)"
+                  : "#F3E8FF",
+              }}
+            >
+              <Ionicons name="heart" size={20} color="#9333EA" />
+            </View>
+            <View>
+              <AppText weight="bold">Wishlist & Timer</AppText>
+              <AppText variant="caption">Cegah belanja impulsif</AppText>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push("/(sub)/debts")}
+          className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+          }}
+        >
+          <View className="flex-row items-center gap-4">
+            <View
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(13, 148, 136, 0.15)"
+                  : "#CCFBF1", // teal-100
+              }}
+            >
+              <Ionicons name="people" size={20} color="#0D9488" />
+            </View>
+            <View>
+              <AppText weight="bold">Hutang & Piutang</AppText>
+              <AppText variant="caption">Catat pinjaman teman</AppText>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
           onPress={() => router.push("/(sub)/manage-templates")}
-          className="flex-row items-center justify-between p-4 rounded-2xl border mb-4"
+          className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
           style={{
             backgroundColor: theme.card,
             borderColor: theme.border,
@@ -139,7 +164,7 @@ export default function MenuScreen() {
           <Ionicons name="chevron-forward" size={20} color={theme.icon} />
         </TouchableOpacity>
 
-        <View className="mb-6">
+        <View className="mb-8">
           <AppText variant="h3" weight="bold" className="mb-4">
             Akun
           </AppText>
