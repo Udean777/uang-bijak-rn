@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { cn } from "@/src/utils/cn";
 import React from "react";
 import { TextInput, TextInputProps, View } from "react-native";
@@ -14,25 +16,37 @@ export const AppInput: React.FC<AppInputProps> = ({
   error,
   containerClass,
   className,
+  style,
   ...props
 }) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+
   return (
     <View className={cn("w-full mb-4", containerClass)}>
       {label && (
-        <AppText variant="label" weight="medium" className="mb-2 text-gray-700">
+        <AppText variant="label" weight="medium" className="pb-2">
           {label}
         </AppText>
       )}
 
       <TextInput
         className={cn(
-          "w-full bg-gray-50 border rounded-xl p-4 text-gray-900 text-base",
+          "w-full border rounded-xl p-4 text-base",
           error
-            ? "border-red-500 bg-red-50"
-            : "border-gray-200 focus:border-blue-500",
+            ? "border-danger bg-red-50 dark:bg-red-900/10"
+            : "focus:border-primary",
           className
         )}
-        placeholderTextColor="#9CA3AF"
+        style={[
+          {
+            backgroundColor: error ? undefined : theme.surface,
+            borderColor: error ? undefined : theme.border,
+            color: theme.text,
+          },
+          style,
+        ]}
+        placeholderTextColor={theme.icon}
         {...props}
       />
 

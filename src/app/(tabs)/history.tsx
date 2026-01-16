@@ -1,22 +1,24 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { AppText } from "@/src/components/atoms/AppText";
+import { Skeleton } from "@/src/components/atoms/Skeleton";
+import { EmptyState } from "@/src/components/molecules/EmptyState";
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { FilterSheet } from "@/src/features/transactions/components/FilterSheet";
+import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
+import { TransactionService } from "@/src/services/transactionService";
+import { Transaction } from "@/src/types/transaction";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, TextInput, TouchableOpacity, View } from "react-native";
 
-// Components
-import { AppText } from "@/src/components/atoms/AppText";
-import { Skeleton } from "@/src/components/atoms/Skeleton";
-import { FilterSheet } from "@/src/features/transactions/components/FilterSheet"; // Import Sheet
-import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
-
-// Hooks & Services
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { TransactionService } from "@/src/services/transactionService";
-import { Transaction } from "@/src/types/transaction";
-
 export default function HistoryScreen() {
   const router = useRouter();
   const { user } = useAuth();
+
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,19 +64,29 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="px-5 pb-4 bg-white border-b border-gray-100 shadow-sm z-10">
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <View
+        className="px-5 pb-4 border-b z-10"
+        style={{
+          backgroundColor: theme.background,
+          borderBottomColor: theme.divider,
+        }}
+      >
         <AppText variant="h2" weight="bold" className="mb-4">
           Riwayat
         </AppText>
 
         <View className="flex-row gap-3">
-          <View className="flex-1 flex-row items-center bg-gray-100 rounded-xl px-3 h-12">
-            <Ionicons name="search" size={20} color="#9CA3AF" />
+          <View
+            className="flex-1 flex-row items-center rounded-xl px-3 h-12"
+            style={{ backgroundColor: theme.surface }}
+          >
+            <Ionicons name="search" size={20} color={theme.icon} />
             <TextInput
-              className="flex-1 ml-2 font-medium text-gray-800 h-full"
+              className="flex-1 ml-2 font-medium h-full"
+              style={{ color: theme.text }}
               placeholder="Cari transaksi..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.icon}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -87,12 +99,19 @@ export default function HistoryScreen() {
 
           <TouchableOpacity
             onPress={() => setShowFilter(true)}
-            className={`w-12 h-12 items-center justify-center rounded-xl border ${
-              filterType !== "all" ||
-              selectedMonth.getMonth() !== new Date().getMonth()
-                ? "bg-blue-600 border-blue-600"
-                : "bg-white border-gray-200"
-            }`}
+            className="w-12 h-12 items-center justify-center rounded-xl border"
+            style={{
+              backgroundColor:
+                filterType !== "all" ||
+                selectedMonth.getMonth() !== new Date().getMonth()
+                  ? "#2563EB"
+                  : theme.surface,
+              borderColor:
+                filterType !== "all" ||
+                selectedMonth.getMonth() !== new Date().getMonth()
+                  ? "#2563EB"
+                  : theme.border,
+            }}
           >
             <Ionicons
               name="options-outline"
@@ -101,7 +120,7 @@ export default function HistoryScreen() {
                 filterType !== "all" ||
                 selectedMonth.getMonth() !== new Date().getMonth()
                   ? "white"
-                  : "black"
+                  : theme.text
               }
             />
           </TouchableOpacity>
@@ -147,17 +166,23 @@ export default function HistoryScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
           renderItem={({ item }) => (
-            <View className="mb-3 rounded-xl border border-gray-100 overflow-hidden">
+            <View
+              className="mb-3 rounded-xl border overflow-hidden"
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.surface,
+              }}
+            >
               <TransactionItem transaction={item} onPress={handlePress} />
             </View>
           )}
           ListEmptyComponent={
-            <View className="items-center justify-center py-20 opacity-50">
-              <Ionicons name="search-outline" size={64} color="gray" />
-              <AppText className="mt-4 text-gray-500 text-center">
-                Tidak ada transaksi yang ditemukan{"\n"}untuk filter ini.
-              </AppText>
-            </View>
+            <EmptyState
+              icon="search-outline"
+              title="Tidak ditemukan"
+              message="Tidak ada transaksi yang cocok dengan filter pencarianmu."
+              className="py-20"
+            />
           }
         />
       )}

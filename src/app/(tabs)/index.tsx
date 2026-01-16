@@ -1,9 +1,11 @@
-import { AppCard } from "@/src/components/atoms/AppCard";
+import { Colors } from "@/constants/theme";
+import { useThemeControl } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { SafeToSpendCard } from "@/src/features/auth/components/SafeToSpendCard";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { TransactionHistorySheet } from "@/src/features/transactions/components/TransactionHistorySheet";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
 import { WalletCard } from "@/src/features/wallets/components/WalletCard";
 import { useWallets } from "@/src/features/wallets/hooks/useWallets";
@@ -25,16 +27,22 @@ export default function HomeScreen() {
   const { user, userProfile } = useAuth();
   const { wallets, isLoading: walletsLoading } = useWallets();
 
+  const { colorScheme, toggleColorScheme } = useThemeControl();
+  const isDark = colorScheme === "dark";
+  const theme = Colors[isDark ? "dark" : "light"];
+
   const [safeDaily, setSafeDaily] = useState(0);
   const [budgetStatus, setBudgetStatus] = useState<
     "safe" | "warning" | "danger"
   >("safe");
   const [remainingDays, setRemainingDays] = useState(0);
   const [budgetLoading, setBudgetLoading] = useState(true);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
     []
   );
   const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [showHistorySheet, setShowHistorySheet] = useState(false);
 
   const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
 
@@ -67,8 +75,9 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!user) return;
     const unsub = TransactionService.subscribeTransactions(user.uid, (data) => {
-      const sorted = data.sort((a, b) => b.date - a.date).slice(0, 5);
-      setRecentTransactions(sorted);
+      const sorted = data.sort((a, b) => b.date - a.date);
+      setAllTransactions(sorted);
+      setRecentTransactions(sorted.slice(0, 5));
       setLoadingTransactions(false);
     });
     return () => unsub();
@@ -83,7 +92,10 @@ export default function HomeScreen() {
 
   if (walletsLoading) {
     return (
-      <View className="flex-1 bg-white justify-center items-center p-5">
+      <View
+        style={{ flex: 1, backgroundColor: theme.background }}
+        className="justify-center items-center p-5"
+      >
         <Skeleton variant="circle" width={80} height={80} className="mb-4" />
         <Skeleton variant="box" width="60%" height={20} className="mb-2" />
         <Skeleton variant="box" width="40%" height={20} />
@@ -93,7 +105,10 @@ export default function HomeScreen() {
 
   if (wallets.length === 0) {
     return (
-      <View className="flex-1 bg-white px-5">
+      <View
+        style={{ flex: 1, backgroundColor: theme.background }}
+        className="px-5"
+      >
         <View className="flex-row items-center gap-3 mb-10">
           <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center">
             <AppText weight="bold" color="primary">
@@ -122,28 +137,53 @@ export default function HomeScreen() {
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
         className="flex-1 px-5"
         refreshControl={
-          <RefreshControl refreshing={walletsLoading} onRefresh={() => {}} />
+          <RefreshControl
+            refreshing={walletsLoading}
+            onRefresh={() => {}}
+            tintColor={theme.primary}
+          />
         }
       >
         <View className="flex-row justify-between items-center mb-6">
           <View>
-            <AppText color="secondary">Selamat Pagi,</AppText>
+            <AppText color="default">Selamat Pagi,</AppText>
             <AppText variant="h2" weight="bold">
               {userProfile?.displayName || "Pengguna"}
             </AppText>
           </View>
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/menu")}
-            className="w-10 h-10 bg-gray-200 rounded-full items-center justify-center border border-white shadow-sm"
-          >
-            <AppText weight="bold" color="primary">
-              {userProfile?.displayName?.charAt(0) || "U"}
-            </AppText>
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-3">
+            <TouchableOpacity
+              onPress={toggleColorScheme}
+              className="w-10 h-10 rounded-full items-center justify-center border"
+              style={{
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+              }}
+            >
+              <Ionicons
+                name={isDark ? "sunny" : "moon"}
+                size={20}
+                color={theme.icon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/menu")}
+              className="w-10 h-10 rounded-full items-center justify-center border shadow-sm"
+              style={{
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                shadowOpacity: isDark ? 0.3 : 0.1,
+              }}
+            >
+              <AppText weight="bold">
+                {userProfile?.displayName?.charAt(0) || "U"}
+              </AppText>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View className="mb-8">
@@ -164,9 +204,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               onPress={() => router.push("/(modals)/add-wallet")}
             >
-              <AppText variant="label" color="primary">
-                + Tambah
-              </AppText>
+              <AppText weight="bold">+ Tambah</AppText>
             </TouchableOpacity>
           </View>
           <ScrollView
@@ -194,11 +232,7 @@ export default function HomeScreen() {
             <AppText variant="h3" weight="bold">
               Transaksi Terakhir
             </AppText>
-            <AppText
-              variant="label"
-              color="primary"
-              onPress={() => router.push("/(tabs)/history")}
-            >
+            <AppText weight="bold" onPress={() => setShowHistorySheet(true)}>
               Lihat Semua
             </AppText>
           </View>
@@ -219,25 +253,30 @@ export default function HomeScreen() {
               />
             </View>
           ) : recentTransactions.length === 0 ? (
-            <AppCard
-              variant="flat"
-              className="p-6 items-center bg-white border border-gray-100 border-dashed"
+            <View
+              className="py-6 border border-dashed rounded-2xl"
+              style={{
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+              }}
             >
-              <Ionicons name="receipt-outline" size={32} color="#E5E7EB" />
-              <AppText
-                color="secondary"
-                variant="caption"
-                className="mt-2 text-center text-gray-400"
-              >
-                Belum ada transaksi.{"\n"}Tekan tombol (+) untuk mencatat.
-              </AppText>
-            </AppCard>
+              <EmptyState
+                icon="receipt-outline"
+                title="Belum ada transaksi"
+                message="Mulai catat pengeluaranmu sekarang."
+              />
+            </View>
           ) : (
             <View className="gap-y-3">
               {recentTransactions.map((t) => (
                 <View
                   key={t.id}
-                  className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm"
+                  className="rounded-xl overflow-hidden border shadow-sm"
+                  style={{
+                    backgroundColor: theme.surface,
+                    borderColor: theme.border,
+                    shadowOpacity: isDark ? 0.3 : 0.1,
+                  }}
                 >
                   <TransactionItem
                     transaction={t}
@@ -249,6 +288,14 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      <TransactionHistorySheet
+        visible={showHistorySheet}
+        onClose={() => setShowHistorySheet(false)}
+        transactions={allTransactions}
+        loading={loadingTransactions}
+        onTransactionPress={handleTransactionPress}
+      />
     </View>
   );
 }

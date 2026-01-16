@@ -1,3 +1,4 @@
+import { Colors } from "@/constants/theme";
 import "@/global.css";
 import {
   DarkTheme,
@@ -92,6 +93,7 @@ function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
   const [loaded] = useFonts({
     JakartaSans: require("../../assets/fonts/PlusJakartaSans-Regular.ttf"),
     JakartaSansBold: require("../../assets/fonts/PlusJakartaSans-Bold.ttf"),
@@ -105,7 +107,10 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView className="flex-1">
+      <SafeAreaView
+        className="flex-1"
+        style={{ backgroundColor: theme.background }}
+      >
         <AuthProvider>
           <ThemeProvider
             value={colorScheme === "dark" ? DarkTheme : DefaultTheme}

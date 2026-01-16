@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
@@ -12,6 +14,8 @@ import Toast from "react-native-toast-message";
 export default function AddSubscriptionScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
 
   const [name, setName] = useState("");
   const [cost, setCost] = useState("");
@@ -55,7 +59,7 @@ export default function AddSubscriptionScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <ScreenLoader visible={isLoading} />
       <ModalHeader
         title="Tambah Langganan"

@@ -1,3 +1,4 @@
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Wallet } from "@/src/types/wallet";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,6 +11,9 @@ interface WalletCardProps {
 }
 
 export const WalletCard = ({ wallet, onPress }: WalletCardProps) => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+
   const formatRupiah = (val: number) =>
     new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -34,26 +38,40 @@ export const WalletCard = ({ wallet, onPress }: WalletCardProps) => {
     <TouchableOpacity
       onPress={() => onPress && onPress(wallet)}
       className="mr-4 w-40 h-48 rounded-3xl p-5 justify-between shadow-sm"
-      style={{ backgroundColor: wallet.color }}
+      style={{
+        backgroundColor: wallet.color,
+        shadowOpacity: isDark ? 0.3 : 0.1,
+      }}
+      activeOpacity={0.8}
     >
       <View className="flex-row justify-between items-start">
         <View className="bg-white/20 p-2 rounded-full">
           <Ionicons name={getIcon()} size={20} color="white" />
         </View>
-        <AppText className="text-white/80 font-bold uppercase text-[10px] tracking-wider">
+        <AppText
+          color="white"
+          weight="bold"
+          variant="caption"
+          className="uppercase tracking-wider"
+        >
           {wallet.type}
         </AppText>
       </View>
 
       <View>
         <AppText
-          className="text-white/90 text-sm font-medium mb-1"
+          color="white"
+          weight="medium"
+          variant="h3"
+          className="mb-1"
           numberOfLines={1}
         >
           {wallet.name}
         </AppText>
         <AppText
-          className="text-white text-xl font-bold"
+          color="white"
+          weight="bold"
+          variant="h3"
           numberOfLines={1}
           adjustsFontSizeToFit
         >

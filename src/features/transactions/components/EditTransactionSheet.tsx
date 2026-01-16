@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
@@ -34,6 +36,9 @@ export const EditTransactionSheet = ({
 }: EditTransactionSheetProps) => {
   const { user } = useAuth();
   const { wallets } = useWallets();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
 
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -100,20 +105,30 @@ export const EditTransactionSheet = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View className="flex-1 bg-black/50 justify-end">
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-white rounded-t-3xl h-[85%] w-full">
+            <View
+              className="rounded-t-3xl h-[85%] w-full"
+              style={{ backgroundColor: theme.background }}
+            >
               <View className="items-center pt-4 pb-2">
-                <View className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                <View
+                  className="w-12 h-1.5 rounded-full"
+                  style={{ backgroundColor: theme.border }}
+                />
               </View>
 
-              <View className="px-5 pb-4 flex-row justify-between items-center border-b border-gray-100">
+              <View
+                className="px-5 pb-4 flex-row justify-between items-center border-b"
+                style={{ borderBottomColor: theme.divider }}
+              >
                 <AppText variant="h3" weight="bold">
                   Edit Transaksi
                 </AppText>
                 <TouchableOpacity
                   onPress={onClose}
-                  className="bg-gray-100 p-2 rounded-full"
+                  className="p-2 rounded-full"
+                  style={{ backgroundColor: theme.surface }}
                 >
-                  <Ionicons name="close" size={20} color="gray" />
+                  <Ionicons name="close" size={20} color={theme.icon} />
                 </TouchableOpacity>
               </View>
 
@@ -126,12 +141,16 @@ export const EditTransactionSheet = ({
                     <AppText
                       variant="caption"
                       weight="bold"
-                      className="text-gray-500 uppercase mb-2"
+                      className="uppercase mb-2"
                     >
                       Nominal (Rp)
                     </AppText>
                     <TextInput
-                      className="text-4xl font-bold text-gray-900 border-b border-gray-200 pb-2"
+                      className="text-4xl font-bold pb-2 border-b"
+                      style={{
+                        color: theme.text,
+                        borderBottomColor: theme.divider,
+                      }}
                       keyboardType="numeric"
                       value={amount}
                       onChangeText={setAmount}
@@ -142,7 +161,7 @@ export const EditTransactionSheet = ({
                     <AppText
                       variant="caption"
                       weight="bold"
-                      className="text-gray-500 uppercase mb-2"
+                      className="uppercase mb-2"
                     >
                       Kategori
                     </AppText>
@@ -154,18 +173,20 @@ export const EditTransactionSheet = ({
                         <TouchableOpacity
                           key={cat.id}
                           onPress={() => setCategory(cat.name)}
-                          className={`mr-3 px-4 py-2 rounded-full border ${
-                            category === cat.name
-                              ? "bg-blue-600 border-blue-600"
-                              : "bg-white border-gray-300"
-                          }`}
+                          className="mr-3 px-4 py-2 rounded-full border"
+                          style={{
+                            backgroundColor:
+                              category === cat.name
+                                ? theme.primary
+                                : theme.surface,
+                            borderColor:
+                              category === cat.name
+                                ? theme.primary
+                                : theme.border,
+                          }}
                         >
                           <AppText
-                            className={
-                              category === cat.name
-                                ? "text-white"
-                                : "text-gray-700"
-                            }
+                            color={category === cat.name ? "white" : "default"}
                           >
                             {cat.name}
                           </AppText>
@@ -178,7 +199,7 @@ export const EditTransactionSheet = ({
                     <AppText
                       variant="caption"
                       weight="bold"
-                      className="text-gray-500 uppercase mb-2"
+                      className="uppercase mb-2"
                     >
                       Sumber Dana
                     </AppText>
@@ -190,15 +211,34 @@ export const EditTransactionSheet = ({
                         <TouchableOpacity
                           key={w.id}
                           onPress={() => setSelectedWalletId(w.id)}
-                          className={`mr-3 px-4 py-2 rounded-full border ${
-                            selectedWalletId === w.id
-                              ? "bg-gray-900 border-gray-900"
-                              : "bg-white border-gray-300"
-                          }`}
+                          className="mr-3 px-4 py-2 rounded-full border"
+                          style={{
+                            backgroundColor:
+                              selectedWalletId === w.id
+                                ? isDark
+                                  ? theme.text
+                                  : "#111827" // gray-900
+                                : theme.surface,
+                            borderColor:
+                              selectedWalletId === w.id
+                                ? isDark
+                                  ? theme.text
+                                  : "#111827"
+                                : theme.border,
+                          }}
                         >
                           <AppText
                             color={
-                              selectedWalletId === w.id ? "white" : "default"
+                              selectedWalletId === w.id
+                                ? isDark
+                                  ? "default"
+                                  : "white"
+                                : "default"
+                            }
+                            style={
+                              selectedWalletId === w.id && isDark
+                                ? { color: theme.background }
+                                : undefined
                             }
                           >
                             {w.name}
@@ -220,7 +260,10 @@ export const EditTransactionSheet = ({
                   </View>
                 </ScrollView>
 
-                <View className="p-5 border-t border-gray-100 pb-10">
+                <View
+                  className="p-5 border-t pb-10"
+                  style={{ borderTopColor: theme.divider }}
+                >
                   <AppButton
                     title="Simpan Perubahan"
                     onPress={handleUpdate}

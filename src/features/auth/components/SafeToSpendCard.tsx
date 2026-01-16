@@ -1,5 +1,8 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
+import { formatRupiah } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -25,20 +28,14 @@ export const SafeToSpendCard = ({
   remainingDays,
 }: SafeToSpendProps) => {
   const [showInfo, setShowInfo] = useState(false);
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
 
   const statusColors = {
     safe: "bg-green-600",
     warning: "bg-yellow-500",
     danger: "bg-red-600",
-  };
-
-  const formatRupiah = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(Math.floor(value));
   };
 
   if (isLoading) {
@@ -55,7 +52,8 @@ export const SafeToSpendCard = ({
   return (
     <>
       <View
-        className={`${statusColors[status]} p-5 rounded-3xl shadow-lg shadow-gray-300`}
+        className={`${statusColors[status]} p-5 rounded-3xl shadow-lg`}
+        style={{ shadowOpacity: isDark ? 0.3 : 0.1, shadowColor: "#000" }}
       >
         <View className="flex-row justify-between items-start mb-2">
           <View>
@@ -63,7 +61,7 @@ export const SafeToSpendCard = ({
               onPress={() => setShowInfo(true)}
               className="flex-row items-center gap-1 mb-1"
             >
-              <AppText variant="label" className="text-white/80">
+              <AppText variant="label" color="white" style={{ opacity: 0.8 }}>
                 Safe-to-Spend (Harian)
               </AppText>
               <Ionicons
@@ -95,7 +93,7 @@ export const SafeToSpendCard = ({
 
         <View className="flex-row justify-between items-center">
           <View>
-            <AppText variant="caption" className="text-white/70">
+            <AppText variant="caption" color="white" style={{ opacity: 0.7 }}>
               Total Saldo Aktif
             </AppText>
             <AppText variant="body" weight="bold" color="white">
@@ -126,24 +124,35 @@ export const SafeToSpendCard = ({
         <TouchableWithoutFeedback onPress={() => setShowInfo(false)}>
           <View className="flex-1 bg-black/60 justify-center items-center p-6">
             <TouchableWithoutFeedback>
-              <View className="bg-white p-6 rounded-3xl w-full max-w-sm">
+              <View
+                className="p-6 rounded-3xl w-full max-w-sm"
+                style={{ backgroundColor: theme.background }}
+              >
                 <View className="flex-row items-center gap-2 mb-3">
-                  <Ionicons name="sparkles" size={24} color="#F59E0B" />
+                  <Ionicons
+                    name="sparkles"
+                    size={24}
+                    color={isDark ? theme.warning : "#F59E0B"}
+                  />
                   <AppText variant="h3" weight="bold">
                     Apa itu Safe-to-Spend?
                   </AppText>
                 </View>
 
-                <AppText className="text-gray-600 leading-6 mb-4">
+                <AppText color="secondary" className="leading-6 mb-4">
                   Ini adalah <AppText weight="bold">batas maksimal</AppText>{" "}
                   uang yang boleh kamu habiskan hari ini agar uangmu cukup
                   sampai akhir bulan.
                 </AppText>
 
-                <View className="bg-gray-100 p-3 rounded-xl mb-4">
+                <View
+                  className="p-3 rounded-xl mb-4"
+                  style={{ backgroundColor: theme.surface }}
+                >
                   <AppText
                     variant="caption"
-                    className="text-gray-800 font-mono text-center"
+                    className="font-mono text-center"
+                    color="secondary"
                   >
                     (Total Saldo - Tagihan) ÷ Sisa Hari
                   </AppText>
@@ -151,7 +160,8 @@ export const SafeToSpendCard = ({
 
                 <TouchableOpacity
                   onPress={() => setShowInfo(false)}
-                  className="bg-gray-900 py-3 rounded-xl items-center"
+                  className="py-3 rounded-xl items-center"
+                  style={{ backgroundColor: theme.primary }}
                 >
                   <AppText color="white" weight="bold">
                     Saya Mengerti

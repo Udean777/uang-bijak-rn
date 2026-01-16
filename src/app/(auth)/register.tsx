@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
@@ -14,6 +16,8 @@ import {
 import Toast from "react-native-toast-message";
 
 export default function RegisterScreen() {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,7 +69,8 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-white"
+      className="flex-1"
+      style={{ backgroundColor: theme.background }}
     >
       <ScrollView
         contentContainerStyle={{
@@ -109,7 +114,7 @@ export default function RegisterScreen() {
               onChangeText={setPassword}
               containerClass="mb-1"
             />
-            <AppText variant="caption" className="text-gray-400 ml-1">
+            <AppText variant="caption" color="secondary" className="ml-1">
               Minimal 6 karakter
             </AppText>
           </View>

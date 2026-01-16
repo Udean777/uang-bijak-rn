@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
@@ -38,6 +40,9 @@ const SLIDES = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const { setHasSeenOnboarding } = useAuth();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -63,17 +68,17 @@ export default function OnboardingScreen() {
     return (
       <View style={{ width }} className="items-center justify-center px-8">
         <View
-          className="w-64 h-64 rounded-full items-center justify-center mb-10 shadow-lg shadow-blue-200"
-          style={{ backgroundColor: `${item.color}20` }}
+          className="w-64 h-64 rounded-full items-center justify-center mb-10 shadow-lg"
+          style={{
+            backgroundColor: isDark ? `${item.color}30` : `${item.color}20`,
+            shadowColor: item.color,
+            shadowOpacity: 0.3,
+          }}
         >
           <Ionicons name={item.icon as any} size={120} color={item.color} />
         </View>
 
-        <AppText
-          variant="h1"
-          weight="bold"
-          className="text-center mb-4 text-gray-800"
-        >
+        <AppText variant="h1" weight="bold" className="text-center mb-4">
           {item.title}
         </AppText>
 
@@ -88,7 +93,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <View className="mt-12 px-6 items-end">
         <TouchableOpacity onPress={handleFinish}>
           <AppText weight="bold" color="primary">
@@ -118,8 +123,12 @@ export default function OnboardingScreen() {
             <View
               key={index}
               className={`h-2 rounded-full transition-all duration-300 ${
-                currentIndex === index ? "w-8 bg-blue-600" : "w-2 bg-gray-300"
+                currentIndex === index ? "w-8" : "w-2"
               }`}
+              style={{
+                backgroundColor:
+                  currentIndex === index ? "#3B82F6" : theme.border,
+              }}
             />
           ))}
         </View>

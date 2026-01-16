@@ -9,6 +9,8 @@ import { SubscriptionService } from "@/src/services/subscriptionService";
 import { TransactionService } from "@/src/services/transactionService";
 import { Subscription } from "@/src/types/subscription";
 
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppCard } from "@/src/components/atoms/AppCard";
 import { AppText } from "@/src/components/atoms/AppText";
@@ -47,6 +49,10 @@ export const SubscriptionList = () => {
   const { wallets } = useWallets();
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
 
   const [payModalVisible, setPayModalVisible] = useState(false);
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null);
@@ -116,9 +122,18 @@ export const SubscriptionList = () => {
 
   return (
     <View>
-      <View className="bg-indigo-600 p-5 rounded-2xl mb-4 flex-row justify-between items-center shadow-lg shadow-indigo-200">
+      <View
+        className="p-5 rounded-2xl mb-4 flex-row justify-between items-center shadow-lg"
+        style={{
+          backgroundColor: theme.primary,
+          shadowColor: theme.primary,
+          shadowOpacity: isDark ? 0.4 : 0.2,
+          shadowOffset: { width: 0, height: 4 },
+          shadowRadius: 8,
+        }}
+      >
         <View>
-          <AppText variant="caption" color="white" className="opacity-80">
+          <AppText variant="caption" color="white" className="mb-1">
             Estimasi Tagihan Bulanan
           </AppText>
           <AppText variant="h2" weight="bold" color="white">
@@ -131,7 +146,7 @@ export const SubscriptionList = () => {
       </View>
 
       {subs.length === 0 ? (
-        <AppText color="secondary" className="text-center py-4">
+        <AppText className="text-center py-4">
           Belum ada langganan aktif.
         </AppText>
       ) : (
@@ -141,24 +156,29 @@ export const SubscriptionList = () => {
             : Date.now();
           const daysLeft = getDaysLeft(nextDate);
 
-          let statusColor = "text-gray-500";
+          let statusColor = "";
           let statusText = `${daysLeft} Hari lagi`;
-          let bgBadge = "bg-gray-100";
+          let bgBadge = "";
+          let badgeTextColor = "";
 
           if (daysLeft < 0) {
             statusColor = "text-red-600";
             statusText = `Telat ${Math.abs(daysLeft)} Hari`;
-            bgBadge = "bg-red-50";
+            bgBadge = isDark ? "rgba(220, 38, 38, 0.2)" : "#FEF2F2";
+            badgeTextColor = theme.danger;
           } else if (daysLeft === 0) {
             statusColor = "text-orange-600";
             statusText = "Hari Ini!";
-            bgBadge = "bg-orange-50";
+            bgBadge = isDark ? "rgba(245, 158, 11, 0.2)" : "#FFFBEB";
+            badgeTextColor = theme.warning;
           } else if (daysLeft <= 3) {
             statusColor = "text-orange-500";
-            bgBadge = "bg-orange-50";
+            bgBadge = isDark ? "rgba(245, 158, 11, 0.1)" : "#FFFBEB";
+            badgeTextColor = theme.warning;
           } else {
             statusColor = "text-green-600";
-            bgBadge = "bg-green-50";
+            bgBadge = isDark ? "rgba(22, 163, 74, 0.1)" : "#F0FDF4";
+            badgeTextColor = theme.success; // Green
           }
 
           return (
@@ -167,8 +187,14 @@ export const SubscriptionList = () => {
               className="mb-3 flex-row justify-between items-center"
             >
               <View className="flex-row items-center gap-3 flex-1">
-                <View className="w-12 h-12 bg-gray-50 rounded-full items-center justify-center border border-gray-100">
-                  <AppText weight="bold" className="text-gray-500 text-lg">
+                <View
+                  className="w-12 h-12 rounded-full items-center justify-center border"
+                  style={{
+                    backgroundColor: theme.surface,
+                    borderColor: theme.border,
+                  }}
+                >
+                  <AppText weight="bold" className="text-lg">
                     {item.name.charAt(0)}
                   </AppText>
                 </View>
@@ -178,8 +204,12 @@ export const SubscriptionList = () => {
                   </AppText>
 
                   <View className="flex-row items-center gap-1 mt-1">
-                    <Ionicons name="calendar-outline" size={12} color="gray" />
-                    <AppText variant="caption" color="secondary">
+                    <Ionicons
+                      name="calendar-outline"
+                      size={12}
+                      color={theme.icon}
+                    />
+                    <AppText variant="caption">
                       {item.nextPaymentDate
                         ? formatDateFull(item.nextPaymentDate)
                         : `Tgl ${item.dueDate} (Set Awal)`}
@@ -189,23 +219,25 @@ export const SubscriptionList = () => {
               </View>
 
               <View className="items-end gap-2">
-                <View className={`px-2 py-1 rounded-md ${bgBadge}`}>
+                <View
+                  className="px-2 py-1 rounded-md"
+                  style={{ backgroundColor: bgBadge }}
+                >
                   <AppText
                     variant="caption"
                     weight="bold"
-                    className={statusColor}
+                    style={{ color: badgeTextColor }}
                   >
                     {statusText}
                   </AppText>
                 </View>
 
-                <AppText weight="bold" className="text-gray-900">
-                  {formatRupiah(item.cost)}
-                </AppText>
+                <AppText weight="bold">{formatRupiah(item.cost)}</AppText>
 
                 <TouchableOpacity
                   onPress={() => onPayPress(item)}
-                  className="bg-indigo-600 px-4 py-1.5 rounded-full"
+                  className="px-4 py-1.5 rounded-full"
+                  style={{ backgroundColor: theme.primary }}
                 >
                   <AppText variant="caption" weight="bold" color="white">
                     Bayar
@@ -223,35 +255,41 @@ export const SubscriptionList = () => {
         animationType="slide"
         onRequestClose={() => setPayModalVisible(false)}
       >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-white rounded-t-3xl p-6">
+        <View
+          className="flex-1 justify-end"
+          style={{ backgroundColor: theme.modalOverlay }}
+        >
+          <View
+            className="rounded-t-3xl p-6"
+            style={{ backgroundColor: theme.card }}
+          >
             <View className="flex-row justify-between items-center mb-4">
               <AppText variant="h3" weight="bold">
                 Bayar & Perpanjang
               </AppText>
               <TouchableOpacity onPress={() => setPayModalVisible(false)}>
-                <Ionicons name="close" size={24} color="gray" />
+                <Ionicons name="close" size={24} color={theme.icon} />
               </TouchableOpacity>
             </View>
 
-            <View className="bg-blue-50 p-4 rounded-xl mb-6 border border-blue-100">
-              <AppText color="secondary">Tagihan Bulan Ini:</AppText>
-              <AppText
-                variant="h2"
-                weight="bold"
-                className="text-blue-700 my-1"
-              >
+            <View
+              className="p-4 rounded-xl mb-6 border"
+              style={{
+                backgroundColor: isDark ? "rgba(37, 99, 235, 0.1)" : "#EFF6FF",
+                borderColor: isDark ? "rgba(37, 99, 235, 0.3)" : "#DBEAFE",
+              }}
+            >
+              <AppText>Tagihan Bulan Ini:</AppText>
+              <AppText variant="h2" weight="bold" className="my-1">
                 {selectedSub?.name}
               </AppText>
               <View className="flex-row items-center gap-1">
                 <Ionicons
                   name="arrow-forward-circle"
                   size={16}
-                  color="#1D4ED8"
+                  color={theme.info}
                 />
-                <AppText className="text-blue-700">
-                  Akan diperbarui ke bulan depan.
-                </AppText>
+                <AppText>Akan diperbarui ke bulan depan.</AppText>
               </View>
             </View>
 
@@ -263,30 +301,35 @@ export const SubscriptionList = () => {
               showsHorizontalScrollIndicator={false}
               className="mb-6"
             >
-              {wallets.map((w) => (
-                <TouchableOpacity
-                  key={w.id}
-                  onPress={() => setSelectedWalletId(w.id)}
-                  className={`mr-3 p-4 rounded-xl border w-36 ${
-                    selectedWalletId === w.id
-                      ? "bg-gray-900 border-gray-900"
-                      : "bg-white border-gray-300"
-                  }`}
-                >
-                  <AppText
-                    color={selectedWalletId === w.id ? "white" : "default"}
-                    weight="bold"
+              {wallets.map((w) => {
+                const isSelected = selectedWalletId === w.id;
+                return (
+                  <TouchableOpacity
+                    key={w.id}
+                    onPress={() => setSelectedWalletId(w.id)}
+                    className="mr-3 p-4 rounded-xl border w-36"
+                    style={{
+                      backgroundColor: isSelected
+                        ? theme.primary
+                        : theme.surface,
+                      borderColor: isSelected ? theme.primary : theme.border,
+                    }}
                   >
-                    {w.name}
-                  </AppText>
-                  <AppText
-                    color={selectedWalletId === w.id ? "white" : "secondary"}
-                    variant="caption"
-                  >
-                    {formatRupiah(w.balance)}
-                  </AppText>
-                </TouchableOpacity>
-              ))}
+                    <AppText
+                      color={isSelected ? "white" : "default"}
+                      weight="bold"
+                    >
+                      {w.name}
+                    </AppText>
+                    <AppText
+                      color={isSelected ? "white" : "default"}
+                      variant="caption"
+                    >
+                      {formatRupiah(w.balance)}
+                    </AppText>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             <AppButton

@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Transaction } from "@/src/types/transaction";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,6 +15,10 @@ export const TransactionItem = ({
   transaction,
   onPress,
 }: TransactionItemProps) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
+
   const isExpense = transaction.type === "expense";
 
   const formatRupiah = (val: number) =>
@@ -40,35 +46,41 @@ export const TransactionItem = ({
   return (
     <TouchableOpacity
       onPress={() => onPress && onPress(transaction)}
-      className="flex-row items-center justify-between p-4 bg-white active:bg-gray-50"
+      className="flex-row items-center justify-between p-4"
+      style={{
+        backgroundColor: theme.background,
+      }}
+      activeOpacity={0.7}
     >
       <View className="flex-row items-center gap-4 flex-1">
         <View
-          className={`w-12 h-12 rounded-full items-center justify-center ${isExpense ? "bg-red-50" : "bg-green-50"}`}
+          className="w-12 h-12 rounded-full items-center justify-center"
+          style={{
+            backgroundColor: isExpense
+              ? isDark
+                ? "rgba(239, 68, 68, 0.1)"
+                : "#FEF2F2"
+              : isDark
+                ? "rgba(34, 197, 94, 0.1)"
+                : "#F0FDF4",
+          }}
         >
           <Ionicons
             name={getIconName(transaction.category)}
             size={20}
-            color={isExpense ? "#DC2626" : "#16A34A"}
+            color={isExpense ? theme.danger : theme.success}
           />
         </View>
 
         <View className="flex-1">
-          <AppText
-            weight="bold"
-            className="text-gray-900 mb-0.5"
-            numberOfLines={1}
-          >
+          <AppText weight="bold" numberOfLines={1}>
             {transaction.category}
           </AppText>
           <View className="flex-row items-center gap-2">
-            <AppText variant="caption" color="secondary">
-              {formatDate(transaction.date)}
-            </AppText>
+            <AppText variant="caption">{formatDate(transaction.date)}</AppText>
             {transaction.note && (
               <AppText
                 variant="caption"
-                color="secondary"
                 numberOfLines={1}
                 className="flex-1 italic"
               >
@@ -82,7 +94,7 @@ export const TransactionItem = ({
       <View className="items-end">
         <AppText
           weight="bold"
-          className={isExpense ? "text-red-600" : "text-green-600"}
+          style={{ color: isExpense ? theme.danger : theme.success }}
         >
           {isExpense ? "-" : "+"}
           {formatRupiah(transaction.amount)}
@@ -90,7 +102,8 @@ export const TransactionItem = ({
         {transaction.classification && (
           <AppText
             variant="caption"
-            className="text-xs text-gray-400 mt-1 uppercase"
+            className="text-xs mt-1 uppercase"
+            color="secondary"
           >
             {transaction.classification}
           </AppText>

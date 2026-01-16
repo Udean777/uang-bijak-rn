@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
@@ -38,6 +40,10 @@ export const EditWalletSheet = ({
   onClose,
   wallet,
 }: EditWalletSheetProps) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
+
   const [name, setName] = useState("");
   const [balance, setBalance] = useState("");
   const [selectedType, setSelectedType] = useState<WalletType>("bank");
@@ -89,16 +95,17 @@ export const EditWalletSheet = ({
   }) => (
     <TouchableOpacity
       onPress={() => setSelectedType(type)}
-      className={`flex-1 items-center p-3 rounded-xl border ${
-        selectedType === type
-          ? "bg-blue-50 border-blue-600"
-          : "bg-white border-gray-200"
-      }`}
+      className="flex-1 items-center p-3 rounded-xl border"
+      style={{
+        backgroundColor:
+          selectedType === type ? "rgba(37, 99, 235, 0.1)" : theme.background,
+        borderColor: selectedType === type ? theme.primary : theme.border,
+      }}
     >
       <Ionicons
         name={icon}
         size={24}
-        color={selectedType === type ? "#2563EB" : "#9CA3AF"}
+        color={selectedType === type ? theme.primary : theme.icon}
       />
       <AppText
         variant="caption"
@@ -120,20 +127,30 @@ export const EditWalletSheet = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View className="flex-1 bg-black/50 justify-end">
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-white rounded-t-3xl h-[85%] w-full">
+            <View
+              className="rounded-t-3xl h-[85%] w-full"
+              style={{ backgroundColor: theme.background }}
+            >
               <View className="items-center pt-4 pb-2">
-                <View className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                <View
+                  className="w-12 h-1.5 rounded-full"
+                  style={{ backgroundColor: theme.border }}
+                />
               </View>
 
-              <View className="px-5 pb-4 flex-row justify-between items-center border-b border-gray-100">
+              <View
+                className="px-5 pb-4 flex-row justify-between items-center border-b"
+                style={{ borderBottomColor: theme.divider }}
+              >
                 <AppText variant="h3" weight="bold">
                   Edit Dompet
                 </AppText>
                 <TouchableOpacity
                   onPress={onClose}
-                  className="bg-gray-100 p-2 rounded-full"
+                  className="p-2 rounded-full"
+                  style={{ backgroundColor: theme.surface }}
                 >
-                  <Ionicons name="close" size={20} color="gray" />
+                  <Ionicons name="close" size={20} color={theme.icon} />
                 </TouchableOpacity>
               </View>
 
@@ -144,7 +161,10 @@ export const EditWalletSheet = ({
                 <ScrollView className="flex-1 p-5">
                   <View
                     className="w-full h-32 rounded-2xl p-5 justify-between mb-6 shadow-sm"
-                    style={{ backgroundColor: selectedColor }}
+                    style={{
+                      backgroundColor: selectedColor,
+                      shadowOpacity: isDark ? 0.3 : 0.1,
+                    }}
                   >
                     <View className="flex-row justify-between">
                       <Ionicons name="wallet" size={24} color="white" />
@@ -159,7 +179,7 @@ export const EditWalletSheet = ({
                       <AppText className="text-white text-2xl font-bold">
                         Rp{" "}
                         {balance
-                          ? parseInt(balance).toLocaleString("id-ID")
+                          ? parseFloat(balance).toLocaleString("id-ID")
                           : "0"}
                       </AppText>
                     </View>
@@ -182,7 +202,7 @@ export const EditWalletSheet = ({
                     />
 
                     <View>
-                      <AppText variant="label" className="mb-2 text-gray-700">
+                      <AppText variant="label" className="mb-2">
                         Tipe Akun
                       </AppText>
                       <View className="flex-row gap-3">
@@ -197,7 +217,7 @@ export const EditWalletSheet = ({
                     </View>
 
                     <View>
-                      <AppText variant="label" className="mb-2 text-gray-700">
+                      <AppText variant="label" className="mb-2">
                         Warna
                       </AppText>
                       <ScrollView
@@ -208,8 +228,14 @@ export const EditWalletSheet = ({
                           <TouchableOpacity
                             key={color}
                             onPress={() => setSelectedColor(color)}
-                            className={`w-10 h-10 rounded-full mr-3 border-2 ${selectedColor === color ? "border-gray-800" : "border-transparent"}`}
-                            style={{ backgroundColor: color }}
+                            className="w-10 h-10 rounded-full mr-3 border-2"
+                            style={{
+                              backgroundColor: color,
+                              borderColor:
+                                selectedColor === color
+                                  ? theme.text
+                                  : "transparent",
+                            }}
                           />
                         ))}
                       </ScrollView>
@@ -217,7 +243,10 @@ export const EditWalletSheet = ({
                   </View>
                 </ScrollView>
 
-                <View className="p-5 border-t border-gray-100 pb-10">
+                <View
+                  className="p-5 border-t pb-10"
+                  style={{ borderTopColor: theme.divider }}
+                >
                   <AppButton
                     title="Simpan Perubahan"
                     onPress={handleUpdate}

@@ -1,17 +1,17 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
-import { AppText } from "@/src/components/atoms/AppText";
+import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { SubscriptionService } from "@/src/services/subscriptionService";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
@@ -27,13 +27,15 @@ export const AddSubscriptionSheet = ({
   onClose,
 }: AddSubscriptionSheetProps) => {
   const { user } = useAuth();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
 
   const [name, setName] = useState("");
   const [cost, setCost] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
       setName("");
       setCost("");
@@ -83,29 +85,24 @@ export const AddSubscriptionSheet = ({
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={onClose}>
-        <View className="flex-1 bg-black/50 justify-end">
+        <View
+          className="flex-1 justify-end"
+          style={{ backgroundColor: theme.modalOverlay }}
+        >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-white rounded-t-3xl h-[70%] w-full">
+            <View
+              className="rounded-t-3xl h-[70%] w-full"
+              style={{ backgroundColor: theme.background }}
+            >
               <View className="items-center pt-4 pb-2">
                 <View className="w-12 h-1.5 bg-gray-300 rounded-full" />
               </View>
 
-              <View className="px-5 pb-4 flex-row justify-between items-center border-b border-gray-100">
-                <View>
-                  <AppText variant="h3" weight="bold">
-                    Tambah Langganan
-                  </AppText>
-                  <AppText variant="caption" color="secondary">
-                    Catat tagihan rutin bulanan
-                  </AppText>
-                </View>
-                <TouchableOpacity
-                  onPress={onClose}
-                  className="bg-gray-100 p-2 rounded-full"
-                >
-                  <Ionicons name="close" size={20} color="gray" />
-                </TouchableOpacity>
-              </View>
+              <ModalHeader
+                title="Tambah Langganan"
+                subtitle="Catat tagihan rutin bulanan"
+                onClose={onClose}
+              />
 
               <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -139,7 +136,10 @@ export const AddSubscriptionSheet = ({
                   </View>
                 </ScrollView>
 
-                <View className="p-5 border-t border-gray-100 pb-10">
+                <View
+                  className="p-5 border-t pb-10"
+                  style={{ borderTopColor: theme.border }}
+                >
                   <AppButton
                     title="Simpan Langganan"
                     onPress={handleSave}

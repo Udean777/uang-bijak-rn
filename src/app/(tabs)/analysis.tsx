@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
@@ -29,6 +31,9 @@ const CHART_COLORS = [
 
 export default function AnalysisScreen() {
   const { user } = useAuth();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -95,7 +100,9 @@ export default function AnalysisScreen() {
                   backgroundColor: item.color,
                 }}
               />
-              <AppText className="text-gray-700">{item.label}</AppText>
+              <AppText className="text-gray-700" style={{ color: theme.text }}>
+                {item.label}
+              </AppText>
             </View>
             <View className="items-end">
               <AppText weight="bold">{formatRupiah(item.value)}</AppText>
@@ -118,14 +125,23 @@ export default function AnalysisScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="px-5 pb-4 flex-row justify-between items-center border-b border-gray-100">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <View
+        className="px-5 pb-4 flex-row justify-between items-center border-b"
+        style={{ borderBottomColor: theme.border }}
+      >
         <AppText variant="h2" weight="bold">
           Analisis
         </AppText>
-        <View className="flex-row items-center gap-3 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
+        <View
+          className="flex-row items-center gap-3 px-3 py-1 rounded-full border"
+          style={{
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+          }}
+        >
           <TouchableOpacity onPress={() => changeMonth(-1)}>
-            <Ionicons name="chevron-back" size={20} color="black" />
+            <Ionicons name="chevron-back" size={20} color={theme.text} />
           </TouchableOpacity>
           <AppText weight="bold">
             {currentMonth.toLocaleDateString("id-ID", {
@@ -134,14 +150,20 @@ export default function AnalysisScreen() {
             })}
           </AppText>
           <TouchableOpacity onPress={() => changeMonth(1)}>
-            <Ionicons name="chevron-forward" size={20} color="black" />
+            <Ionicons name="chevron-forward" size={20} color={theme.text} />
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView className="flex-1 px-5 pt-6">
         <View className="flex-row gap-4 mb-8">
-          <View className="flex-1 bg-green-50 p-4 rounded-2xl border border-green-100">
+          <View
+            className="flex-1 p-4 rounded-2xl border"
+            style={{
+              backgroundColor: isDark ? "rgba(22, 163, 74, 0.1)" : "#F0FDF4",
+              borderColor: isDark ? "rgba(22, 163, 74, 0.3)" : "#DCFCE7",
+            }}
+          >
             <View className="flex-row items-center gap-2 mb-2">
               <Ionicons name="arrow-down-circle" size={18} color="#16A34A" />
               <AppText className="text-green-700 text-xs font-bold uppercase">
@@ -152,7 +174,13 @@ export default function AnalysisScreen() {
               {formatRupiah(totalIncome)}
             </AppText>
           </View>
-          <View className="flex-1 bg-red-50 p-4 rounded-2xl border border-red-100">
+          <View
+            className="flex-1 p-4 rounded-2xl border"
+            style={{
+              backgroundColor: isDark ? "rgba(220, 38, 38, 0.1)" : "#FEF2F2",
+              borderColor: isDark ? "rgba(220, 38, 38, 0.3)" : "#FEE2E2",
+            }}
+          >
             <View className="flex-row items-center gap-2 mb-2">
               <Ionicons name="arrow-up-circle" size={18} color="#DC2626" />
               <AppText className="text-red-700 text-xs font-bold uppercase">
@@ -183,7 +211,7 @@ export default function AnalysisScreen() {
                 donut
                 radius={120}
                 innerRadius={85}
-                innerCircleColor={"white"}
+                innerCircleColor={theme.background}
                 centerLabelComponent={() => <View />}
               />
             </View>

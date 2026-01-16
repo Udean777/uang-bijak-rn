@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,6 +28,9 @@ export const FilterSheet = ({
   selectedDate,
   onDateChange,
 }: FilterSheetProps) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+
   const changeMonth = (increment: number) => {
     const newDate = new Date(selectedDate);
     newDate.setMonth(newDate.getMonth() + increment);
@@ -44,12 +49,19 @@ export const FilterSheet = ({
     <TouchableOpacity
       onPress={() => onTypeChange(value)}
       className={`flex-1 py-3 px-2 rounded-xl border items-center ${
-        active ? "bg-blue-50 border-blue-600" : "bg-white border-gray-200"
+        active
+          ? "bg-blue-50 dark:bg-blue-900/30 border-blue-600"
+          : "bg-white border-gray-200"
       }`}
+      style={
+        !active
+          ? { backgroundColor: theme.background, borderColor: theme.border }
+          : {}
+      }
     >
       <AppText
         weight={active ? "bold" : "regular"}
-        className={active ? "text-blue-600" : "text-gray-600"}
+        color={active ? "primary" : "secondary"}
       >
         {label}
       </AppText>
@@ -66,26 +78,40 @@ export const FilterSheet = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View className="flex-1 bg-black/50 justify-end">
           <TouchableWithoutFeedback>
-            <View className="bg-white rounded-t-3xl p-6 w-full">
+            <View
+              className="rounded-t-3xl p-6 w-full"
+              style={{ backgroundColor: theme.background }}
+            >
               <View className="flex-row justify-between items-center mb-6">
                 <AppText variant="h3" weight="bold">
                   Filter Transaksi
                 </AppText>
                 <TouchableOpacity onPress={onClose}>
-                  <Ionicons name="close" size={24} color="gray" />
+                  <Ionicons name="close" size={24} color={theme.icon} />
                 </TouchableOpacity>
               </View>
 
               <View className="mb-6">
-                <AppText variant="label" className="mb-3 text-gray-500">
+                <AppText variant="label" className="mb-3">
                   Periode
                 </AppText>
-                <View className="flex-row items-center justify-between bg-gray-50 p-2 rounded-xl border border-gray-200">
+                <View
+                  className="flex-row items-center justify-between p-2 rounded-xl border"
+                  style={{
+                    backgroundColor: theme.surface,
+                    borderColor: theme.border,
+                  }}
+                >
                   <TouchableOpacity
                     onPress={() => changeMonth(-1)}
-                    className="p-2 bg-white rounded-lg shadow-sm"
+                    className="p-2 rounded-lg"
+                    style={{ backgroundColor: theme.background }}
                   >
-                    <Ionicons name="chevron-back" size={20} color="black" />
+                    <Ionicons
+                      name="chevron-back"
+                      size={20}
+                      color={theme.text}
+                    />
                   </TouchableOpacity>
 
                   <View className="items-center">
@@ -99,15 +125,20 @@ export const FilterSheet = ({
 
                   <TouchableOpacity
                     onPress={() => changeMonth(1)}
-                    className="p-2 bg-white rounded-lg shadow-sm"
+                    className="p-2 rounded-lg"
+                    style={{ backgroundColor: theme.background }}
                   >
-                    <Ionicons name="chevron-forward" size={20} color="black" />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color={theme.text}
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
 
               <View className="mb-8">
-                <AppText variant="label" className="mb-3 text-gray-500">
+                <AppText variant="label" className="mb-3">
                   Tipe Transaksi
                 </AppText>
                 <View className="flex-row gap-3">

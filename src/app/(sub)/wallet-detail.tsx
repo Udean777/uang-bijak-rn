@@ -1,6 +1,9 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
+import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
 import { db } from "@/src/config/firebase";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
@@ -29,6 +32,9 @@ export default function WalletDetailScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const params = useLocalSearchParams();
+
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditSheet, setShowEditSheet] = useState(false);
@@ -125,15 +131,19 @@ export default function WalletDetailScreen() {
     }
   }, [wallet]);
 
-  if (!wallet) return <View className="flex-1 bg-white" />;
+  if (!wallet)
+    return <View style={{ flex: 1, backgroundColor: theme.background }} />;
 
   return (
-    <View className="flex-1 bg-white">
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScreenLoader visible={isLoading} text="Menghapus..." />
 
-      <View className="px-5 pb-4 border-b border-gray-100 flex-row items-center justify-between">
+      <View
+        className="px-5 pb-4 border-b flex-row items-center justify-between"
+        style={{ borderBottomColor: theme.divider }}
+      >
         <TouchableOpacity onPress={handleBackNavigation}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
         <AppText weight="bold" variant="h3">
           Detail Dompet
@@ -177,12 +187,13 @@ export default function WalletDetailScreen() {
           <AppButton
             title="Hapus"
             variant="danger"
-            className="flex-1 bg-red-50 border-red-50"
-            style={{ backgroundColor: "#DC2626", borderColor: "#DC2626" }}
+            className="flex-1"
+            style={{
+              backgroundColor: Colors.light.danger,
+              borderColor: Colors.light.danger,
+            }}
             onPress={onDeletePress}
-            leftIcon={
-              <Ionicons name="trash-outline" size={18} color="#ffffff" />
-            }
+            leftIcon={<Ionicons name="trash-outline" size={18} color="white" />}
           />
         </View>
 
@@ -191,16 +202,29 @@ export default function WalletDetailScreen() {
             Riwayat Transaksi
           </AppText>
           {transactions.length === 0 ? (
-            <View className="items-center py-10 bg-gray-50 rounded-xl">
-              <AppText color="secondary">
-                Belum ada transaksi di dompet ini.
-              </AppText>
+            <View
+              className="py-10 rounded-2xl border border-dashed"
+              style={{
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+              }}
+            >
+              <EmptyState
+                icon="receipt-outline"
+                title="Belum ada transaksi"
+                message="Dompet ini belum memiliki riwayat transaksi."
+                className=""
+              />
             </View>
           ) : (
             transactions.map((t) => (
               <View
                 key={t.id}
-                className="mb-3 rounded-xl overflow-hidden border border-gray-100"
+                className="mb-3 rounded-xl overflow-hidden border"
+                style={{
+                  borderColor: theme.border,
+                  backgroundColor: theme.surface,
+                }}
               >
                 <TransactionItem
                   transaction={t}

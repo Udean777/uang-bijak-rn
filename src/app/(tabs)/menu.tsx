@@ -1,5 +1,6 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 
@@ -12,11 +13,14 @@ import { SubscriptionList } from "@/src/features/subscriptions/components/Subscr
 import { AuthService } from "@/src/services/authService";
 
 export default function MenuScreen() {
-  const router = useRouter();
   const { userProfile } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
+
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
 
   const onLogoutPress = () => {
     setShowLogoutDialog(true);
@@ -34,14 +38,20 @@ export default function MenuScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50 ">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         className="px-5"
       >
-        <View className="flex-row items-center mb-8">
-          <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mr-4">
-            <AppText variant="h2" weight="bold" className="text-blue-600">
+        <View className="flex-row items-center mb-8 pt-4">
+          <View
+            className="w-16 h-16 rounded-full items-center justify-center mr-4 border"
+            style={{
+              backgroundColor: isDark ? "rgba(37, 99, 235, 0.2)" : "#DBEAFE",
+              borderColor: isDark ? "rgba(37, 99, 235, 0.5)" : "#BFDBFE",
+            }}
+          >
+            <AppText variant="h2" weight="bold">
               {userProfile?.displayName?.charAt(0) || "U"}
             </AppText>
           </View>
@@ -49,7 +59,7 @@ export default function MenuScreen() {
             <AppText variant="h2" weight="bold">
               {userProfile?.displayName || "User"}
             </AppText>
-            <AppText color="secondary">{userProfile?.email}</AppText>
+            <AppText>{userProfile?.email}</AppText>
           </View>
         </View>
 
@@ -59,9 +69,7 @@ export default function MenuScreen() {
               Langganan & Tagihan
             </AppText>
             <TouchableOpacity onPress={() => setShowAddSheet(true)}>
-              <AppText color="primary" weight="bold">
-                + Tambah
-              </AppText>
+              <AppText weight="bold">+ Tambah</AppText>
             </TouchableOpacity>
           </View>
 
@@ -76,17 +84,12 @@ export default function MenuScreen() {
           <AppButton
             title="Keluar Aplikasi"
             variant="danger"
-            className="border-red-200"
             onPress={onLogoutPress}
             leftIcon={
-              <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+              <Ionicons name="log-out-outline" size={20} color="white" />
             }
           />
-          <AppText
-            variant="caption"
-            color="secondary"
-            className="text-center mt-4"
-          >
+          <AppText variant="caption" className="text-center mt-4">
             Versi Aplikasi 1.0.0 (MVP)
           </AppText>
         </View>
