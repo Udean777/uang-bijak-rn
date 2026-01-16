@@ -78,11 +78,9 @@ function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
         (!user && !hasSeenOnboarding && inOnboarding);
 
       if (isCorrectRoute) {
-        try {
-          SplashScreen.hideAsync();
-        } catch (e) {
+        SplashScreen.hideAsync().catch(() => {
           // Ignore error if splash screen is already hidden
-        }
+        });
       }
     }
   }, [isLoading, hasSeenOnboarding, fontsLoaded, user, segments, isMounted]);

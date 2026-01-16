@@ -30,6 +30,7 @@ export const FilterSheet = ({
 }: FilterSheetProps) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
+  const isDark = colorScheme === "dark";
 
   const changeMonth = (increment: number) => {
     const newDate = new Date(selectedDate);
@@ -61,7 +62,15 @@ export const FilterSheet = ({
     >
       <AppText
         weight={active ? "bold" : "regular"}
-        color={active ? "primary" : "secondary"}
+        color={
+          active
+            ? isDark
+              ? "white"
+              : "primary"
+            : isDark
+              ? "white"
+              : "secondary"
+        }
       >
         {label}
       </AppText>

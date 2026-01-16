@@ -187,7 +187,7 @@ export default function WalletDetailScreen() {
             className="flex-1"
             onPress={() => setShowEditSheet(true)}
             leftIcon={
-              <Ionicons name="create-outline" size={18} color="black" />
+              <Ionicons name="create-outline" size={18} color={theme.text} />
             }
           />
           <AppButton

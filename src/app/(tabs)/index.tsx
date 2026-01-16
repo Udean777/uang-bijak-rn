@@ -263,7 +263,8 @@ export default function HomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="-mx-5 px-5"
+            className="-mx-5"
+            contentContainerStyle={{ paddingHorizontal: 20 }}
           >
             {wallets.map((wallet) => (
               <WalletCard
@@ -301,7 +302,8 @@ export default function HomeScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              className="-mx-5 px-5"
+              className="-mx-5"
+              contentContainerStyle={{ paddingHorizontal: 20 }}
             >
               {templates.map((tpl) => (
                 <TouchableOpacity

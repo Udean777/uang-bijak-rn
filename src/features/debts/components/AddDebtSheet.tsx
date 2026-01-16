@@ -79,15 +79,15 @@ export const AddDebtSheet = ({ visible, onClose }: AddDebtSheetProps) => {
 
     let bgColor = theme.surface;
     let borderColor = theme.border;
-    let textColor: any = "default"; // or specific color enum
+    let textColor: any = "default";
 
     if (isSelected) {
       if (isReceivable) {
-        bgColor = isDark ? "rgba(22, 163, 74, 0.2)" : "#F0FDF4"; // green-50
+        bgColor = isDark ? "rgba(22, 163, 74, 0.2)" : "#F0FDF4";
         borderColor = "#16A34A";
         textColor = "#16A34A";
       } else {
-        bgColor = isDark ? "rgba(220, 38, 38, 0.2)" : "#FEF2F2"; // red-50
+        bgColor = isDark ? "rgba(220, 38, 38, 0.2)" : "#FEF2F2";
         borderColor = "#DC2626";
         textColor = "#DC2626";
       }
@@ -105,7 +105,7 @@ export const AddDebtSheet = ({ visible, onClose }: AddDebtSheetProps) => {
         <AppText
           weight="bold"
           style={isSelected ? { color: textColor } : {}}
-          color={isSelected ? undefined : "secondary"}
+          color={isSelected ? undefined : isDark ? "white" : "default"}
         >
           {label}
         </AppText>

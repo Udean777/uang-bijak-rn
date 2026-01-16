@@ -82,10 +82,7 @@ export default function OnboardingScreen() {
           {item.title}
         </AppText>
 
-        <AppText
-          color="secondary"
-          className="text-center text-lg leading-7 px-4"
-        >
+        <AppText className="text-center text-lg leading-7 px-4">
           {item.description}
         </AppText>
       </View>
@@ -96,9 +93,7 @@ export default function OnboardingScreen() {
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <View className="px-6 items-end">
         <TouchableOpacity onPress={handleFinish}>
-          <AppText weight="bold" color="primary">
-            Lewati
-          </AppText>
+          <AppText weight="bold">Lewati</AppText>
         </TouchableOpacity>
       </View>
 

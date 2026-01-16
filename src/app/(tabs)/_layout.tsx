@@ -15,7 +15,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#3B82F6", // Primary blue (kept for brand)
+        tabBarActiveTintColor: "#3B82F6",
         tabBarInactiveTintColor: theme.tabIconDefault,
         headerShown: false,
         tabBarShowLabel: true,
@@ -144,7 +144,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   addButtonWrapper: {
-    top: -24,
+    top: -10,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "transparent",

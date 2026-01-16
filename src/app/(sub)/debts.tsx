@@ -1,6 +1,7 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { AddDebtSheet } from "@/src/features/debts/components/AddDebtSheet";
@@ -9,7 +10,7 @@ import { Debt, DebtType } from "@/src/types/debt";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Share, TouchableOpacity, View } from "react-native";
+import { FlatList, Share, TouchableOpacity, View } from "react-native";
 
 export default function DebtScreen() {
   const router = useRouter();
@@ -22,6 +23,15 @@ export default function DebtScreen() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [filter, setFilter] = useState<DebtType>("receivable");
   const [showAdd, setShowAdd] = useState(false);
+
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "primary" as "primary" | "danger",
+    confirmText: "Ya, Lanjutkan",
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -57,28 +67,31 @@ export default function DebtScreen() {
   };
 
   const handleMarkPaid = (item: Debt) => {
-    Alert.alert(
-      "Konfirmasi Lunas",
-      `Apakah ${item.personName} sudah melunasi?`,
-      [
-        { text: "Batal", style: "cancel" },
-        {
-          text: "Ya, Lunas",
-          onPress: () => DebtService.updateStatus(item.id, "paid"),
-        },
-      ]
-    );
+    setConfirmConfig({
+      title: "Konfirmasi Lunas",
+      message: `Apakah ${item.personName} sudah melunasi?`,
+      confirmText: "Ya, Lunas",
+      variant: "primary",
+      onConfirm: async () => {
+        await DebtService.updateStatus(item.id, "paid");
+        setConfirmVisible(false);
+      },
+    });
+    setConfirmVisible(true);
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("Hapus Data", "Yakin hapus data ini?", [
-      { text: "Batal" },
-      {
-        text: "Hapus",
-        style: "destructive",
-        onPress: () => DebtService.deleteDebt(id),
+    setConfirmConfig({
+      title: "Hapus Data",
+      message: "Yakin hapus data ini?",
+      confirmText: "Hapus",
+      variant: "danger",
+      onConfirm: async () => {
+        await DebtService.deleteDebt(id);
+        setConfirmVisible(false);
       },
-    ]);
+    });
+    setConfirmVisible(true);
   };
 
   const renderItem = ({ item }: { item: Debt }) => {
@@ -101,14 +114,24 @@ export default function DebtScreen() {
                 {item.personName}
               </AppText>
               {isPaid && (
-                <View className="bg-green-100 px-2 py-0.5 rounded text-xs">
-                  <AppText className="text-green-700 text-xs font-bold">
+                <View
+                  className="px-2 py-0.5 rounded"
+                  style={{
+                    backgroundColor: isDark
+                      ? "rgba(22, 163, 74, 0.2)"
+                      : "#DCFCE7",
+                  }}
+                >
+                  <AppText
+                    className="text-xs font-bold"
+                    style={{ color: isDark ? "#4ADE80" : "#15803D" }}
+                  >
                     LUNAS
                   </AppText>
                 </View>
               )}
             </View>
-            <AppText variant="caption" color="secondary">
+            <AppText variant="caption">
               Jatuh Tempo:{" "}
               {new Date(item.dueDate).toLocaleDateString("id-ID", {
                 dateStyle: "medium",
@@ -117,7 +140,8 @@ export default function DebtScreen() {
             {isOverdue && (
               <AppText
                 variant="caption"
-                className="text-red-500 font-bold mt-1"
+                className="font-bold mt-1"
+                style={{ color: theme.danger }}
               >
                 ⚠️ Terlewat Jatuh Tempo
               </AppText>
@@ -140,14 +164,18 @@ export default function DebtScreen() {
                 style={{
                   backgroundColor: isDark
                     ? "rgba(37, 99, 235, 0.2)"
-                    : "#EFF6FF",
+                    : "#EFF6FF", // blue-50
                 }}
               >
-                <Ionicons name="logo-whatsapp" size={16} color="#2563EB" />
+                <Ionicons
+                  name="logo-whatsapp"
+                  size={16}
+                  color={isDark ? "#60A5FA" : "#2563EB"}
+                />
                 <AppText
                   variant="caption"
                   weight="bold"
-                  className="text-blue-700"
+                  style={{ color: isDark ? "#60A5FA" : "#2563EB" }}
                 >
                   Ingatkan
                 </AppText>
@@ -156,17 +184,20 @@ export default function DebtScreen() {
 
             <TouchableOpacity
               onPress={() => handleMarkPaid(item)}
-              className="flex-1 flex-row items-center justify-center gap-2 bg-green-50 py-2 rounded-lg"
+              className="flex-1 flex-row items-center justify-center gap-2 py-2 rounded-lg"
+              style={{
+                backgroundColor: isDark ? "rgba(22, 163, 74, 0.2)" : "#F0FDF4", // green-50
+              }}
             >
               <Ionicons
                 name="checkmark-circle-outline"
                 size={18}
-                color="#16A34A"
+                color={isDark ? "#4ADE80" : "#16A34A"}
               />
               <AppText
                 variant="caption"
                 weight="bold"
-                style={{ color: "#16A34A" }}
+                style={{ color: isDark ? "#4ADE80" : "#16A34A" }}
               >
                 Tandai Lunas
               </AppText>
@@ -212,9 +243,7 @@ export default function DebtScreen() {
           </AppText>
         </View>
         <TouchableOpacity onPress={() => setShowAdd(true)}>
-          <AppText weight="bold" color="primary">
-            + Catat
-          </AppText>
+          <AppText weight="bold">+ Catat</AppText>
         </TouchableOpacity>
       </View>
 
@@ -322,6 +351,16 @@ export default function DebtScreen() {
       />
 
       <AddDebtSheet visible={showAdd} onClose={() => setShowAdd(false)} />
+
+      <ConfirmDialog
+        visible={confirmVisible}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmVisible(false)}
+        variant={confirmConfig.variant}
+        confirmText={confirmConfig.confirmText}
+      />
     </View>
   );
 }

@@ -225,7 +225,7 @@ export default function AddTransactionScreen() {
             Nominal (Rp)
           </AppText>
           <TextInput
-            className="text-4xl font-bold pb-2 border-b"
+            className={`text-4xl font-bold pb-2 border-b ${isDark ? "text-white" : "text-[#333333]"}`}
             style={{
               borderBottomColor: theme.divider,
             }}

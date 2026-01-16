@@ -2,6 +2,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { AddWishlistSheet } from "@/src/features/wishlist/components/AddWishlistSheet";
@@ -10,13 +11,22 @@ import { Wishlist } from "@/src/types/wishlist";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, TouchableOpacity, View } from "react-native";
+import { FlatList, TouchableOpacity, View } from "react-native";
 
 export default function WishlistScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "primary" as "primary" | "danger",
+    confirmText: "Ya, Lanjutkan",
+  });
 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
@@ -50,44 +60,46 @@ export default function WishlistScreen() {
   };
 
   const handlePurchase = (item: Wishlist) => {
-    Alert.alert(
-      "Konfirmasi Pembelian",
-      "Hebat! Kamu sudah menunggu dengan sabar. Apakah kamu yakin ingin membeli ini sekarang?",
-      [
-        { text: "Batal", style: "cancel" },
-        {
-          text: "Ya, Beli & Catat",
-          onPress: () => {
-            WishlistService.updateStatus(item.id, "purchased");
-            router.push({
-              pathname: "/(modals)/add-transaction",
-              params: {
-                editData: JSON.stringify({
-                  amount: item.price,
-                  category: "Belanja",
-                  note: `Pembelian Wishlist: ${item.name}`,
-                  type: "expense",
-                  classification: "want",
-                  date: new Date(),
-                  walletId: "",
-                }),
-              },
-            });
+    setConfirmConfig({
+      title: "Konfirmasi Pembelian",
+      message:
+        "Hebat! Kamu sudah menunggu dengan sabar. Apakah kamu yakin ingin membeli ini sekarang?",
+      confirmText: "Ya, Beli & Catat",
+      variant: "primary",
+      onConfirm: () => {
+        WishlistService.updateStatus(item.id, "purchased");
+        setConfirmVisible(false);
+        router.push({
+          pathname: "/(modals)/add-transaction",
+          params: {
+            editData: JSON.stringify({
+              amount: item.price,
+              category: "Belanja",
+              note: `Pembelian Wishlist: ${item.name}`,
+              type: "expense",
+              classification: "want",
+              date: new Date(),
+              walletId: "",
+            }),
           },
-        },
-      ]
-    );
+        });
+      },
+    });
+    setConfirmVisible(true);
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("Hapus", "Batal menginginkan barang ini?", [
-      { text: "Tidak" },
-      {
-        text: "Ya, Hapus",
-        style: "destructive",
-        onPress: () => WishlistService.deleteWishlist(id),
+    setConfirmConfig({
+      title: "Hapus",
+      message: "Batal menginginkan barang ini?",
+      confirmText: "Ya, Hapus",
+      variant: "danger",
+      onConfirm: async () => {
+        await WishlistService.deleteWishlist(id);
+        setConfirmVisible(false);
       },
-    ]);
+    });
+    setConfirmVisible(true);
   };
 
   const renderItem = ({ item }: { item: Wishlist }) => {
@@ -227,6 +239,16 @@ export default function WishlistScreen() {
       />
 
       <AddWishlistSheet visible={showAdd} onClose={() => setShowAdd(false)} />
+
+      <ConfirmDialog
+        visible={confirmVisible}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmVisible(false)}
+        variant={confirmConfig.variant}
+        confirmText={confirmConfig.confirmText}
+      />
     </View>
   );
 }

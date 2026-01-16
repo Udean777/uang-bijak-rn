@@ -87,7 +87,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
           <AppText
             weight="bold"
             color={textColors[variant]}
-            variant="label"
+            variant="body"
             className="text-center py-2"
           >
             {title}

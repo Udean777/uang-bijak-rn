@@ -3,6 +3,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
@@ -13,7 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
   FlatList,
   Modal,
   ScrollView,
@@ -39,6 +39,14 @@ export default function ManageTemplatesScreen() {
   const [category, setCategory] = useState("Makan");
   const [selectedWalletId, setSelectedWalletId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({
+    title: "",
+    message: "",
+    confirmText: "",
+    variant: "primary",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -79,14 +87,17 @@ export default function ManageTemplatesScreen() {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("Hapus Shortcut", "Yakin?", [
-      { text: "Batal" },
-      {
-        text: "Hapus",
-        style: "destructive",
-        onPress: () => TemplateService.deleteTemplate(id),
+    setConfirmConfig({
+      title: "Hapus Shortcut",
+      message: "Yakin ingin menghapus shortcut ini?",
+      confirmText: "Hapus",
+      variant: "danger",
+      onConfirm: async () => {
+        await TemplateService.deleteTemplate(id);
+        setConfirmVisible(false);
       },
-    ]);
+    });
+    setConfirmVisible(true);
   };
 
   return (
@@ -239,6 +250,15 @@ export default function ManageTemplatesScreen() {
           </View>
         </View>
       </Modal>
+
+      <ConfirmDialog
+        visible={confirmVisible}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmVisible(false)}
+        confirmText={confirmConfig.confirmText}
+      />
     </View>
   );
 }

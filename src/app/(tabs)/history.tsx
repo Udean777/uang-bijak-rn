@@ -127,15 +127,13 @@ export default function HistoryScreen() {
         </View>
 
         <View className="mt-3 flex-row items-center justify-between">
-          <AppText variant="caption" color="secondary">
+          <AppText variant="caption">
             {selectedMonth.toLocaleDateString("id-ID", {
               month: "long",
               year: "numeric",
             })}
           </AppText>
-          <AppText variant="caption" color="secondary">
-            Total: {filteredData.length} Data
-          </AppText>
+          <AppText variant="caption">Total: {filteredData.length} Data</AppText>
         </View>
       </View>
 

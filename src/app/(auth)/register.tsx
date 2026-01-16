@@ -83,9 +83,7 @@ export default function RegisterScreen() {
           <AppText variant="h1" weight="bold" className="mb-2">
             Buat Akun Baru 🚀
           </AppText>
-          <AppText color="secondary">
-            Mulai perjalanan finansial sehat Anda hari ini.
-          </AppText>
+          <AppText>Mulai perjalanan finansial sehat Anda hari ini.</AppText>
         </View>
 
         <View className="gap-y-4">
@@ -114,7 +112,7 @@ export default function RegisterScreen() {
               onChangeText={setPassword}
               containerClass="mb-1"
             />
-            <AppText variant="caption" color="secondary" className="ml-1">
+            <AppText variant="caption" className="ml-1">
               Minimal 6 karakter
             </AppText>
           </View>
@@ -128,12 +126,10 @@ export default function RegisterScreen() {
         </View>
 
         <View className="flex-row justify-center mt-8 items-center">
-          <AppText color="secondary">Sudah punya akun? </AppText>
+          <AppText>Sudah punya akun? </AppText>
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
-              <AppText color="primary" weight="bold">
-                Masuk
-              </AppText>
+              <AppText weight="bold">Masuk</AppText>
             </TouchableOpacity>
           </Link>
         </View>

@@ -100,9 +100,7 @@ export default function LoginScreen() {
           <AppText variant="h1" weight="bold" className="mb-2">
             Selamat Datang 👋
           </AppText>
-          <AppText variant="body" color="secondary">
-            Masuk untuk mengelola keuangan Anda.
-          </AppText>
+          <AppText variant="body">Masuk untuk mengelola keuangan Anda.</AppText>
         </View>
 
         <View className="gap-y-2">
@@ -135,7 +133,7 @@ export default function LoginScreen() {
             className="flex-1 h-[1px]"
             style={{ backgroundColor: theme.border }}
           />
-          <AppText variant="caption" color="secondary" className="mx-4">
+          <AppText variant="caption" className="mx-4">
             atau
           </AppText>
           <View
@@ -155,12 +153,10 @@ export default function LoginScreen() {
         />
 
         <View className="flex-row justify-center mt-8">
-          <AppText color="secondary">Belum punya akun? </AppText>
+          <AppText>Belum punya akun? </AppText>
           <Link href="/(auth)/register" asChild>
             <TouchableOpacity>
-              <AppText color="primary" weight="bold">
-                Daftar Sekarang
-              </AppText>
+              <AppText weight="bold">Daftar Sekarang</AppText>
             </TouchableOpacity>
           </Link>
         </View>

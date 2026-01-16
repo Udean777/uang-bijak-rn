@@ -13,6 +13,8 @@ export const formatTime = (ts: number) =>
   });
 
 export const formatRupiah = (val: number) =>
-  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(
-    val
-  );
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(val);
