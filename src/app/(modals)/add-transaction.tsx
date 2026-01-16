@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { ModalHeader } from "@/src/components/molecules/ModalHeader"; // Import ModalHeader
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { useWallets } from "@/src/features/wallets/hooks/useWallets";
@@ -98,10 +99,7 @@ export default function AddTransactionScreen() {
     if (user) {
       try {
         await CategoryService.addCategory(user.uid, newCategoryName, type);
-
-        // Pilih otomatis kategori yang baru dibuat
         setCategory(newCategoryName);
-
         setCategoryModalVisible(false);
         Toast.show({ type: "success", text1: "Kategori ditambahkan" });
       } catch (error) {
@@ -152,11 +150,24 @@ export default function AddTransactionScreen() {
     }
   };
 
+  // Fungsi Close Navigasi
+  const handleClose = () => {
+    router.back();
+  };
+
   return (
     <View className="flex-1 bg-white">
       <ScreenLoader
         visible={isLoading}
         text={isEditMode ? "Updating..." : "Menyimpan..."}
+      />
+
+      <ModalHeader
+        title={isEditMode ? "Edit Transaksi" : "Tambah Transaksi"}
+        subtitle={
+          isEditMode ? "Perbarui data transaksi" : "Catat aliran dana baru"
+        }
+        onClose={handleClose}
       />
 
       <ScrollView className="flex-1 p-5">

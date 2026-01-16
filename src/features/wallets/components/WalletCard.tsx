@@ -4,50 +4,62 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
-const formatRupiah = (val: number) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(val);
-
-interface Props {
+interface WalletCardProps {
   wallet: Wallet;
-  onPress?: (wallet: Wallet) => void;
+  onPress: (wallet: Wallet) => void;
 }
 
-export const WalletCard: React.FC<Props> = ({ wallet, onPress }) => {
+export const WalletCard = ({ wallet, onPress }: WalletCardProps) => {
+  const formatRupiah = (val: number) =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(val);
+
+  const getIcon = () => {
+    switch (wallet.type) {
+      case "bank":
+        return "card-outline";
+      case "e-wallet":
+        return "phone-portrait-outline";
+      case "cash":
+        return "cash-outline";
+      default:
+        return "wallet-outline";
+    }
+  };
+
   return (
     <TouchableOpacity
       onPress={() => onPress && onPress(wallet)}
-      activeOpacity={0.7}
-      className="mb-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm flex-row justify-between items-center"
+      className="mr-4 w-40 h-48 rounded-3xl p-5 justify-between shadow-sm"
+      style={{ backgroundColor: wallet.color }}
     >
-      <View className="flex-row items-center gap-4">
-        <View
-          className="w-12 h-12 rounded-xl items-center justify-center opacity-90"
-          style={{ backgroundColor: wallet.color }}
-        >
-          <Ionicons name="wallet" size={24} color="white" />
+      <View className="flex-row justify-between items-start">
+        <View className="bg-white/20 p-2 rounded-full">
+          <Ionicons name={getIcon()} size={20} color="white" />
         </View>
-
-        <View>
-          <AppText
-            variant="caption"
-            color="secondary"
-            className="uppercase tracking-wider"
-          >
-            {wallet.type}
-          </AppText>
-          <AppText variant="body" weight="bold" className="text-gray-900">
-            {wallet.name}
-          </AppText>
-        </View>
+        <AppText className="text-white/80 font-bold uppercase text-[10px] tracking-wider">
+          {wallet.type}
+        </AppText>
       </View>
 
-      <AppText variant="h3" weight="bold" color="primary">
-        {formatRupiah(wallet.balance)}
-      </AppText>
+      <View>
+        <AppText
+          className="text-white/90 text-sm font-medium mb-1"
+          numberOfLines={1}
+        >
+          {wallet.name}
+        </AppText>
+        <AppText
+          className="text-white text-xl font-bold"
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {formatRupiah(wallet.balance)}
+        </AppText>
+      </View>
     </TouchableOpacity>
   );
 };

@@ -1,10 +1,12 @@
-import { AppCard } from "@/src/components/atoms/AppCard";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
-import { useFinancialHealth } from "@/src/features/budgeting/hooks/useFinancialHealth";
-import React from "react";
-import { ScrollView, View } from "react-native";
-import { BarChart, PieChart } from "react-native-gifted-charts";
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { TransactionService } from "@/src/services/transactionService";
+import { Transaction } from "@/src/types/transaction";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useMemo, useState } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { PieChart } from "react-native-gifted-charts";
 
 const formatRupiah = (val: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -13,152 +15,192 @@ const formatRupiah = (val: number) =>
     minimumFractionDigits: 0,
   }).format(val);
 
+const CHART_COLORS = [
+  "#3B82F6",
+  "#EF4444",
+  "#10B981",
+  "#F59E0B",
+  "#8B5CF6",
+  "#EC4899",
+  "#6366F1",
+  "#14B8A6",
+];
+
 export default function AnalysisScreen() {
-  const { chartData, barData, summary, isLoading } = useFinancialHealth();
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const LegendItem = ({ color, label, value, subLabel }: any) => (
-    <View className="flex-row items-center justify-between mb-4">
-      <View className="flex-row items-center gap-3">
-        <View
-          className="w-4 h-4 rounded-full"
-          style={{ backgroundColor: color }}
-        />
-        <View>
-          <AppText variant="body" weight="medium">
-            {label}
-          </AppText>
-          <AppText variant="caption" color="secondary">
-            {subLabel}
-          </AppText>
-        </View>
-      </View>
-      <AppText variant="body" weight="bold">
-        {formatRupiah(value)}
-      </AppText>
-    </View>
-  );
+  useEffect(() => {
+    if (!user) return;
+    const unsub = TransactionService.subscribeTransactions(user.uid, (data) => {
+      setTransactions(data);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [user]);
 
-  return (
-    <View className="flex-1 bg-gray-50 ">
-      <ScreenLoader visible={isLoading} text="Menganalisa..." />
+  const monthlyData = useMemo(() => {
+    return transactions.filter((t) => {
+      const tDate = new Date(t.date);
+      return (
+        tDate.getMonth() === currentMonth.getMonth() &&
+        tDate.getFullYear() === currentMonth.getFullYear()
+      );
+    });
+  }, [transactions, currentMonth]);
 
-      <View className="px-5 mb-6">
-        <AppText variant="h2" weight="bold">
-          Kesehatan Finansial
-        </AppText>
-        <AppText variant="body" color="secondary">
-          Laporan arus kas & analisa bulan ini
-        </AppText>
-      </View>
+  const { totalIncome, totalExpense } = useMemo(() => {
+    let inc = 0;
+    let exp = 0;
+    monthlyData.forEach((t) => {
+      if (t.type === "income") inc += t.amount;
+      else exp += t.amount;
+    });
+    return { totalIncome: inc, totalExpense: exp };
+  }, [monthlyData]);
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <View className="px-5 mb-8">
-          <AppText variant="h3" weight="bold" className="mb-4">
-            Arus Kas Bulan Ini
-          </AppText>
-          <View className="bg-white p-5 rounded-3xl shadow-sm items-center justify-center min-h-[220px]">
-            {barData && barData.length > 0 ? (
-              <BarChart
-                data={barData}
-                barWidth={60}
-                noOfSections={4}
-                barBorderRadius={8}
-                yAxisThickness={0}
-                xAxisThickness={0}
-                hideRules
-                width={250}
-                height={150}
-                isAnimated
-                xAxisLabelTextStyle={{
-                  color: "gray",
-                  fontSize: 12,
-                  fontWeight: "bold",
+  const pieData = useMemo(() => {
+    const expenses = monthlyData.filter((t) => t.type === "expense");
+    const grouped: Record<string, number> = {};
+
+    expenses.forEach((t) => {
+      if (!grouped[t.category]) grouped[t.category] = 0;
+      grouped[t.category] += t.amount;
+    });
+
+    const result = Object.keys(grouped).map((cat, index) => ({
+      value: grouped[cat],
+      color: CHART_COLORS[index % CHART_COLORS.length],
+      text: cat,
+      label: cat,
+    }));
+
+    return result.sort((a, b) => b.value - a.value);
+  }, [monthlyData]);
+
+  const renderLegendComponent = () => {
+    return (
+      <View className="mt-8 gap-y-4">
+        {pieData.map((item, index) => (
+          <View key={index} className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-3">
+              <View
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: item.color,
                 }}
               />
-            ) : (
-              <View className="items-center justify-center py-6">
-                <AppText color="secondary">Belum ada data transaksi.</AppText>
-              </View>
-            )}
+              <AppText className="text-gray-700">{item.label}</AppText>
+            </View>
+            <View className="items-end">
+              <AppText weight="bold">{formatRupiah(item.value)}</AppText>
+              <AppText variant="caption" color="secondary">
+                {((item.value / totalExpense) * 100).toFixed(1)}%
+              </AppText>
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  if (loading) return <ScreenLoader visible={true} text="Menganalisa..." />;
+
+  const changeMonth = (direction: -1 | 1) => {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(newDate.getMonth() + direction);
+    setCurrentMonth(newDate);
+  };
+
+  return (
+    <View className="flex-1 bg-white">
+      {/* Header Bulan */}
+      <View className="px-5 pt-12 pb-4 flex-row justify-between items-center border-b border-gray-100">
+        <AppText variant="h2" weight="bold">
+          Analisis
+        </AppText>
+        <View className="flex-row items-center gap-3 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
+          <TouchableOpacity onPress={() => changeMonth(-1)}>
+            <Ionicons name="chevron-back" size={20} color="black" />
+          </TouchableOpacity>
+          <AppText weight="bold">
+            {currentMonth.toLocaleDateString("id-ID", {
+              month: "long",
+              year: "numeric",
+            })}
+          </AppText>
+          <TouchableOpacity onPress={() => changeMonth(1)}>
+            <Ionicons name="chevron-forward" size={20} color="black" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView className="flex-1 px-5 pt-6">
+        {/* Summary Card */}
+        <View className="flex-row gap-4 mb-8">
+          <View className="flex-1 bg-green-50 p-4 rounded-2xl border border-green-100">
+            <View className="flex-row items-center gap-2 mb-2">
+              <Ionicons name="arrow-down-circle" size={18} color="#16A34A" />
+              <AppText className="text-green-700 text-xs font-bold uppercase">
+                Pemasukan
+              </AppText>
+            </View>
+            <AppText weight="bold" className="text-lg">
+              {formatRupiah(totalIncome)}
+            </AppText>
+          </View>
+          <View className="flex-1 bg-red-50 p-4 rounded-2xl border border-red-100">
+            <View className="flex-row items-center gap-2 mb-2">
+              <Ionicons name="arrow-up-circle" size={18} color="#DC2626" />
+              <AppText className="text-red-700 text-xs font-bold uppercase">
+                Pengeluaran
+              </AppText>
+            </View>
+            <AppText weight="bold" className="text-lg">
+              {formatRupiah(totalExpense)}
+            </AppText>
           </View>
         </View>
 
-        <View className="px-5 mb-6">
-          <AppText variant="h3" weight="bold" className="mb-4">
-            Analisa Pengeluaran
-          </AppText>
-
-          <View className="items-center justify-center bg-white p-6 rounded-3xl shadow-sm mb-6">
-            {chartData.length > 0 ? (
-              <PieChart
-                data={chartData}
-                donut
-                radius={120}
-                innerRadius={80}
-                showText
-                textColor="white"
-                textSize={14}
-                fontWeight="bold"
-                centerLabelComponent={() => (
-                  <View className="items-center">
-                    <AppText variant="caption" color="secondary">
-                      Total Pemasukan
-                    </AppText>
-                    <AppText variant="h3" weight="bold">
-                      {formatRupiah(summary.income)}
-                    </AppText>
-                  </View>
-                )}
-              />
-            ) : (
-              <View className="h-40 items-center justify-center">
-                <AppText color="secondary">
-                  Belum ada pengeluaran tercatat.
+        {/* Chart Section */}
+        {totalExpense > 0 ? (
+          <View className="items-center">
+            <View className="items-center justify-center">
+              {/* Text Tengah Donut */}
+              <View className="absolute z-10 items-center">
+                <AppText variant="caption" color="secondary">
+                  Total Keluar
+                </AppText>
+                <AppText variant="h3" weight="bold">
+                  {formatRupiah(totalExpense)}
                 </AppText>
               </View>
-            )}
+
+              <PieChart
+                data={pieData}
+                donut
+                radius={120}
+                innerRadius={85}
+                innerCircleColor={"white"}
+                centerLabelComponent={() => <View />}
+              />
+            </View>
+
+            {/* List Kategori */}
+            <View className="w-full mb-10">{renderLegendComponent()}</View>
           </View>
-
-          <AppCard className="mb-6">
-            <LegendItem
-              color="#3B82F6"
-              label="Needs (Kebutuhan)"
-              subLabel="Target Ideal: 50%"
-              value={summary.needs}
-            />
-            <View className="h-[1px] bg-gray-100 my-2" />
-            <LegendItem
-              color="#EF4444"
-              label="Wants (Keinginan)"
-              subLabel="Target Ideal: 30%"
-              value={summary.wants}
-            />
-            <View className="h-[1px] bg-gray-100 my-2" />
-            <LegendItem
-              color="#10B981"
-              label="Savings (Tabungan)"
-              subLabel="Target Ideal: 20%"
-              value={summary.savings > 0 ? summary.savings : 0}
-            />
-          </AppCard>
-
-          <View className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
-            <AppText
-              variant="body"
-              weight="bold"
-              className="text-blue-800 mb-2"
-            >
-              💡 Insight Uang Bijak
-            </AppText>
-            <AppText variant="body" className="text-blue-700 leading-6">
-              {summary.savings < 0
-                ? "Peringatan: Pengeluaranmu lebih besar dari pemasukan (Defisit). Segera kurangi pengeluaran 'Wants'!"
-                : summary.wants > summary.income * 0.3
-                  ? "Hati-hati, porsi 'Keinginan' kamu sudah melebihi 30%. Coba tunda belanja hobi bulan depan."
-                  : "Luar biasa! Kondisi keuanganmu sehat. Pertahankan porsi tabungan di atas 20%."}
+        ) : (
+          <View className="items-center py-10 opacity-50">
+            <Ionicons name="pie-chart-outline" size={80} color="gray" />
+            <AppText className="mt-4 text-center text-gray-500">
+              Belum ada pengeluaran di bulan ini.
             </AppText>
           </View>
-        </View>
+        )}
       </ScrollView>
     </View>
   );

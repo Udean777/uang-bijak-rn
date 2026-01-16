@@ -2,17 +2,21 @@ import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
+import { db } from "@/src/config/firebase";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
+import { EditWalletSheet } from "@/src/features/wallets/components/EditWalletSheet";
 import { TransactionService } from "@/src/services/transactionService";
 import { WalletService } from "@/src/services/walletService";
-import { Transaction } from "@/src/types/transaction";
-import { Wallet } from "@/src/types/wallet";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
+import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
+
+import { Transaction } from "@/src/types/transaction";
+import { Wallet } from "@/src/types/wallet";
 
 const formatRupiah = (val: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -25,9 +29,24 @@ export default function WalletDetailScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const params = useLocalSearchParams();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const [wallet] = useState<Wallet | null>(() => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const walletId = useMemo(() => {
+    if (params.id) return Array.isArray(params.id) ? params.id[0] : params.id;
+    if (typeof params.data === "string") {
+      try {
+        return JSON.parse(params.data).id;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }, [params]);
+
+  const [wallet, setWallet] = useState<Wallet | null>(() => {
     if (typeof params.data === "string") {
       try {
         return JSON.parse(params.data);
@@ -39,7 +58,34 @@ export default function WalletDetailScreen() {
   });
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!walletId) return;
+
+    const unsub = onSnapshot(doc(db, "wallets", walletId), (docSnap) => {
+      if (docSnap.exists()) {
+        setWallet({ id: docSnap.id, ...docSnap.data() } as Wallet);
+      } else {
+        setWallet(null);
+      }
+    });
+
+    return () => unsub();
+  }, [walletId]);
+
+  useEffect(() => {
+    if (!user || !walletId) return;
+
+    const unsub = TransactionService.subscribeTransactions(
+      user.uid,
+      (allData) => {
+        const filtered = allData.filter((t) => t.walletId === walletId);
+        setTransactions(filtered);
+      }
+    );
+
+    return () => unsub();
+  }, [user, walletId]);
 
   const handleBackNavigation = () => {
     if (router.canGoBack()) {
@@ -48,31 +94,6 @@ export default function WalletDetailScreen() {
       router.replace("/(tabs)");
     }
   };
-
-  useEffect(() => {
-    if (!wallet) {
-      Toast.show({
-        type: "error",
-        text1: "Data Error",
-        text2: "Dompet tidak ditemukan",
-      });
-      handleBackNavigation();
-    }
-  }, [wallet]);
-
-  useEffect(() => {
-    if (!user || !wallet?.id) return;
-
-    const unsub = TransactionService.subscribeTransactions(
-      user.uid,
-      (allData) => {
-        const filtered = allData.filter((t) => t.walletId === wallet.id);
-        setTransactions(filtered);
-      }
-    );
-
-    return () => unsub();
-  }, [user, wallet]);
 
   const onDeletePress = () => {
     setShowDeleteDialog(true);
@@ -93,17 +114,16 @@ export default function WalletDetailScreen() {
     }
   };
 
-  const handleCancelDelete = () => {
-    setShowDeleteDialog(false);
-  };
-
-  const handleEdit = () => {
-    if (!wallet) return;
-    router.push({
-      pathname: "/(modals)/add-wallet",
-      params: { editData: JSON.stringify(wallet) },
-    });
-  };
+  useEffect(() => {
+    if (!wallet && !isLoading) {
+      Toast.show({
+        type: "error",
+        text1: "Data Error",
+        text2: "Dompet tidak ditemukan",
+      });
+      handleBackNavigation();
+    }
+  }, [wallet]);
 
   if (!wallet) return <View className="flex-1 bg-white" />;
 
@@ -111,7 +131,7 @@ export default function WalletDetailScreen() {
     <View className="flex-1 bg-white">
       <ScreenLoader visible={isLoading} text="Menghapus..." />
 
-      <View className="px-5  pb-4 border-b border-gray-100 flex-row items-center justify-between">
+      <View className="px-5 pb-4 border-b border-gray-100 flex-row items-center justify-between">
         <TouchableOpacity onPress={handleBackNavigation}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
@@ -149,7 +169,7 @@ export default function WalletDetailScreen() {
             title="Edit"
             variant="outline"
             className="flex-1"
-            onPress={handleEdit}
+            onPress={() => setShowEditSheet(true)}
             leftIcon={
               <Ionicons name="create-outline" size={18} color="black" />
             }
@@ -158,9 +178,11 @@ export default function WalletDetailScreen() {
             title="Hapus"
             variant="danger"
             className="flex-1 bg-red-50 border-red-50"
-            style={{ backgroundColor: "#D00000", borderColor: "#D00000" }}
+            style={{ backgroundColor: "#DC2626", borderColor: "#DC2626" }}
             onPress={onDeletePress}
-            leftIcon={<Ionicons name="trash-outline" size={18} color="white" />}
+            leftIcon={
+              <Ionicons name="trash-outline" size={18} color="#ffffff" />
+            }
           />
         </View>
 
@@ -195,6 +217,12 @@ export default function WalletDetailScreen() {
         </View>
       </ScrollView>
 
+      <EditWalletSheet
+        visible={showEditSheet}
+        onClose={() => setShowEditSheet(false)}
+        wallet={wallet}
+      />
+
       <ConfirmDialog
         visible={showDeleteDialog}
         title="Hapus Dompet?"
@@ -204,7 +232,7 @@ export default function WalletDetailScreen() {
         variant="danger"
         isLoading={isLoading}
         onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
+        onCancel={() => setShowDeleteDialog(false)}
       />
     </View>
   );

@@ -7,8 +7,8 @@ import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { WalletService } from "@/src/services/walletService";
 import { WalletType } from "@/src/types/wallet";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -31,32 +31,12 @@ const COLORS = [
 export default function AddWalletScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const params = useLocalSearchParams();
 
   const [name, setName] = useState("");
   const [initialBalance, setInitialBalance] = useState("");
   const [selectedType, setSelectedType] = useState<WalletType>("bank");
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editWalletId, setEditWalletId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (params.editData) {
-      try {
-        const data = JSON.parse(params.editData as string);
-        setIsEditMode(true);
-        setEditWalletId(data.id);
-
-        setName(data.name);
-        setInitialBalance(data.balance.toString());
-        setSelectedType(data.type);
-        setSelectedColor(data.color);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, [params.editData]);
 
   const handleSave = async () => {
     if (!name || !initialBalance) {
@@ -70,33 +50,21 @@ export default function AddWalletScreen() {
 
     setIsLoading(true);
     try {
-      if (isEditMode && editWalletId) {
-        await WalletService.updateWallet(editWalletId, {
-          name,
-          type: selectedType,
-          color: selectedColor,
-          balance: parseFloat(initialBalance),
-        } as any);
+      await WalletService.createWallet(user!.uid, {
+        name,
+        type: selectedType,
+        initialBalance: parseFloat(initialBalance),
+        color: selectedColor,
+      });
 
-        Toast.show({ type: "success", text1: "Dompet Diupdate" });
+      Toast.show({
+        type: "success",
+        text1: "Berhasil!",
+        text2: "Dompet baru telah dibuat.",
+      });
 
-        router.dismissAll();
-      } else {
-        await WalletService.createWallet(user!.uid, {
-          name,
-          type: selectedType,
-          initialBalance: parseFloat(initialBalance),
-          color: selectedColor,
-        });
-
-        Toast.show({
-          type: "success",
-          text1: "Berhasil!",
-          text2: "Dompet baru telah dibuat.",
-        });
-
-        setTimeout(() => router.back(), 1000);
-      }
+      // Kembali ke halaman sebelumnya
+      router.back();
     } catch (error: any) {
       Toast.show({ type: "error", text1: "Gagal", text2: error.message });
     } finally {
@@ -139,16 +107,16 @@ export default function AddWalletScreen() {
   return (
     <View className="flex-1 bg-white">
       <ScreenLoader visible={isLoading} text="Membuat Dompet..." />
-      <ModalHeader
-        title={isEditMode ? "Edit Dompet" : "Tambah Dompet"}
-        subtitle="Atur sumber dana baru"
-      />
+
+      {/* Header standar tanpa custom close */}
+      <ModalHeader title="Tambah Dompet" subtitle="Atur sumber dana baru" />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         <ScrollView className="flex-1 p-5">
+          {/* Card Preview */}
           <View
             className="w-full h-40 rounded-2xl p-5 justify-between mb-8 shadow-sm"
             style={{ backgroundColor: selectedColor }}
@@ -160,7 +128,7 @@ export default function AddWalletScreen() {
               </AppText>
             </View>
             <View>
-              <AppText className="text-white/80 text-sm">Saldo</AppText>
+              <AppText className="text-white/80 text-sm">Saldo Awal</AppText>
               <AppText className="text-white text-3xl font-bold">
                 Rp{" "}
                 {initialBalance
@@ -173,6 +141,7 @@ export default function AddWalletScreen() {
             </View>
           </View>
 
+          {/* Form Inputs */}
           <View className="gap-y-4">
             <AppInput
               label="Nama Dompet"
@@ -181,7 +150,7 @@ export default function AddWalletScreen() {
               onChangeText={setName}
             />
             <AppInput
-              label={isEditMode ? "Koreksi Saldo Saat Ini" : "Saldo Awal"}
+              label="Saldo Awal"
               placeholder="0"
               keyboardType="numeric"
               value={initialBalance}
@@ -222,10 +191,7 @@ export default function AddWalletScreen() {
         </ScrollView>
 
         <View className="p-5 border-t border-gray-100 pb-8">
-          <AppButton
-            title={isEditMode ? "Simpan Perubahan" : "Simpan Dompet"}
-            onPress={handleSave}
-          />
+          <AppButton title="Simpan Dompet" onPress={handleSave} />
         </View>
       </KeyboardAvoidingView>
     </View>

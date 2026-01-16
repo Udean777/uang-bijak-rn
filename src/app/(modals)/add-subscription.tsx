@@ -50,12 +50,17 @@ export default function AddSubscriptionScreen() {
     }
   };
 
+  const onClose = () => {
+    router.back();
+  };
+
   return (
     <View className="flex-1 bg-white">
       <ScreenLoader visible={isLoading} />
       <ModalHeader
         title="Tambah Langganan"
         subtitle="Catat tagihan rutin bulanan"
+        onClose={onClose}
       />
 
       <ScrollView className="p-5">

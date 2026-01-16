@@ -7,6 +7,7 @@ import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { AddSubscriptionSheet } from "@/src/features/subscriptions/components/AddSubscriptionSheet";
 import { SubscriptionList } from "@/src/features/subscriptions/components/SubscriptionList";
 import { AuthService } from "@/src/services/authService";
 
@@ -15,6 +16,7 @@ export default function MenuScreen() {
   const { userProfile } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddSheet, setShowAddSheet] = useState(false);
 
   const onLogoutPress = () => {
     setShowLogoutDialog(true);
@@ -56,9 +58,7 @@ export default function MenuScreen() {
             <AppText variant="h3" weight="bold">
               Langganan & Tagihan
             </AppText>
-            <TouchableOpacity
-              onPress={() => router.push("/(modals)/add-subscription")}
-            >
+            <TouchableOpacity onPress={() => setShowAddSheet(true)}>
               <AppText color="primary" weight="bold">
                 + Tambah
               </AppText>
@@ -91,6 +91,11 @@ export default function MenuScreen() {
           </AppText>
         </View>
       </ScrollView>
+
+      <AddSubscriptionSheet
+        visible={showAddSheet}
+        onClose={() => setShowAddSheet(false)}
+      />
 
       <ConfirmDialog
         visible={showLogoutDialog}
