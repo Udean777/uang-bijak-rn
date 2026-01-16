@@ -1,50 +1,110 @@
-# Welcome to your Expo app 👋
+# Uang Bijak 💰
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Uang Bijak** is a smart and modern personal finance tracker application designed to help you manage your income, expenses, savings, and debts with ease. Built with the latest technologies to provide a fast, responsive, and delightful user experience.
 
-## Get started
+## ✨ Key Features
 
-1. Install dependencies
+The app includes a wide range of features to support your financial health:
 
-   ```bash
-   npm install
-   ```
+- **📊 Dashboard Overview**: View a summary of your balance, total income, and expenses in real-time with engaging visualizations.
+- **💸 Transaction Recording**: Record daily transactions (Income, Expense, Transfer) quickly and easily.
+- **📂 Wallets & Accounts**: Manage multiple funding sources (Cash, Bank, E-Wallet) in one place.
+- **📅 Transaction History**: Browse your transaction history based on specific time periods.
+- **📈 Financial Analysis**: Get deep insights into your spending patterns through informative charts and diagrams.
+- **🎯 Wishlist & Savings**: Set saving goals for your dream items and track your progress.
+- **🧾 Debt Management**: Record and monitor debts so nothing gets missed.
+- **🔁 Subscriptions**: Manage your recurring monthly bills (Netflix, Spotify, Utilities, etc.) to avoid late payments.
+- **📝 Transaction Templates**: Save favorite transactions to speed up recording of repetitive entries.
+- **🌗 Dark Mode**: A comfortable viewing experience with automatic dark mode support.
 
-2. Start the app
+## 🛠️ Tech Stack
 
-   ```bash
-   npx expo start
-   ```
+This project is built using:
 
-In the output, you'll find options to open the app in a
+- **Framework**: [React Native](https://reactnative.dev/) with [Expo](https://expo.dev/) (SDK 50+)
+- **Language**: [TypeScript](https://www.typescriptlang.org/) for type safety.
+- **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based routing).
+- **Styling**: [NativeWind](https://www.nativewind.dev/) (Tailwind CSS for React Native).
+- **Database**: [Firebase Firestore](https://firebase.google.com/docs/firestore) for real-time cloud data storage.
+- **Authentication**: Firebase Authentication.
+- **Icons**: Ionicons (@expo/vector-icons).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🚀 Getting Started
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Follow these steps to customize and run the application on your local machine.
 
-## Get a fresh project
+### Prerequisites
 
-When you're ready, run:
+Ensure you have the following installed:
 
-```bash
-npm run reset-project
+- [Node.js](https://nodejs.org/) (LTS version recommended)
+- [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
+- [Expo Go](https://expo.dev/client) on your Android/iOS device (or Emulator).
+
+### Installation
+
+1.  **Clone this repository:**
+
+    ```bash
+    git clone https://github.com/username/uang-bijak.git
+    cd uang-bijak
+    ```
+
+2.  **Install dependencies:**
+
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Configuration:**
+    Create a `.env` file in your project root (if not already present) and add your Firebase configuration.
+    _(Adjust according to your Firebase project configuration)_
+
+4.  **Run the Application:**
+
+    ```bash
+    npm start
+    ```
+
+5.  **Open the App:**
+    - Scan the QR Code shown in the terminal using the **Expo Go** app (Android) or **Camera** (iOS).
+    - Press `a` in the terminal to open in Android Emulator.
+    - Press `i` in the terminal to open in iOS Simulator.
+
+## 📂 Project Structure
+
+```
+uang-bijak/
+├── src/
+│   ├── app/                 # Screens & Routing (Expo Router)
+│   │   ├── (auth)/          # Authentication screens (Login/Register)
+│   │   ├── (tabs)/          # Main Tab Navigation (Home, History, etc.)
+│   │   ├── (modals)/        # Modal screens (Add Transaction, etc.)
+│   │   └── _layout.tsx      # Root Layout
+│   ├── components/          # Reusable UI Components
+│   ├── config/              # Configuration (Firebase, Theme)
+│   ├── constants/           # App Constants (Colors, Fonts)
+│   ├── hooks/               # Custom React Hooks
+│   ├── services/            # API & Business Logic (Firebase Wrappers)
+│   ├── types/               # TypeScript Type Definitions
+│   └── utils/               # Helper Functions
+├── assets/                  # Images, Fonts, Icons
+├── .env                     # Environment Variables
+├── babel.config.js          # Babel Configuration
+├── tailwind.config.js       # Tailwind CSS Configuration
+└── package.json             # Dependencies & Scripts
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🤝 Contribution
 
-## Learn more
+Contributions are welcome! If you want to fix bugs or add new features:
 
-To learn more about developing your project with Expo, look at the following resources:
+1.  Fork this repository.
+2.  Create a new feature branch (`git checkout -b cool-feature`).
+3.  Commit your changes (`git commit -m 'Add cool feature'`).
+4.  Push to the branch (`git push origin cool-feature`).
+5.  Create a Pull Request.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Made with ❤️ by [Sajudin]
