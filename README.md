@@ -21,13 +21,14 @@ The app includes a wide range of features to support your financial health:
 
 This project is built using:
 
-- **Framework**: [React Native](https://reactnative.dev/) with [Expo](https://expo.dev/) (SDK 50+)
+- **Framework**: [React Native](https://reactnative.dev/) (v0.81) with [Expo](https://expo.dev/) (SDK 54)
 - **Language**: [TypeScript](https://www.typescriptlang.org/) for type safety.
 - **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based routing).
 - **Styling**: [NativeWind](https://www.nativewind.dev/) (Tailwind CSS for React Native).
-- **Database**: [Firebase Firestore](https://firebase.google.com/docs/firestore) for real-time cloud data storage.
-- **Authentication**: Firebase Authentication.
-- **Icons**: Ionicons (@expo/vector-icons).
+- **Backend/Database**: [Firebase](https://firebase.google.com/) (Auth, Firestore).
+- **Charts**: [react-native-gifted-charts](https://github.com/Abhinandan-Kushwaha/react-native-gifted-charts) for beautiful financial visualizations.
+- **Date Picking**: [react-native-modal-datetime-picker](https://github.com/mmazzarolo/react-native-modal-datetime-picker).
+- **Icons**: Ionicons & Expo Symbols.
 
 ## 🚀 Getting Started
 
@@ -54,6 +55,8 @@ Ensure you have the following installed:
 
     ```bash
     npm install
+    # or
+    bun install
     ```
 
 3.  **Environment Configuration:**
@@ -63,7 +66,7 @@ Ensure you have the following installed:
 4.  **Run the Application:**
 
     ```bash
-    npm start
+    npx expo start
     ```
 
 5.  **Open the App:**
@@ -78,14 +81,25 @@ uang-bijak/
 ├── src/
 │   ├── app/                 # Screens & Routing (Expo Router)
 │   │   ├── (auth)/          # Authentication screens (Login/Register)
+│   │   ├── (modals)/        # Modal screens (Add Transaction, Wallet, etc.)
+│   │   ├── (sub)/           # Secondary screens (Details, Forms)
 │   │   ├── (tabs)/          # Main Tab Navigation (Home, History, etc.)
-│   │   ├── (modals)/        # Modal screens (Add Transaction, etc.)
-│   │   └── _layout.tsx      # Root Layout
+│   │   ├── _layout.tsx      # Root Layout
+│   │   └── ...
 │   ├── components/          # Reusable UI Components
+│   │   ├── atoms/           # Basic components (Text, Button, Input)
+│   │   ├── molecules/       # Composition of atoms (Dialogs, Cards)
+│   │   └── ...
 │   ├── config/              # Configuration (Firebase, Theme)
-│   ├── constants/           # App Constants (Colors, Fonts)
-│   ├── hooks/               # Custom React Hooks
-│   ├── services/            # API & Business Logic (Firebase Wrappers)
+│   ├── features/            # Feature-based logic & components
+│   │   ├── auth/            # Authentication feature
+│   │   ├── budgeting/       # Budgeting hooks
+│   │   ├── debts/           # Debt management
+│   │   ├── subscriptions/   # Subscription management
+│   │   ├── transactions/    # Transaction logic & components
+│   │   ├── wallets/         # Wallet logic & components
+│   │   └── wishlist/        # Wishlist logic
+│   ├── services/            # API & Business Logic
 │   ├── types/               # TypeScript Type Definitions
 │   └── utils/               # Helper Functions
 ├── assets/                  # Images, Fonts, Icons
