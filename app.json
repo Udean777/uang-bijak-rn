@@ -41,6 +41,12 @@
           }
         }
       ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Izinkan Uang Bijak menggunakan FaceID untuk mengamankan data keuangan Anda."
+        }
+      ],
       "expo-web-browser",
       "@react-native-community/datetimepicker"
     ],

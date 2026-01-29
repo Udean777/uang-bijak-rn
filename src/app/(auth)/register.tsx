@@ -4,7 +4,7 @@ import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { AuthService } from "@/src/services/authService";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -16,6 +16,7 @@ import {
 import Toast from "react-native-toast-message";
 
 export default function RegisterScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
   const [fullName, setFullName] = useState("");
@@ -55,6 +56,8 @@ export default function RegisterScreen() {
         text1: "Berhasil!",
         text2: "Anda berhasil mendaftar.",
       });
+      // Redirect ke Setup PIN
+      router.replace("/(auth)/setup-pin" as any);
     } catch (error: any) {
       Toast.show({
         type: "error",

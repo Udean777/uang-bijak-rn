@@ -7,10 +7,11 @@ import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { AddSubscriptionSheet } from "@/src/features/subscriptions/components/AddSubscriptionSheet";
 import { SubscriptionList } from "@/src/features/subscriptions/components/SubscriptionList";
 import { AuthService } from "@/src/services/authService";
+import { SecurityService } from "@/src/services/SecurityService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { ScrollView, Switch, TouchableOpacity, View } from "react-native";
 
 export default function MenuScreen() {
   const router = useRouter();
@@ -18,10 +19,20 @@ export default function MenuScreen() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
+  const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
   const isDark = colorScheme === "dark";
+
+  React.useEffect(() => {
+    loadBiometricStatus();
+  }, []);
+
+  const loadBiometricStatus = async () => {
+    const enabled = await SecurityService.isBiometricEnabled();
+    setIsBiometricEnabled(enabled);
+  };
 
   const onLogoutPress = () => {
     setShowLogoutDialog(true);
@@ -36,6 +47,31 @@ export default function MenuScreen() {
 
   const handleCancelLogout = () => {
     setShowLogoutDialog(false);
+  };
+
+  const toggleBiometric = async (value: boolean) => {
+    if (value) {
+      const hasHardware = await SecurityService.checkHardware();
+      if (!hasHardware) {
+        alert(
+          "Perangkat Anda tidak mendukung atau belum mengaktifkan fitur biometrik.",
+        );
+        return;
+      }
+
+      // Verifikasi/Trigger permission saat mengaktifkan
+      const verified = await SecurityService.authenticateBiometric();
+      if (!verified) {
+        // Jika batal atau gagal auth, jangan aktifkan
+        alert(
+          "Gagal memverifikasi biometrik. Pastikan wajah/jari Anda terdeteksi.",
+        );
+        return;
+      }
+    }
+
+    await SecurityService.setBiometricEnabled(value);
+    setIsBiometricEnabled(value);
   };
 
   return (
@@ -166,6 +202,40 @@ export default function MenuScreen() {
 
         <View className="mb-8">
           <AppText variant="h3" weight="bold" className="mb-4">
+            Keamanan
+          </AppText>
+
+          <View
+            className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+            style={{ backgroundColor: theme.card, borderColor: theme.border }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(16, 185, 129, 0.15)"
+                    : "#D1FAE5",
+                }}
+              >
+                <Ionicons name="finger-print" size={20} color="#10B981" />
+              </View>
+              <View>
+                <AppText weight="bold">Biometrik</AppText>
+                <AppText variant="caption">Kunci aplikasi saat keluar</AppText>
+              </View>
+            </View>
+            <Switch
+              value={isBiometricEnabled}
+              onValueChange={toggleBiometric}
+              trackColor={{ false: "#767577", true: theme.primary }}
+              thumbColor={isBiometricEnabled ? "#ffffff" : "#f4f3f4"}
+            />
+          </View>
+        </View>
+
+        <View className="mb-8">
+          <AppText variant="h3" weight="bold" className="mb-4">
             Akun
           </AppText>
 
@@ -177,9 +247,6 @@ export default function MenuScreen() {
               <Ionicons name="log-out-outline" size={20} color="white" />
             }
           />
-          <AppText variant="caption" className="text-center mt-4">
-            Versi Aplikasi 1.0.0 (MVP)
-          </AppText>
         </View>
       </ScrollView>
 

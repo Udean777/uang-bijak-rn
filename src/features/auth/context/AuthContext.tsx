@@ -57,12 +57,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentUser);
 
       if (currentUser) {
-        try {
-          const profile = await AuthService.getUserProfile(currentUser.uid);
-          setUserProfile(profile);
-        } catch (error) {
-          console.error("Gagal ambil profil", error);
-        }
+        const fetchProfile = async (retry = 0) => {
+          try {
+            const profile = await AuthService.getUserProfile(currentUser.uid);
+            setUserProfile(profile);
+          } catch (error: any) {
+            // Jika profil belum ada (race condition saat register), coba lagi
+            if (error.message.includes("tidak ditemukan") && retry < 3) {
+              setTimeout(() => fetchProfile(retry + 1), 1000);
+            } else {
+              console.error("Gagal ambil profil", error);
+            }
+          }
+        };
+        fetchProfile();
       } else {
         setUserProfile(null);
       }
