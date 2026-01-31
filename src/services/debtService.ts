@@ -15,7 +15,7 @@ import { Debt, DebtStatus } from "../types/debt";
 export const DebtService = {
   addDebt: async (
     userId: string,
-    data: Omit<Debt, "id" | "createdAt" | "status" | "userId">
+    data: Omit<Debt, "id" | "createdAt" | "status" | "userId">,
   ) => {
     await addDoc(collection(db, "debts"), {
       userId,
@@ -37,14 +37,20 @@ export const DebtService = {
     const q = query(
       collection(db, "debts"),
       where("userId", "==", userId),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
     );
-    return onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Debt[];
-      callback(data);
-    });
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Debt[];
+        callback(data);
+      },
+      (error) => {
+        console.error("[DebtService] Snapshot error:", error);
+      },
+    );
   },
 };

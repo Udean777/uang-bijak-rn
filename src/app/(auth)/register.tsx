@@ -54,10 +54,11 @@ export default function RegisterScreen() {
       Toast.show({
         type: "success",
         text1: "Berhasil!",
-        text2: "Anda berhasil mendaftar.",
+        text2: "Akun Anda telah dibuat.",
       });
-      // Redirect ke Setup PIN
-      router.replace("/(auth)/setup-pin" as any);
+
+      // Redirect ke main tabs (layout will redirect to PIN setup if needed)
+      router.replace("/(tabs)");
     } catch (error: any) {
       Toast.show({
         type: "error",

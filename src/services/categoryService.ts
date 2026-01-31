@@ -27,7 +27,7 @@ export const CategoryService = {
   addCategory: async (
     userId: string,
     name: string,
-    type: "income" | "expense"
+    type: "income" | "expense",
   ) => {
     await addDoc(collection(db, "categories"), {
       userId,
@@ -40,18 +40,24 @@ export const CategoryService = {
 
   subscribeCategories: (
     userId: string,
-    callback: (cats: Category[]) => void
+    callback: (cats: Category[]) => void,
   ) => {
     const q = query(
       collection(db, "categories"),
-      where("userId", "==", userId)
+      where("userId", "==", userId),
     );
-    return onSnapshot(q, (snapshot) => {
-      const customCats = snapshot.docs.map(
-        (d) => ({ id: d.id, ...d.data() }) as Category
-      );
-      callback([...DEFAULT_CATEGORIES, ...customCats]);
-    });
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const customCats = snapshot.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as Category,
+        );
+        callback([...DEFAULT_CATEGORIES, ...customCats]);
+      },
+      (error) => {
+        console.error("[CategoryService] Snapshot error:", error);
+      },
+    );
   },
 
   deleteCategory: async (id: string) => {

@@ -68,4 +68,23 @@ export const SecurityService = {
     }
     return !!storedPin;
   },
+
+  /**
+   * Clear all security data (used when deleting account)
+   */
+  clearAll: async () => {
+    try {
+      // Clear biometric setting
+      await AsyncStorage.removeItem(BIOMETRIC_KEY);
+
+      // Clear PIN
+      if (Platform.OS === "web") {
+        await AsyncStorage.removeItem(PIN_KEY);
+      } else {
+        await SecureStore.deleteItemAsync(PIN_KEY);
+      }
+    } catch (error) {
+      console.error("Error clearing security data:", error);
+    }
+  },
 };

@@ -36,26 +36,32 @@ export const WalletService = {
       collection(db, COLLECTION),
       where("userId", "==", userId),
       where("isArchived", "==", false),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "asc"),
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const wallets = snapshot.docs.map(
-        (doc) =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-          }) as Wallet
-      );
-      onUpdate(wallets);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const wallets = snapshot.docs.map(
+          (doc) =>
+            ({
+              id: doc.id,
+              ...doc.data(),
+            }) as Wallet,
+        );
+        onUpdate(wallets);
+      },
+      (error) => {
+        console.error("[WalletService] Snapshot error:", error);
+      },
+    );
 
     return unsubscribe;
   },
 
   updateWallet: async (
     walletId: string,
-    data: Partial<CreateWalletPayload>
+    data: Partial<CreateWalletPayload>,
   ) => {
     try {
       const walletRef = doc(db, COLLECTION, walletId);

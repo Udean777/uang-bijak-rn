@@ -7,7 +7,14 @@ import { Text, TextProps } from "react-native";
 interface AppTextProps extends TextProps {
   variant?: "h1" | "h2" | "h3" | "body" | "caption" | "label";
   weight?: "regular" | "medium" | "bold" | "semibold";
-  color?: "primary" | "secondary" | "error" | "default" | "white";
+  color?:
+    | "primary"
+    | "secondary"
+    | "error"
+    | "default"
+    | "white"
+    | "success"
+    | "danger";
   className?: string;
 }
 
@@ -41,12 +48,35 @@ export const AppText: React.FC<AppTextProps> = ({
     bold: "font-jakartaBold",
   };
 
-  const colors = {
+  const colors: Record<string, string> = {
     default: "text-white",
     primary: "text-primary",
     secondary: "text-secondary",
     error: "text-danger",
     white: "text-white",
+    success: "text-success",
+    danger: "text-danger",
+  };
+
+  const getStyleColor = () => {
+    switch (color) {
+      case "default":
+        return theme.text;
+      case "primary":
+        return theme.primary;
+      case "secondary":
+        return theme.secondary;
+      case "error":
+        return theme.danger;
+      case "success":
+        return theme.success;
+      case "danger":
+        return theme.danger;
+      case "white":
+        return "#FFFFFF";
+      default:
+        return color;
+    }
   };
 
   return (
@@ -56,9 +86,9 @@ export const AppText: React.FC<AppTextProps> = ({
         variants[variant],
         weights[weight],
         colors[color],
-        className
+        className,
       )}
-      style={[{ color: color === "default" ? theme.text : color }, style]}
+      style={[{ color: getStyleColor() }, style]}
       {...props}
     >
       {children}

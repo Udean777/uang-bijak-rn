@@ -21,15 +21,21 @@ export const TemplateService = {
 
   subscribeTemplates: (
     userId: string,
-    callback: (list: TransactionTemplate[]) => void
+    callback: (list: TransactionTemplate[]) => void,
   ) => {
     const q = query(collection(db, "templates"), where("userId", "==", userId));
-    return onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as TransactionTemplate[];
-      callback(data);
-    });
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as TransactionTemplate[];
+        callback(data);
+      },
+      (error) => {
+        console.error("[TemplateService] Snapshot error:", error);
+      },
+    );
   },
 };

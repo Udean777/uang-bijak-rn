@@ -15,7 +15,7 @@ import { Wishlist, WishlistStatus } from "../types/wishlist";
 export const WishlistService = {
   addWishlist: async (
     userId: string,
-    data: { name: string; price: number; durationDays: number; note?: string }
+    data: { name: string; price: number; durationDays: number; note?: string },
   ) => {
     const createdAt = Date.now();
     const targetDate = createdAt + data.durationDays * 24 * 60 * 60 * 1000;
@@ -39,29 +39,35 @@ export const WishlistService = {
 
   subscribeWishlists: (
     userId: string,
-    callback: (list: Wishlist[]) => void
+    callback: (list: Wishlist[]) => void,
   ) => {
     const q = query(
       collection(db, "wishlists"),
       where("userId", "==", userId),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
     );
 
-    return onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Wishlist[];
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Wishlist[];
 
-      const now = Date.now();
-      data.forEach((item) => {
-        if (item.status === "waiting" && now >= item.targetDate) {
-          WishlistService.updateStatus(item.id, "ready");
-          item.status = "ready";
-        }
-      });
+        const now = Date.now();
+        data.forEach((item) => {
+          if (item.status === "waiting" && now >= item.targetDate) {
+            WishlistService.updateStatus(item.id, "ready");
+            item.status = "ready";
+          }
+        });
 
-      callback(data);
-    });
+        callback(data);
+      },
+      (error) => {
+        console.error("[WishlistService] Snapshot error:", error);
+      },
+    );
   },
 };

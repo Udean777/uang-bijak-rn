@@ -5,6 +5,7 @@ export interface Transaction {
   id: string;
   userId: string;
   walletId: string;
+  targetWalletId?: string; // For transfer transactions
   amount: number;
   type: TransactionType;
   category: string;
@@ -17,6 +18,7 @@ export interface Transaction {
 
 export interface CreateTransactionPayload {
   walletId: string;
+  targetWalletId?: string; // For transfer transactions
   amount: number;
   type: TransactionType;
   category: string;

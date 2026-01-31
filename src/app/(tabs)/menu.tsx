@@ -7,19 +7,26 @@ import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { AddSubscriptionSheet } from "@/src/features/subscriptions/components/AddSubscriptionSheet";
 import { SubscriptionList } from "@/src/features/subscriptions/components/SubscriptionList";
 import { AuthService } from "@/src/services/authService";
+import { ExportService } from "@/src/services/ExportService";
+import { NotificationService } from "@/src/services/NotificationService";
 import { SecurityService } from "@/src/services/SecurityService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, Switch, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function MenuScreen() {
   const router = useRouter();
   const { userProfile } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
+  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
@@ -49,6 +56,35 @@ export default function MenuScreen() {
     setShowLogoutDialog(false);
   };
 
+  const onDeleteAccountPress = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await AuthService.deleteAccount();
+      setShowDeleteDialog(false);
+      Toast.show({
+        type: "success",
+        text1: "Akun Dihapus",
+        text2: "Semua data Anda telah dihapus.",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal Menghapus Akun",
+        text2: error.message,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteDialog(false);
+  };
+
   const toggleBiometric = async (value: boolean) => {
     if (value) {
       const hasHardware = await SecurityService.checkHardware();
@@ -72,6 +108,60 @@ export default function MenuScreen() {
 
     await SecurityService.setBiometricEnabled(value);
     setIsBiometricEnabled(value);
+  };
+
+  const toggleNotifications = async (value: boolean) => {
+    if (value) {
+      const granted = await NotificationService.requestPermissions();
+      if (!granted) {
+        Toast.show({
+          type: "error",
+          text1: "Izin Notifikasi Ditolak",
+          text2: "Aktifkan notifikasi di pengaturan perangkat.",
+        });
+        return;
+      }
+    } else {
+      await NotificationService.cancelAllNotifications();
+    }
+    setIsNotificationsEnabled(value);
+  };
+
+  const handleExportData = async () => {
+    if (!userProfile?.uid) return;
+
+    setIsExporting(true);
+    try {
+      await ExportService.exportTransactionsToCSV(userProfile.uid);
+      Toast.show({
+        type: "success",
+        text1: "Export Berhasil",
+        text2: "File CSV siap dibagikan.",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Export Gagal",
+        text2: error.message,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleTestNotification = async () => {
+    try {
+      await NotificationService.sendLocalNotification(
+        "Tes Notifikasi Berhasil! ✅",
+        "Jika Anda melihat ini, berarti sistem notifikasi sudah aktif dan berjalan lancar.",
+      );
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal Mengirim Tes",
+        text2: error.message,
+      });
+    }
   };
 
   return (
@@ -118,6 +208,60 @@ export default function MenuScreen() {
             Fitur Cerdas
           </AppText>
         </View>
+
+        <TouchableOpacity
+          onPress={() => router.push("/(sub)/goals" as any)}
+          className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+          }}
+        >
+          <View className="flex-row items-center gap-4">
+            <View
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(16, 185, 129, 0.15)"
+                  : "#D1FAE5",
+              }}
+            >
+              <Ionicons name="flag" size={20} color="#10B981" />
+            </View>
+            <View>
+              <AppText weight="bold">Target Menabung</AppText>
+              <AppText variant="caption">Mencapai tujuan finansialmu</AppText>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push("/(sub)/budgets" as any)}
+          className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+          }}
+        >
+          <View className="flex-row items-center gap-4">
+            <View
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(245, 158, 11, 0.15)"
+                  : "#FEF3C7",
+              }}
+            >
+              <Ionicons name="pie-chart" size={20} color="#F59E0B" />
+            </View>
+            <View>
+              <AppText weight="bold">Budget Kategori</AppText>
+              <AppText variant="caption">Atur batasan pengeluaran</AppText>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => router.push("/(sub)/wishlist")}
@@ -168,6 +312,35 @@ export default function MenuScreen() {
             <View>
               <AppText weight="bold">Hutang & Piutang</AppText>
               <AppText variant="caption">Catat pinjaman teman</AppText>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push("/(sub)/recurring" as any)}
+          className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+          }}
+        >
+          <View className="flex-row items-center gap-4">
+            <View
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(139, 92, 246, 0.15)"
+                  : "#EDE9FE",
+              }}
+            >
+              <Ionicons name="repeat" size={20} color="#8B5CF6" />
+            </View>
+            <View>
+              <AppText weight="bold">Transaksi Berulang</AppText>
+              <AppText variant="caption">
+                Otomasi pemasukan & pengeluaran
+              </AppText>
             </View>
           </View>
           <Ionicons name="chevron-forward" size={20} color={theme.icon} />
@@ -232,6 +405,194 @@ export default function MenuScreen() {
               thumbColor={isBiometricEnabled ? "#ffffff" : "#f4f3f4"}
             />
           </View>
+
+          <View
+            className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+            style={{ backgroundColor: theme.card, borderColor: theme.border }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(59, 130, 246, 0.15)"
+                    : "#DBEAFE",
+                }}
+              >
+                <Ionicons name="notifications" size={20} color="#3B82F6" />
+              </View>
+              <View>
+                <AppText weight="bold">Notifikasi</AppText>
+                <AppText variant="caption">Pengingat tagihan & utang</AppText>
+              </View>
+            </View>
+            <Switch
+              value={isNotificationsEnabled}
+              onValueChange={toggleNotifications}
+              trackColor={{ false: "#767577", true: theme.primary }}
+              thumbColor={isNotificationsEnabled ? "#ffffff" : "#f4f3f4"}
+            />
+          </View>
+
+          {isNotificationsEnabled && (
+            <TouchableOpacity
+              onPress={handleTestNotification}
+              className="flex-row items-center justify-center p-3 rounded-xl border border-dashed mb-3"
+              style={{ borderColor: theme.primary }}
+            >
+              <Ionicons
+                name="send-outline"
+                size={18}
+                color={theme.primary}
+                className="mr-2"
+              />
+              <AppText weight="bold" style={{ color: theme.primary }}>
+                Kirim Notifikasi Tes
+              </AppText>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Data Management Section */}
+        <View className="mb-8">
+          <AppText variant="h3" weight="bold" className="mb-4">
+            Data
+          </AppText>
+
+          <TouchableOpacity
+            onPress={() => router.push("/(sub)/reports" as any)}
+            className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+            style={{
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+            }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(59, 130, 246, 0.15)"
+                    : "#DBEAFE",
+                }}
+              >
+                <Ionicons name="bar-chart" size={20} color="#3B82F6" />
+              </View>
+              <View>
+                <AppText weight="bold">Laporan Bulanan</AppText>
+                <AppText variant="caption">
+                  Ringkasan keuangan per bulan
+                </AppText>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleExportData}
+            disabled={isExporting}
+            className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+            style={{
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+              opacity: isExporting ? 0.6 : 1,
+            }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(16, 185, 129, 0.15)"
+                    : "#D1FAE5",
+                }}
+              >
+                <Ionicons name="download-outline" size={20} color="#10B981" />
+              </View>
+              <View>
+                <AppText weight="bold">
+                  {isExporting ? "Mengexport..." : "Export Transaksi"}
+                </AppText>
+                <AppText variant="caption">
+                  Download data dalam format CSV
+                </AppText>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Legal & Info Section */}
+        <View className="mb-8">
+          <AppText variant="h3" weight="bold" className="mb-4">
+            Informasi
+          </AppText>
+
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(sub)/legal",
+                params: { type: "privacy" },
+              } as any)
+            }
+            className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+            style={{
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+            }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(107, 114, 128, 0.15)"
+                    : "#F3F4F6",
+                }}
+              >
+                <Ionicons name="shield-checkmark" size={20} color="#6B7280" />
+              </View>
+              <View>
+                <AppText weight="bold">Kebijakan Privasi</AppText>
+                <AppText variant="caption">
+                  Bagaimana kami menjaga data Anda
+                </AppText>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(sub)/legal",
+                params: { type: "terms" },
+              } as any)
+            }
+            className="flex-row items-center justify-between p-4 rounded-2xl border mb-3"
+            style={{
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+            }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(107, 114, 128, 0.15)"
+                    : "#F3F4F6",
+                }}
+              >
+                <Ionicons name="document-text" size={20} color="#6B7280" />
+              </View>
+              <View>
+                <AppText weight="bold">Syarat & Ketentuan</AppText>
+                <AppText variant="caption">Aturan penggunaan aplikasi</AppText>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+          </TouchableOpacity>
         </View>
 
         <View className="mb-8">
@@ -241,12 +602,34 @@ export default function MenuScreen() {
 
           <AppButton
             title="Keluar Aplikasi"
-            variant="danger"
+            variant="outline"
             onPress={onLogoutPress}
             leftIcon={
-              <Ionicons name="log-out-outline" size={20} color="white" />
+              <Ionicons name="log-out-outline" size={20} color={theme.text} />
             }
+            className="mb-3"
           />
+
+          <TouchableOpacity
+            onPress={onDeleteAccountPress}
+            className="flex-row items-center justify-center p-4 rounded-2xl border"
+            style={{
+              borderColor: theme.danger,
+              backgroundColor: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2",
+            }}
+          >
+            <Ionicons name="trash-outline" size={20} color={theme.danger} />
+            <AppText
+              weight="bold"
+              className="ml-2"
+              style={{ color: theme.danger }}
+            >
+              Hapus Akun
+            </AppText>
+          </TouchableOpacity>
+          <AppText variant="caption" className="mt-2 text-center">
+            Menghapus akun akan menghapus semua data Anda secara permanen.
+          </AppText>
         </View>
       </ScrollView>
 
@@ -265,6 +648,18 @@ export default function MenuScreen() {
         isLoading={isLoading}
         onConfirm={handleLogout}
         onCancel={handleCancelLogout}
+      />
+
+      <ConfirmDialog
+        visible={showDeleteDialog}
+        title="Hapus Akun?"
+        message="PERINGATAN: Tindakan ini tidak dapat dibatalkan. Semua data keuangan Anda (transaksi, dompet, tagihan, utang, wishlist) akan dihapus secara permanen."
+        confirmText="Hapus Akun"
+        cancelText="Batal"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleDeleteAccount}
+        onCancel={handleCancelDelete}
       />
     </View>
   );

@@ -4,8 +4,10 @@ import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
+import { InsightCard } from "@/src/components/molecules/InsightCard";
 import { SafeToSpendCard } from "@/src/features/auth/components/SafeToSpendCard";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { useSmartInsights } from "@/src/hooks/useSmartInsights";
 import { TransactionHistorySheet } from "@/src/features/transactions/components/TransactionHistorySheet";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
 import { WalletCard } from "@/src/features/wallets/components/WalletCard";
@@ -30,6 +32,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, userProfile } = useAuth();
   const { wallets, isLoading: walletsLoading } = useWallets();
+  const { insights, isLoading: insightsLoading } = useSmartInsights();
 
   const { colorScheme, toggleColorScheme } = useThemeControl();
   const isDark = colorScheme === "dark";
@@ -335,6 +338,20 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </View>
+        )}
+
+        {insights.length > 0 && (
+          <View className="mb-8">
+            <View className="flex-row items-center gap-2 mb-4">
+              <Ionicons name="bulb" size={18} color="#3B82F6" />
+              <AppText variant="h3" weight="bold">
+                Insights Finansial
+              </AppText>
+            </View>
+            {insights.map((insight) => (
+              <InsightCard key={insight.id} insight={insight} />
+            ))}
           </View>
         )}
 
