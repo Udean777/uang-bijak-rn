@@ -13,8 +13,9 @@ interface ConfirmDialogProps {
   cancelText?: string;
   variant?: "primary" | "danger";
   isLoading?: boolean;
+  showCancel?: boolean;
   onConfirm: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -25,6 +26,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelText = "Batal",
   variant = "primary",
   isLoading = false,
+  showCancel = true,
   onConfirm,
   onCancel,
 }) => {
@@ -54,14 +56,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <AppText className="text-center mb-6 leading-5">{message}</AppText>
 
           <View className="flex-row gap-3">
-            <View className="flex-1">
-              <AppButton
-                title={cancelText}
-                variant={isDark ? "ghost" : "outline"}
-                onPress={onCancel}
-                disabled={isLoading}
-              />
-            </View>
+            {showCancel && (
+              <View className="flex-1">
+                <AppButton
+                  title={cancelText}
+                  variant={isDark ? "ghost" : "outline"}
+                  onPress={onCancel}
+                  disabled={isLoading}
+                />
+              </View>
+            )}
             <View className="flex-1">
               <AppButton
                 title={confirmText}

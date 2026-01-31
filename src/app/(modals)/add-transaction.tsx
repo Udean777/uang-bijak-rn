@@ -31,12 +31,13 @@ export default function AddTransactionScreen() {
   const theme = Colors[colorScheme ?? "light"];
   const isDark = colorScheme === "dark";
 
-  const [type, setType] = useState<"income" | "expense">("expense");
+  const [type, setType] = useState<"income" | "expense" | "transfer">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [classification, setClassification] = useState<"need" | "want">("need");
   const [selectedWalletId, setSelectedWalletId] = useState<string>("");
+  const [targetWalletId, setTargetWalletId] = useState<string>("");
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -101,6 +102,11 @@ export default function AddTransactionScreen() {
       return; // Jangan simpan jika kosong
     }
 
+    // Only allow adding categories for income/expense, not transfer
+    if (type === "transfer") {
+      return;
+    }
+
     if (user) {
       try {
         await CategoryService.addCategory(user.uid, newCategoryName, type);
@@ -123,13 +129,24 @@ export default function AddTransactionScreen() {
       return;
     }
 
+    // Validate transfer requirements
+    if (type === "transfer" && !targetWalletId) {
+      Toast.show({
+        type: "error",
+        text1: "Data Belum Lengkap",
+        text2: "Mohon pilih dompet tujuan untuk transfer.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const payload = {
         walletId: selectedWalletId,
+        targetWalletId: type === "transfer" ? targetWalletId : undefined,
         amount: parseFloat(amount),
         type,
-        category,
+        category: type === "transfer" ? "Transfer" : category,
         classification: type === "expense" ? classification : null,
         date: new Date(),
         note,
@@ -218,6 +235,25 @@ export default function AddTransactionScreen() {
               Pemasukan
             </AppText>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setType("transfer")}
+            className={`flex-1 py-3 rounded-lg items-center ${type === "transfer" ? (isDark ? "bg-blue-900/30" : "bg-blue-100") : ""}`}
+          >
+            <AppText
+              weight="bold"
+              style={{
+                color:
+                  type === "transfer"
+                    ? "#3B82F6"
+                    : isDark
+                      ? theme.text
+                      : "gray",
+                opacity: type === "transfer" ? 1 : 0.5,
+              }}
+            >
+              Transfer
+            </AppText>
+          </TouchableOpacity>
         </View>
 
         <View className="mb-6">
@@ -238,43 +274,46 @@ export default function AddTransactionScreen() {
           />
         </View>
 
-        <View className="mb-6">
-          <AppText variant="caption" weight="bold" className="uppercase mb-2">
-            Kategori
-          </AppText>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity
-              className="mr-3 px-4 py-2 rounded-full border border-dashed justify-center"
-              style={{ borderColor: theme.border }}
-              onPress={handleAddCategory}
-            >
-              <AppText weight="bold">+ Baru</AppText>
-            </TouchableOpacity>
+        {/* Category section - hidden for transfers */}
+        {type !== "transfer" && (
+          <View className="mb-6">
+            <AppText variant="caption" weight="bold" className="uppercase mb-2">
+              Kategori
+            </AppText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <TouchableOpacity
+                className="mr-3 px-4 py-2 rounded-full border border-dashed justify-center"
+                style={{ borderColor: theme.border }}
+                onPress={handleAddCategory}
+              >
+                <AppText weight="bold">+ Baru</AppText>
+              </TouchableOpacity>
 
-            {categories
-              .filter((c) => c.type === type)
-              .map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  onPress={() => setCategory(cat.name)}
-                  className="mr-3 px-4 py-2 rounded-full border"
-                  style={{
-                    backgroundColor:
-                      category === cat.name ? theme.primary : theme.surface,
-                    borderColor:
-                      category === cat.name ? theme.primary : theme.border,
-                  }}
-                >
-                  <AppText
-                    weight="bold"
-                    color={category === cat.name ? "white" : "default"}
+              {categories
+                .filter((c) => c.type === type)
+                .map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    onPress={() => setCategory(cat.name)}
+                    className="mr-3 px-4 py-2 rounded-full border"
+                    style={{
+                      backgroundColor:
+                        category === cat.name ? theme.primary : theme.surface,
+                      borderColor:
+                        category === cat.name ? theme.primary : theme.border,
+                    }}
                   >
-                    {cat.name}
-                  </AppText>
-                </TouchableOpacity>
-              ))}
-          </ScrollView>
-        </View>
+                    <AppText
+                      weight="bold"
+                      color={category === cat.name ? "white" : "default"}
+                    >
+                      {cat.name}
+                    </AppText>
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
+          </View>
+        )}
 
         {type === "expense" && (
           <View className="mb-6">
@@ -337,52 +376,149 @@ export default function AddTransactionScreen() {
           </View>
         )}
 
-        <View className="mb-6">
-          <AppText variant="caption" weight="bold" className="uppercase mb-2">
-            Sumber Dana
-          </AppText>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {wallets.map((w) => (
-              <TouchableOpacity
-                key={w.id}
-                onPress={() => setSelectedWalletId(w.id)}
-                className="mr-3 px-4 py-2 rounded-full border"
-                style={{
-                  backgroundColor:
-                    selectedWalletId === w.id
-                      ? isDark
-                        ? theme.text
-                        : "#111827"
-                      : theme.surface,
-                  borderColor:
-                    selectedWalletId === w.id
-                      ? isDark
-                        ? theme.text
-                        : "#111827"
-                      : theme.border,
-                }}
-              >
-                <AppText
-                  color={
-                    selectedWalletId === w.id
-                      ? isDark
-                        ? "default"
-                        : "white"
-                      : "default"
-                  }
-                  weight={selectedWalletId === w.id ? "bold" : "regular"}
-                  style={
-                    selectedWalletId === w.id && isDark
-                      ? { color: theme.background }
-                      : undefined
-                  }
-                >
-                  {w.name}
+        {/* Wallet selection - different UI for transfers */}
+        {type === "transfer" ? (
+          <>
+            <View className="mb-6">
+              <AppText variant="caption" weight="bold" className="uppercase mb-2">
+                Dari Dompet
+              </AppText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {wallets.map((w) => (
+                  <TouchableOpacity
+                    key={w.id}
+                    onPress={() => {
+                      setSelectedWalletId(w.id);
+                      // Reset target if same as source
+                      if (targetWalletId === w.id) {
+                        setTargetWalletId("");
+                      }
+                    }}
+                    className="mr-3 px-4 py-2 rounded-full border"
+                    style={{
+                      backgroundColor:
+                        selectedWalletId === w.id
+                          ? isDark
+                            ? theme.text
+                            : "#111827"
+                          : theme.surface,
+                      borderColor:
+                        selectedWalletId === w.id
+                          ? isDark
+                            ? theme.text
+                            : "#111827"
+                          : theme.border,
+                    }}
+                  >
+                    <AppText
+                      color={
+                        selectedWalletId === w.id
+                          ? isDark
+                            ? "default"
+                            : "white"
+                          : "default"
+                      }
+                      weight={selectedWalletId === w.id ? "bold" : "regular"}
+                      style={
+                        selectedWalletId === w.id && isDark
+                          ? { color: theme.background }
+                          : undefined
+                      }
+                    >
+                      {w.name}
+                    </AppText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View className="mb-6">
+              <AppText variant="caption" weight="bold" className="uppercase mb-2">
+                Ke Dompet
+              </AppText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {wallets
+                  .filter((w) => w.id !== selectedWalletId)
+                  .map((w) => (
+                    <TouchableOpacity
+                      key={w.id}
+                      onPress={() => setTargetWalletId(w.id)}
+                      className="mr-3 px-4 py-2 rounded-full border"
+                      style={{
+                        backgroundColor:
+                          targetWalletId === w.id
+                            ? "#3B82F6"
+                            : theme.surface,
+                        borderColor:
+                          targetWalletId === w.id
+                            ? "#3B82F6"
+                            : theme.border,
+                      }}
+                    >
+                      <AppText
+                        color={targetWalletId === w.id ? "white" : "default"}
+                        weight={targetWalletId === w.id ? "bold" : "regular"}
+                      >
+                        {w.name}
+                      </AppText>
+                    </TouchableOpacity>
+                  ))}
+              </ScrollView>
+              {wallets.filter((w) => w.id !== selectedWalletId).length === 0 && (
+                <AppText variant="caption" color="default" className="mt-2">
+                  Tidak ada dompet lain. Tambah dompet baru untuk transfer.
                 </AppText>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+              )}
+            </View>
+          </>
+        ) : (
+          <View className="mb-6">
+            <AppText variant="caption" weight="bold" className="uppercase mb-2">
+              Sumber Dana
+            </AppText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {wallets.map((w) => (
+                <TouchableOpacity
+                  key={w.id}
+                  onPress={() => setSelectedWalletId(w.id)}
+                  className="mr-3 px-4 py-2 rounded-full border"
+                  style={{
+                    backgroundColor:
+                      selectedWalletId === w.id
+                        ? isDark
+                          ? theme.text
+                          : "#111827"
+                        : theme.surface,
+                    borderColor:
+                      selectedWalletId === w.id
+                        ? isDark
+                          ? theme.text
+                          : "#111827"
+                        : theme.border,
+                  }}
+                >
+                  <AppText
+                    color={
+                      selectedWalletId === w.id
+                        ? isDark
+                          ? "default"
+                          : "white"
+                        : "default"
+                    }
+                    weight={selectedWalletId === w.id ? "bold" : "regular"}
+                    style={
+                      selectedWalletId === w.id && isDark
+                        ? { color: theme.background }
+                        : undefined
+                    }
+                  >
+                    {w.name}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         <View className="mb-8">
           <AppInput
@@ -403,7 +539,13 @@ export default function AddTransactionScreen() {
           onPress={handleSave}
           isLoading={isLoading}
           variant={type === "expense" ? "danger" : "primary"}
-          className={type === "expense" ? "" : "bg-green-600 border-green-600"}
+          className={
+            type === "expense"
+              ? ""
+              : type === "transfer"
+                ? "bg-blue-500 border-blue-500"
+                : "bg-green-600 border-green-600"
+          }
         />
       </View>
 

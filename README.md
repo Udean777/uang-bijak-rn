@@ -1,123 +1,73 @@
 # Uang Bijak 💰
 
-**Uang Bijak** is a smart and modern personal finance tracker application designed to help you manage your income, expenses, savings, and debts with ease. Built with the latest technologies to provide a fast, responsive, and delightful user experience.
+**Uang Bijak** is a premium, smart, and modern personal finance tracker designed to provide a high-end experience for managing your financial life. Built with **Expo SDK 54**, it combines powerful features with a sleek, responsive interface to help you achieve financial freedom.
 
 ## ✨ Key Features
 
-The app includes a wide range of features to support your financial health:
+### 🏢 Core Management
 
-- **📊 Dashboard Overview**: View a summary of your balance, total income, and expenses in real-time with engaging visualizations.
-- **💸 Transaction Recording**: Record daily transactions (Income, Expense, Transfer) quickly and easily.
-- **📂 Wallets & Accounts**: Manage multiple funding sources (Cash, Bank, E-Wallet) in one place.
-- **📅 Transaction History**: Browse your transaction history based on specific time periods.
-- **📈 Financial Analysis**: Get deep insights into your spending patterns through informative charts and diagrams.
-- **🎯 Wishlist & Savings**: Set saving goals for your dream items and track your progress.
-- **🧾 Debt Management**: Record and monitor debts so nothing gets missed.
-- **🔁 Subscriptions**: Manage your recurring monthly bills (Netflix, Spotify, Utilities, etc.) to avoid late payments.
-- **📝 Transaction Templates**: Save favorite transactions to speed up recording of repetitive entries.
-- **🌗 Dark Mode**: A comfortable viewing experience with automatic dark mode support.
+- **📊 Dynamic Dashboard**: real-time summary of balance, income, and expenses with elegant visualizations.
+- **� Multi-Wallet Support**: Manage Cash, Bank accounts, and E-wallets in one unified interface.
+- **� Seamless Transactions**: Record income, expenses, and transfers with advanced categorization.
+- **� Recurring Transactions**: Automate repetitive entries for daily, weekly, monthly, or yearly cycles.
 
-## 🛠️ Tech Stack
+### 🧠 Smart & AI-Driven
 
-This project is built using:
+- **� Smart Insights**: Automated analysis of spending trends, comparison with previous months, and anomaly detection.
+- **🎯 Intelligent Budgeting**: Set category-specific limits with real-time tracking and "Near Limit" alerts.
+- **📈 Advanced Analytics**: Deep-dive into your financial habits with interactive charts and historical data.
 
-- **Framework**: [React Native](https://reactnative.dev/) (v0.81) with [Expo](https://expo.dev/) (SDK 54)
-- **Language**: [TypeScript](https://www.typescriptlang.org/) for type safety.
-- **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based routing).
-- **Styling**: [NativeWind](https://www.nativewind.dev/) (Tailwind CSS for React Native).
-- **Backend/Database**: [Firebase](https://firebase.google.com/) (Auth, Firestore).
-- **Charts**: [react-native-gifted-charts](https://github.com/Abhinandan-Kushwaha/react-native-gifted-charts) for beautiful financial visualizations.
-- **Date Picking**: [react-native-modal-datetime-picker](https://github.com/mmazzarolo/react-native-modal-datetime-picker).
-- **Icons**: Ionicons & Expo Symbols.
+### �️ Security & Experience
+
+- **🔐 Biometric Authentication**: Shield your sensitive data with FaceID or Fingerprint protection.
+- **� Proactive Notifications**: Smart reminders for bill payments, debt due dates, and wishlist milestones.
+- **� Data Portability**: Export transactions and monthly summaries to CSV for external auditing or spreadsheets.
+- **🌗 Native Dark Mode**: Seamlessly adapts to your device's appearance for a comfortable late-night viewing experience.
+
+## 🛠️ Tech Stack & Architecture
+
+- **Core**: [React Native 0.81](https://reactnative.dev/) with [Expo SDK 54](https://expo.dev/) (Managed Workflow).
+- **Navigation**: [Expo Router v4](https://docs.expo.dev/router/introduction/) for robust, file-based routing.
+- **State & Backend**: [Firebase v11](https://firebase.google.com/) (Authentication, Cloud Firestore).
+- **Styling**: [NativeWind (Tailwind CSS)](https://www.nativewind.dev/) for a utility-first, modern design system.
+- **Visualization**: [Gifted Charts](https://github.com/Abhinandan-Kushwaha/react-native-gifted-charts) for premium interactive financial graphs.
+- **Developer Tools**: TypeScript for maximum type safety and code quality.
 
 ## 🚀 Getting Started
 
-Follow these steps to customize and run the application on your local machine.
-
 ### Prerequisites
 
-Ensure you have the following installed:
-
-- [Node.js](https://nodejs.org/) (LTS version recommended)
-- [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
-- [Expo Go](https://expo.dev/client) on your Android/iOS device (or Emulator).
+- [Node.js](https://nodejs.org/) (LTS)
+- [Bun](https://bun.sh/) or [npm/yarn]
+- [Expo Go](https://expo.dev/client) app installed on your physical device.
 
 ### Installation
 
-1.  **Clone this repository:**
-
+1.  **Clone & Enter:**
     ```bash
-    git clone https://github.com/username/uang-bijak.git
-    cd uang-bijak
+    git clone https://github.com/udean777/uang-bijak-rn.git && cd uang-bijak-rn
     ```
-
-2.  **Install dependencies:**
-
+2.  **Install Dependencies:**
     ```bash
-    npm install
-    # or
     bun install
     ```
-
-3.  **Environment Configuration:**
-    Create a `.env` file in your project root (if not already present) and add your Firebase configuration.
-    _(Adjust according to your Firebase project configuration)_
-
-4.  **Run the Application:**
-
+3.  **Start Development:**
     ```bash
-    npx expo start
+    bun run ios  # or bun run android
     ```
-
-5.  **Open the App:**
-    - Scan the QR Code shown in the terminal using the **Expo Go** app (Android) or **Camera** (iOS).
-    - Press `a` in the terminal to open in Android Emulator.
-    - Press `i` in the terminal to open in iOS Simulator.
 
 ## 📂 Project Structure
 
+```bash
+src/
+├── app/          # Navigation & Screens (Expo Router)
+├── components/   # Atomic UI System (Atoms, Molecules)
+├── features/     # Feature-encapsulated logic (Auth, Budget, Debts)
+├── services/     # Business Layer (Firebase, Sync, Notifications)
+├── hooks/        # Custom React Hooks (Business & UI logic)
+├── types/        # Global TypeScript Definitions
+└── utils/        # Tactical Helpers (Formatting, Calculations)
 ```
-uang-bijak/
-├── src/
-│   ├── app/                 # Screens & Routing (Expo Router)
-│   │   ├── (auth)/          # Authentication screens (Login/Register)
-│   │   ├── (modals)/        # Modal screens (Add Transaction, Wallet, etc.)
-│   │   ├── (sub)/           # Secondary screens (Details, Forms)
-│   │   ├── (tabs)/          # Main Tab Navigation (Home, History, etc.)
-│   │   ├── _layout.tsx      # Root Layout
-│   │   └── ...
-│   ├── components/          # Reusable UI Components
-│   │   ├── atoms/           # Basic components (Text, Button, Input)
-│   │   ├── molecules/       # Composition of atoms (Dialogs, Cards)
-│   │   └── ...
-│   ├── config/              # Configuration (Firebase, Theme)
-│   ├── features/            # Feature-based logic & components
-│   │   ├── auth/            # Authentication feature
-│   │   ├── budgeting/       # Budgeting hooks
-│   │   ├── debts/           # Debt management
-│   │   ├── subscriptions/   # Subscription management
-│   │   ├── transactions/    # Transaction logic & components
-│   │   ├── wallets/         # Wallet logic & components
-│   │   └── wishlist/        # Wishlist logic
-│   ├── services/            # API & Business Logic
-│   ├── types/               # TypeScript Type Definitions
-│   └── utils/               # Helper Functions
-├── assets/                  # Images, Fonts, Icons
-├── .env                     # Environment Variables
-├── babel.config.js          # Babel Configuration
-├── tailwind.config.js       # Tailwind CSS Configuration
-└── package.json             # Dependencies & Scripts
-```
-
-## 🤝 Contribution
-
-Contributions are welcome! If you want to fix bugs or add new features:
-
-1.  Fork this repository.
-2.  Create a new feature branch (`git checkout -b cool-feature`).
-3.  Commit your changes (`git commit -m 'Add cool feature'`).
-4.  Push to the branch (`git push origin cool-feature`).
-5.  Create a Pull Request.
 
 ---
 

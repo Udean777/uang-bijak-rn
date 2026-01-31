@@ -68,13 +68,19 @@ export default function WalletDetailScreen() {
   useEffect(() => {
     if (!walletId) return;
 
-    const unsub = onSnapshot(doc(db, "wallets", walletId), (docSnap) => {
-      if (docSnap.exists()) {
-        setWallet({ id: docSnap.id, ...docSnap.data() } as Wallet);
-      } else {
-        setWallet(null);
-      }
-    });
+    const unsub = onSnapshot(
+      doc(db, "wallets", walletId),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setWallet({ id: docSnap.id, ...docSnap.data() } as Wallet);
+        } else {
+          setWallet(null);
+        }
+      },
+      (error) => {
+        console.error("[WalletDetail] Snapshot error:", error);
+      },
+    );
 
     return () => unsub();
   }, [walletId]);
@@ -87,7 +93,7 @@ export default function WalletDetailScreen() {
       (allData) => {
         const filtered = allData.filter((t) => t.walletId === walletId);
         setTransactions(filtered);
-      }
+      },
     );
 
     return () => unsub();

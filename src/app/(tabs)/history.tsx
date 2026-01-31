@@ -41,9 +41,13 @@ export default function HistoryScreen() {
   const filteredData = useMemo(() => {
     return transactions.filter((t) => {
       const query = searchQuery.toLowerCase();
+      const amountStr = t.amount.toLocaleString("id-ID");
+
       const matchSearch =
         t.category.toLowerCase().includes(query) ||
-        (t.note && t.note.toLowerCase().includes(query));
+        (t.note && t.note.toLowerCase().includes(query)) ||
+        amountStr.includes(query) ||
+        t.type.toLowerCase().includes(query);
 
       const matchType = filterType === "all" || t.type === filterType;
 

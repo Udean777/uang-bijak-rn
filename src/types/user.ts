@@ -5,6 +5,7 @@ export interface UserProfile {
   photoURL?: string;
   createdAt: number;
   lastLoginAt: number;
+  emailVerified?: boolean;
   preferences: {
     currency: string;
     language: "id" | "en";

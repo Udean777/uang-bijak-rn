@@ -35,7 +35,7 @@ export default function TransactionDetailScreen() {
   }, [params.data]);
 
   const [transaction, setTransaction] = useState<Transaction | null>(
-    initialTransaction
+    initialTransaction,
   );
   const [walletName, setWalletName] = useState("Memuat...");
 
@@ -53,7 +53,10 @@ export default function TransactionDetailScreen() {
         } else {
           setTransaction(null);
         }
-      }
+      },
+      (error) => {
+        console.error("[TransactionDetail] Snapshot error:", error);
+      },
     );
     return () => unsub();
   }, [initialTransaction?.id]);

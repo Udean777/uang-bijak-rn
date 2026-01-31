@@ -33,7 +33,7 @@ const calculateInitialNextPayment = (day: number): number => {
 
 const getNextMonthDate = (
   currentTimestamp: number,
-  fixedDay: number
+  fixedDay: number,
 ): number => {
   const date = new Date(currentTimestamp);
   date.setMonth(date.getMonth() + 1);
@@ -44,6 +44,33 @@ const getNextMonthDate = (
 };
 
 export const SubscriptionService = {
+  /**
+   * Get total pending bills for the current month
+   * (subscriptions where nextPaymentDate is within the current month and not yet paid)
+   */
+  getPendingBillsTotal: (subscriptions: Subscription[]): number => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const endOfMonth = new Date(
+      currentYear,
+      currentMonth + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+
+    return subscriptions
+      .filter((sub) => {
+        if (!sub.isActive) return false;
+        // Include if nextPaymentDate is within current month (not yet paid)
+        return sub.nextPaymentDate <= endOfMonth;
+      })
+      .reduce((total, sub) => total + sub.cost, 0);
+  },
+
   addSubscription: async (userId: string, data: CreateSubscriptionPayload) => {
     const nextPayment = calculateInitialNextPayment(data.dueDate);
 
@@ -58,24 +85,30 @@ export const SubscriptionService = {
 
   subscribeSubscriptions: (
     userId: string,
-    callback: (data: Subscription[]) => void
+    callback: (data: Subscription[]) => void,
   ) => {
     const q = query(
       collection(db, COLLECTION),
       where("userId", "==", userId),
-      orderBy("cost", "desc")
+      orderBy("cost", "desc"),
     );
 
-    return onSnapshot(q, (snapshot) => {
-      const subs = snapshot.docs.map(
-        (doc) =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-          }) as Subscription
-      );
-      callback(subs);
-    });
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const subs = snapshot.docs.map(
+          (doc) =>
+            ({
+              id: doc.id,
+              ...doc.data(),
+            }) as Subscription,
+        );
+        callback(subs);
+      },
+      (error) => {
+        console.error("[SubscriptionService] Snapshot error:", error);
+      },
+    );
   },
 
   deleteSubscription: async (id: string) => {
@@ -85,7 +118,7 @@ export const SubscriptionService = {
   renewSubscription: async (
     id: string,
     currentNextPayment: number,
-    fixedDay: number
+    fixedDay: number,
   ) => {
     try {
       const subRef = doc(db, COLLECTION, id);

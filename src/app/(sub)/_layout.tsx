@@ -7,6 +7,11 @@ export default function SubLayout() {
       <Stack.Screen name="wishlist" />
       <Stack.Screen name="manage-templates" />
       <Stack.Screen name="debts" />
+      <Stack.Screen name="legal" />
+      <Stack.Screen name="reports" />
+      <Stack.Screen name="goals" />
+      <Stack.Screen name="budgets" />
+      <Stack.Screen name="recurring" />
     </Stack>
   );
 }
