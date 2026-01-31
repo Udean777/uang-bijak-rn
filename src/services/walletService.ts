@@ -11,6 +11,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import { stripUndefined } from "../utils/firestoreUtils";
 
 const COLLECTION = "wallets";
 
@@ -66,10 +67,13 @@ export const WalletService = {
     try {
       const walletRef = doc(db, COLLECTION, walletId);
 
-      await updateDoc(walletRef, {
-        ...data,
-        updatedAt: Date.now(),
-      });
+      await updateDoc(
+        walletRef,
+        stripUndefined({
+          ...data,
+          updatedAt: Date.now(),
+        }),
+      );
     } catch (error: any) {
       throw new Error("Gagal update dompet: " + error.message);
     }
