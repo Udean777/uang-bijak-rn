@@ -1,5 +1,4 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -18,8 +17,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   onClose,
 }) => {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors } = useTheme();
 
   const handleClose = () => {
     if (onClose) onClose();
@@ -30,8 +28,8 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
     <View
       className="flex-row items-center justify-between px-5 py-4 border-b"
       style={{
-        backgroundColor: theme.background,
-        borderBottomColor: theme.divider,
+        backgroundColor: colors.background,
+        borderBottomColor: colors.divider,
       }}
     >
       <View>
@@ -44,9 +42,9 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
       <TouchableOpacity
         onPress={handleClose}
         className="w-8 h-8 rounded-full items-center justify-center"
-        style={{ backgroundColor: theme.surface }}
+        style={{ backgroundColor: colors.surface }}
       >
-        <Ionicons name="close" size={20} color={theme.text} />
+        <Ionicons name="close" size={20} color={colors.text} />
       </TouchableOpacity>
     </View>
   );

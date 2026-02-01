@@ -1,12 +1,10 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
+import { useTheme } from "@/src/hooks/useTheme";
 import React from "react";
 import { View } from "react-native";
 
 export const WalletCardSkeleton = () => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors: theme } = useTheme();
 
   return (
     <View

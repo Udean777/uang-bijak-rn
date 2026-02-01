@@ -1,7 +1,6 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/src/hooks/useTheme";
 import { cn } from "@/src/utils/cn";
-import React from "react";
+import React, { useMemo } from "react";
 import { TextInput, TextInputProps, View } from "react-native";
 import { AppText } from "./AppText";
 
@@ -19,8 +18,16 @@ export const AppInput: React.FC<AppInputProps> = ({
   style,
   ...props
 }) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors } = useTheme();
+
+  const inputStyles = useMemo(
+    () => ({
+      backgroundColor: error ? undefined : colors.surface,
+      borderColor: error ? undefined : colors.border,
+      color: colors.text,
+    }),
+    [error, colors],
+  );
 
   return (
     <View className={cn("w-full mb-4", containerClass)}>
@@ -36,17 +43,10 @@ export const AppInput: React.FC<AppInputProps> = ({
           error
             ? "border-danger bg-red-50 dark:bg-red-900/10"
             : "focus:border-primary",
-          className
+          className,
         )}
-        style={[
-          {
-            backgroundColor: error ? undefined : theme.surface,
-            borderColor: error ? undefined : theme.border,
-            color: theme.text,
-          },
-          style,
-        ]}
-        placeholderTextColor={theme.icon}
+        style={[inputStyles, style]}
+        placeholderTextColor={colors.icon}
         {...props}
       />
 

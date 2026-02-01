@@ -1,115 +1,48 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
-import { db } from "@/src/config/firebase";
 import { EditTransactionSheet } from "@/src/features/transactions/components/EditTransactionSheet";
-import { TransactionService } from "@/src/services/transactionService";
-import { Transaction } from "@/src/types/transaction";
+import { useTransactionDetail } from "@/src/features/transactions/hooks/useTransactionDetail";
+import { useTheme } from "@/src/hooks/useTheme";
 import { formatDate, formatRupiah, formatTime } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
-import Toast from "react-native-toast-message";
 
 export default function TransactionDetailScreen() {
-  const router = useRouter();
-  const params = useLocalSearchParams();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors, isDark } = useTheme();
 
-  const initialTransaction = useMemo(() => {
-    if (params.data && typeof params.data === "string") {
-      try {
-        return JSON.parse(params.data);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }, [params.data]);
-
-  const [transaction, setTransaction] = useState<Transaction | null>(
-    initialTransaction,
-  );
-  const [walletName, setWalletName] = useState("Memuat...");
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showEditSheet, setShowEditSheet] = useState(false);
-
-  useEffect(() => {
-    if (!initialTransaction?.id) return;
-    const unsub = onSnapshot(
-      doc(db, "transactions", initialTransaction.id),
-      (doc) => {
-        if (doc.exists()) {
-          setTransaction({ id: doc.id, ...doc.data() } as Transaction);
-        } else {
-          setTransaction(null);
-        }
-      },
-      (error) => {
-        console.error("[TransactionDetail] Snapshot error:", error);
-      },
-    );
-    return () => unsub();
-  }, [initialTransaction?.id]);
-
-  useEffect(() => {
-    if (transaction?.walletId) {
-      const fetchWallet = async () => {
-        const docRef = doc(db, "wallets", transaction.walletId);
-        const snap = await getDoc(docRef);
-        if (snap.exists()) setWalletName(snap.data().name);
-        else setWalletName("Dompet Terhapus");
-      };
-      fetchWallet();
-    }
-  }, [transaction?.walletId]);
-
-  const handleDelete = async () => {
-    if (!transaction) return;
-    setIsLoading(true);
-    try {
-      await TransactionService.deleteTransaction(transaction.id, transaction);
-      Toast.show({
-        type: "success",
-        text1: "Transaksi Dihapus",
-        text2: "Saldo dikembalikan.",
-      });
-      router.back();
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    transaction,
+    walletName,
+    isLoading,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    showEditSheet,
+    setShowEditSheet,
+    handleDelete,
+    handleBack,
+  } = useTransactionDetail();
 
   if (!transaction)
     return (
-      <View className="flex-1" style={{ backgroundColor: theme.background }} />
+      <View className="flex-1" style={{ backgroundColor: colors.background }} />
     );
 
   const isExpense = transaction.type === "expense";
-  const colorClass = isExpense ? theme.danger : theme.success;
 
   return (
-    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <ScreenLoader visible={isLoading} text="Menghapus..." />
 
       <View className="px-5 pb-4 flex-row items-center justify-between">
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={handleBack}
           className="p-2 rounded-full shadow-sm"
-          style={{ backgroundColor: theme.surface }}
+          style={{ backgroundColor: colors.surface }}
         >
-          <Ionicons name="arrow-back" size={24} color={theme.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <AppText weight="bold" variant="h3">
           Detail Transaksi
@@ -120,11 +53,11 @@ export default function TransactionDetailScreen() {
       <ScrollView className="flex-1 px-5 pt-2">
         <View
           className="rounded-3xl p-6 shadow-sm mb-6 relative overflow-hidden"
-          style={{ backgroundColor: theme.surface }}
+          style={{ backgroundColor: colors.surface }}
         >
           <View
             className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-50"
-            style={{ backgroundColor: theme.border }}
+            style={{ backgroundColor: colors.border }}
           />
 
           <View className="items-center mb-6">
@@ -145,7 +78,7 @@ export default function TransactionDetailScreen() {
                   transaction.category === "Makan" ? "fast-food" : "pricetag"
                 }
                 size={32}
-                color={isExpense ? theme.danger : theme.success}
+                color={isExpense ? colors.danger : colors.success}
               />
             </View>
             <AppText variant="h3" weight="bold">
@@ -158,7 +91,7 @@ export default function TransactionDetailScreen() {
 
           <View
             className="h-[1px] w-full border-t border-dashed my-4"
-            style={{ borderColor: theme.border }}
+            style={{ borderColor: colors.border }}
           />
 
           <View className="items-center mb-6">
@@ -171,7 +104,7 @@ export default function TransactionDetailScreen() {
             <AppText
               variant="h1"
               weight="bold"
-              style={{ color: isExpense ? theme.danger : theme.success }}
+              style={{ color: isExpense ? colors.danger : colors.success }}
             >
               {isExpense ? "-" : "+"}
               {formatRupiah(transaction.amount)}
@@ -210,12 +143,12 @@ export default function TransactionDetailScreen() {
 
           <View
             className="rounded-xl p-4 gap-y-3"
-            style={{ backgroundColor: theme.background }}
+            style={{ backgroundColor: colors.background }}
           >
             <View className="flex-row justify-between">
               <AppText>Sumber Dana</AppText>
               <View className="flex-row items-center gap-1">
-                <Ionicons name="wallet-outline" size={14} color={theme.text} />
+                <Ionicons name="wallet-outline" size={14} color={colors.text} />
                 <AppText weight="bold">{walletName}</AppText>
               </View>
             </View>
@@ -223,7 +156,7 @@ export default function TransactionDetailScreen() {
               <AppText>Tipe</AppText>
               <AppText
                 weight="bold"
-                style={{ color: isExpense ? theme.danger : theme.success }}
+                style={{ color: isExpense ? colors.danger : colors.success }}
               >
                 {isExpense ? "Pengeluaran" : "Pemasukan"}
               </AppText>
@@ -241,8 +174,8 @@ export default function TransactionDetailScreen() {
       <View
         className="p-5 border-t flex-row gap-3"
         style={{
-          borderTopColor: theme.divider,
-          backgroundColor: theme.surface,
+          borderTopColor: colors.divider,
+          backgroundColor: colors.surface,
         }}
       >
         <AppButton
@@ -251,7 +184,7 @@ export default function TransactionDetailScreen() {
           className="flex-1"
           onPress={() => setShowEditSheet(true)}
           leftIcon={
-            <Ionicons name="create-outline" size={20} color={theme.text} />
+            <Ionicons name="create-outline" size={20} color={colors.text} />
           }
         />
         <AppButton

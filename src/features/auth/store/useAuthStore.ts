@@ -19,8 +19,11 @@ interface AuthState {
   setUserProfile: (profile: UserProfile | null) => void;
   setIsLoading: (loading: boolean) => void;
   setHasSeenOnboarding: (seen: boolean) => Promise<void>;
-  initializeAuth: () => Promise<void>;
+  initializeAuth: () => () => void;
   refreshProfile: () => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  loginWithGoogle: (idToken: string) => Promise<User>;
+  register: (payload: any) => Promise<void>;
   logout: () => void;
 }
 
@@ -52,13 +55,44 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  initializeAuth: async () => {
-    try {
-      const value = await AsyncStorage.getItem("hasSeenOnboarding");
+  initializeAuth: () => {
+    const { setUser, setUserProfile, setIsLoading } = get();
+
+    // 1. Load Onboarding status
+    AsyncStorage.getItem("hasSeenOnboarding").then((value) => {
       set({ hasSeenOnboarding: value === "true" });
-    } catch (e) {
-      set({ hasSeenOnboarding: false });
-    }
+    });
+
+    // 2. Listen to Auth State
+    const { auth } = require("@/src/config/firebase");
+    const { onAuthStateChanged } = require("firebase/auth");
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (currentUser: User | null) => {
+        setIsLoading(true);
+        setUser(currentUser);
+
+        if (currentUser) {
+          try {
+            const profile = await AuthService.getUserProfile(currentUser.uid);
+            // Auto-verify existing users if they were registered before OTP removal
+            if (profile && profile.emailVerified === false) {
+              await AuthService.ensureEmailVerified(currentUser.uid);
+              profile.emailVerified = true;
+            }
+            setUserProfile(profile);
+          } catch (error: any) {
+            console.error("[useAuthStore] Failed to fetch profile", error);
+          }
+        } else {
+          setUserProfile(null);
+        }
+        setIsLoading(false);
+      },
+    );
+
+    return unsubscribe;
   },
 
   refreshProfile: async () => {
@@ -70,6 +104,41 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       } catch (error) {
         console.error("Failed to refresh profile", error);
       }
+    }
+  },
+
+  login: async (email, password) => {
+    set({ isLoading: true });
+    try {
+      const user = await AuthService.login(email, password);
+      return user;
+    } catch (error) {
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  loginWithGoogle: async (idToken) => {
+    set({ isLoading: true });
+    try {
+      const user = await AuthService.loginWithGoogle(idToken);
+      return user;
+    } catch (error) {
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  register: async (payload) => {
+    set({ isLoading: true });
+    try {
+      await AuthService.register(payload);
+    } catch (error) {
+      throw error;
+    } finally {
+      set({ isLoading: false });
     }
   },
 

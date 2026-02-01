@@ -1,18 +1,22 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/src/hooks/useTheme";
 import { cn } from "@/src/utils/cn";
-import React from "react";
+import React, { useMemo } from "react";
 import {
   TouchableOpacity,
   TouchableOpacityProps,
   View,
   ViewProps,
 } from "react-native";
+import {
+  CARD_BASE_CLASSES,
+  CardVariant,
+  getCardVariantStyles,
+} from "./config/variants";
 
 interface AppCardProps extends ViewProps {
   onPress?: () => void;
   onLongPress?: () => void;
-  variant?: "elevated" | "outlined" | "flat";
+  variant?: CardVariant;
 }
 
 export const AppCard: React.FC<AppCardProps> = ({
@@ -24,34 +28,14 @@ export const AppCard: React.FC<AppCardProps> = ({
   style,
   ...props
 }) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors, isDark } = useTheme();
 
-  const variants = {
-    elevated: {
-      backgroundColor: theme.card,
-      borderColor: theme.border,
-      borderWidth: 1,
-      elevation: isDark ? 0 : 2,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0 : 0.05,
-      shadowRadius: 8,
-    },
-    outlined: {
-      backgroundColor: "transparent",
-      borderColor: theme.border,
-      borderWidth: 1,
-    },
-    flat: {
-      backgroundColor: theme.surface,
-    },
-  };
+  const variantStyle = useMemo(
+    () => getCardVariantStyles(variant, isDark, colors),
+    [variant, isDark, colors],
+  );
 
-  const commonClasses = cn("rounded-2xl p-4", className);
-  const variantStyle = variants[variant];
-
+  const commonClasses = cn(CARD_BASE_CLASSES, className);
   const isInteractive = onPress || onLongPress;
 
   if (isInteractive) {

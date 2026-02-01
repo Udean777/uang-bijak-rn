@@ -1,7 +1,6 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -35,9 +34,7 @@ export const FilterSheet = ({
   rangeMode,
   onRangeModeChange,
 }: FilterSheetProps) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors: theme } = useTheme();
 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 

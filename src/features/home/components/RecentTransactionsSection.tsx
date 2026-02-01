@@ -2,6 +2,7 @@ import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Transaction } from "@/src/types/transaction";
 import React from "react";
 import { View } from "react-native";
@@ -11,8 +12,6 @@ interface RecentTransactionsSectionProps {
   isLoading: boolean;
   onSeeAllPress: () => void;
   onTransactionPress: (item: Transaction) => void;
-  theme: any;
-  isDark: boolean;
 }
 
 export const RecentTransactionsSection = ({
@@ -20,9 +19,9 @@ export const RecentTransactionsSection = ({
   isLoading,
   onSeeAllPress,
   onTransactionPress,
-  theme,
-  isDark,
 }: RecentTransactionsSectionProps) => {
+  const { colors, isDark } = useTheme();
+
   return (
     <View className="mb-32">
       <View className="flex-row justify-between items-center mb-4">
@@ -53,8 +52,8 @@ export const RecentTransactionsSection = ({
         <View
           className="py-6 border border-dashed rounded-2xl"
           style={{
-            backgroundColor: theme.surface,
-            borderColor: theme.border,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
           }}
         >
           <EmptyState
@@ -70,8 +69,8 @@ export const RecentTransactionsSection = ({
               key={t.id}
               className="rounded-xl overflow-hidden border shadow-sm"
               style={{
-                backgroundColor: theme.surface,
-                borderColor: theme.border,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
                 shadowOpacity: isDark ? 0.3 : 0.1,
               }}
             >

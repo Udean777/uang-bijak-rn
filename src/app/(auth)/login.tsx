@@ -1,14 +1,12 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
-import { AuthService } from "@/src/services/authService";
+import { useLogin } from "@/src/features/auth/hooks/useLogin";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import * as Google from "expo-auth-session/providers/google";
 import { Link } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -16,78 +14,28 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { colors } = useTheme();
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-  });
-
-  useEffect(() => {
-    if (response?.type === "success") {
-      const { id_token } = response.params;
-      if (id_token) {
-        handleGoogleSignIn(id_token);
-      }
-    } else if (response?.type === "error") {
-      Toast.show({
-        type: "error",
-        text1: "Gagal",
-        text2: "Login Google Dibatalkan",
-      });
-    }
-  }, [response]);
-
-  const handleEmailLogin = async () => {
-    if (!email || !password) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Mohon isi email dan password",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await AuthService.login(email, password);
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal Masuk", text2: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async (token: string) => {
-    setIsLoading(true);
-    try {
-      await AuthService.loginWithGoogle(token);
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Google Error",
-        text2: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    isLoading,
+    handleEmailLogin,
+    googleRequest,
+    promptGoogleSignIn,
+  } = useLogin();
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
-      style={{ backgroundColor: theme.background }}
+      style={{ backgroundColor: colors.background }}
     >
       <ScrollView
         contentContainerStyle={{
@@ -95,6 +43,7 @@ export default function LoginScreen() {
           justifyContent: "center",
           padding: 24,
         }}
+        keyboardShouldPersistTaps="handled"
       >
         <View className="mb-8">
           <AppText variant="h1" weight="bold" className="mb-2">
@@ -131,24 +80,24 @@ export default function LoginScreen() {
         <View className="flex-row items-center my-6">
           <View
             className="flex-1 h-[1px]"
-            style={{ backgroundColor: theme.border }}
+            style={{ backgroundColor: colors.border }}
           />
           <AppText variant="caption" className="mx-4">
             atau
           </AppText>
           <View
             className="flex-1 h-[1px]"
-            style={{ backgroundColor: theme.border }}
+            style={{ backgroundColor: colors.border }}
           />
         </View>
 
         <AppButton
           title="Lanjutkan dengan Google"
           variant="outline"
-          disabled={!request || isLoading}
-          onPress={() => promptAsync()}
+          disabled={!googleRequest || isLoading}
+          onPress={promptGoogleSignIn}
           leftIcon={
-            <Ionicons name="logo-google" size={20} color={theme.text} />
+            <Ionicons name="logo-google" size={20} color={colors.text} />
           }
         />
 

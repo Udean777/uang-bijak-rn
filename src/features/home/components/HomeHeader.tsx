@@ -1,23 +1,22 @@
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
 interface HomeHeaderProps {
   displayName: string;
-  isDark: boolean;
   toggleColorScheme: () => void;
   onMenuPress: () => void;
-  theme: any;
 }
 
 export const HomeHeader = ({
   displayName,
-  isDark,
   toggleColorScheme,
   onMenuPress,
-  theme,
 }: HomeHeaderProps) => {
+  const { colors, isDark } = useTheme();
+
   return (
     <View className="flex-row justify-between items-center mb-6">
       <View>
@@ -31,22 +30,22 @@ export const HomeHeader = ({
           onPress={toggleColorScheme}
           className="w-10 h-10 rounded-full items-center justify-center border"
           style={{
-            backgroundColor: theme.surface,
-            borderColor: theme.border,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
           }}
         >
           <Ionicons
             name={isDark ? "sunny" : "moon"}
             size={20}
-            color={theme.icon}
+            color={colors.icon}
           />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={onMenuPress}
           className="w-10 h-10 rounded-full items-center justify-center border shadow-sm"
           style={{
-            backgroundColor: theme.surface,
-            borderColor: theme.border,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
             shadowOpacity: isDark ? 0.3 : 0.1,
           }}
         >

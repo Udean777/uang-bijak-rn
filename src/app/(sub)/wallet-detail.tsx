@@ -1,141 +1,34 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
-import { db } from "@/src/config/firebase";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
 import { EditWalletSheet } from "@/src/features/wallets/components/EditWalletSheet";
-import { TransactionService } from "@/src/services/transactionService";
-import { WalletService } from "@/src/services/walletService";
+import {
+  formatRupiah,
+  useWalletDetailScreen,
+} from "@/src/features/wallets/hooks/useWalletDetailScreen";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { doc, onSnapshot } from "firebase/firestore";
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
-import Toast from "react-native-toast-message";
-
-import { Transaction } from "@/src/types/transaction";
-import { Wallet } from "@/src/types/wallet";
-
-const formatRupiah = (val: number) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(val);
 
 export default function WalletDetailScreen() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const params = useLocalSearchParams();
+  const { colors: theme } = useTheme();
 
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showEditSheet, setShowEditSheet] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const walletId = useMemo(() => {
-    if (params.id) return Array.isArray(params.id) ? params.id[0] : params.id;
-    if (typeof params.data === "string") {
-      try {
-        return JSON.parse(params.data).id;
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }, [params]);
-
-  const [wallet, setWallet] = useState<Wallet | null>(() => {
-    if (typeof params.data === "string") {
-      try {
-        return JSON.parse(params.data);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  });
-
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-
-  useEffect(() => {
-    if (!walletId) return;
-
-    const unsub = onSnapshot(
-      doc(db, "wallets", walletId),
-      (docSnap) => {
-        if (docSnap.exists()) {
-          setWallet({ id: docSnap.id, ...docSnap.data() } as Wallet);
-        } else {
-          setWallet(null);
-        }
-      },
-      (error) => {
-        console.error("[WalletDetail] Snapshot error:", error);
-      },
-    );
-
-    return () => unsub();
-  }, [walletId]);
-
-  useEffect(() => {
-    if (!user || !walletId) return;
-
-    const unsub = TransactionService.subscribeTransactions(
-      user.uid,
-      (allData) => {
-        const filtered = allData.filter((t) => t.walletId === walletId);
-        setTransactions(filtered);
-      },
-    );
-
-    return () => unsub();
-  }, [user, walletId]);
-
-  const handleBackNavigation = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace("/(tabs)");
-    }
-  };
-
-  const onDeletePress = () => {
-    setShowDeleteDialog(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!wallet) return;
-
-    setIsLoading(true);
-    try {
-      await WalletService.deleteWallet(wallet.id);
-      Toast.show({ type: "success", text1: "Dompet dihapus" });
-      setShowDeleteDialog(false);
-      router.replace("/(tabs)");
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!wallet && !isLoading) {
-      Toast.show({
-        type: "error",
-        text1: "Data Error",
-        text2: "Dompet tidak ditemukan",
-      });
-      handleBackNavigation();
-    }
-  }, [wallet]);
+  const {
+    wallet,
+    transactions,
+    isLoading,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    showEditSheet,
+    setShowEditSheet,
+    handleBack,
+    handleConfirmDelete,
+    handleTransactionPress,
+  } = useWalletDetailScreen();
 
   if (!wallet)
     return <View style={{ flex: 1, backgroundColor: theme.background }} />;
@@ -148,7 +41,7 @@ export default function WalletDetailScreen() {
         className="px-5 pb-4 border-b flex-row items-center justify-between"
         style={{ borderBottomColor: theme.divider }}
       >
-        <TouchableOpacity onPress={handleBackNavigation}>
+        <TouchableOpacity onPress={handleBack}>
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
         <AppText weight="bold" variant="h3">
@@ -201,10 +94,10 @@ export default function WalletDetailScreen() {
             variant="danger"
             className="flex-1"
             style={{
-              backgroundColor: Colors.light.danger,
-              borderColor: Colors.light.danger,
+              backgroundColor: theme.danger,
+              borderColor: theme.danger,
             }}
-            onPress={onDeletePress}
+            onPress={() => setShowDeleteDialog(true)}
             leftIcon={<Ionicons name="trash-outline" size={18} color="white" />}
           />
         </View>
@@ -240,12 +133,7 @@ export default function WalletDetailScreen() {
               >
                 <TransactionItem
                   transaction={t}
-                  onPress={(item) =>
-                    router.push({
-                      pathname: "/(modals)/transaction-detail",
-                      params: { data: JSON.stringify(item) },
-                    })
-                  }
+                  onPress={handleTransactionPress}
                 />
               </View>
             ))

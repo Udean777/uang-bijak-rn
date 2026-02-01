@@ -1,5 +1,4 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/src/hooks/useTheme";
 import React from "react";
 import { Modal, View } from "react-native";
 import { AppButton } from "../atoms/AppButton";
@@ -30,9 +29,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors, isDark } = useTheme();
 
   return (
     <Modal
@@ -43,11 +40,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     >
       <View
         className="flex-1 justify-center items-center p-5"
-        style={{ backgroundColor: theme.modalOverlay }}
+        style={{ backgroundColor: colors.modalOverlay }}
       >
         <View
           className="rounded-2xl p-6 w-full max-w-sm shadow-xl"
-          style={{ backgroundColor: theme.background }}
+          style={{ backgroundColor: colors.background }}
         >
           <AppText variant="h3" weight="bold" className="mb-2 text-center">
             {title}

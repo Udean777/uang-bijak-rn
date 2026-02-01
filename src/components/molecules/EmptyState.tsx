@@ -1,5 +1,4 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { View } from "react-native";
@@ -23,16 +22,15 @@ export const EmptyState = ({
   onAction,
   className,
 }: EmptyStateProps) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors } = useTheme();
 
   return (
     <View className={`items-center justify-center py-10 px-6 ${className}`}>
       <View
         className="w-24 h-24 rounded-full items-center justify-center mb-6"
-        style={{ backgroundColor: theme.surface }}
+        style={{ backgroundColor: colors.surface }}
       >
-        <Ionicons name={icon} size={48} color={theme.icon} />
+        <Ionicons name={icon} size={48} color={colors.icon} />
       </View>
 
       <AppText variant="h3" weight="bold" className="text-center mb-2">

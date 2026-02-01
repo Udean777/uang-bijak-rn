@@ -1,15 +1,11 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { useWallets } from "@/src/features/wallets/hooks/useWallets";
-import { Category, CategoryService } from "@/src/services/categoryService";
-import { TransactionService } from "@/src/services/transactionService";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Transaction } from "@/src/types/transaction";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -21,7 +17,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
+import { useEditTransactionSheet } from "../hooks/useEditTransactionSheet";
 
 interface EditTransactionSheetProps {
   visible: boolean;
@@ -34,64 +30,14 @@ export const EditTransactionSheet = ({
   onClose,
   transaction,
 }: EditTransactionSheetProps) => {
-  const { user } = useAuth();
+  const { colors, isDark } = useTheme();
   const { wallets } = useWallets();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
 
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [category, setCategory] = useState("");
-  const [selectedWalletId, setSelectedWalletId] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { formState, setters, categories, isLoading, handleUpdate } =
+    useEditTransactionSheet({ transaction, visible, onClose });
 
-  useEffect(() => {
-    if (transaction && visible) {
-      setAmount(transaction.amount.toString());
-      setNote(transaction.note || "");
-      setCategory(transaction.category);
-      setSelectedWalletId(transaction.walletId);
-    }
-  }, [transaction, visible]);
-
-  useEffect(() => {
-    if (user && visible && transaction) {
-      const unsub = CategoryService.subscribeCategories(user.uid, (data) => {
-        setCategories(data.filter((c) => c.type === transaction.type));
-      });
-      return () => unsub();
-    }
-  }, [user, visible, transaction]);
-
-  const handleUpdate = async () => {
-    if (!transaction || !amount || !selectedWalletId) return;
-
-    setIsLoading(true);
-    try {
-      await TransactionService.updateTransaction(transaction.id, transaction, {
-        amount: parseFloat(amount),
-        category,
-        note,
-        walletId: selectedWalletId,
-        type: transaction.type,
-        classification: transaction.classification,
-        date: new Date(transaction.date),
-      } as any);
-
-      Toast.show({ type: "success", text1: "Transaksi Diperbarui" });
-      onClose();
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Gagal Update",
-        text2: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { amount, note, category, selectedWalletId } = formState;
+  const { setAmount, setNote, setCategory, setSelectedWalletId } = setters;
 
   if (!transaction) return null;
 
@@ -107,18 +53,18 @@ export const EditTransactionSheet = ({
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View
               className="rounded-t-3xl h-[85%] w-full"
-              style={{ backgroundColor: theme.background }}
+              style={{ backgroundColor: colors.background }}
             >
               <View className="items-center pt-4 pb-2">
                 <View
                   className="w-12 h-1.5 rounded-full"
-                  style={{ backgroundColor: theme.border }}
+                  style={{ backgroundColor: colors.border }}
                 />
               </View>
 
               <View
                 className="px-5 pb-4 flex-row justify-between items-center border-b"
-                style={{ borderBottomColor: theme.divider }}
+                style={{ borderBottomColor: colors.divider }}
               >
                 <AppText variant="h3" weight="bold">
                   Edit Transaksi
@@ -126,9 +72,9 @@ export const EditTransactionSheet = ({
                 <TouchableOpacity
                   onPress={onClose}
                   className="p-2 rounded-full"
-                  style={{ backgroundColor: theme.surface }}
+                  style={{ backgroundColor: colors.surface }}
                 >
-                  <Ionicons name="close" size={20} color={theme.icon} />
+                  <Ionicons name="close" size={20} color={colors.icon} />
                 </TouchableOpacity>
               </View>
 
@@ -148,8 +94,8 @@ export const EditTransactionSheet = ({
                     <TextInput
                       className="text-4xl font-bold pb-2 border-b"
                       style={{
-                        color: theme.text,
-                        borderBottomColor: theme.divider,
+                        color: colors.text,
+                        borderBottomColor: colors.divider,
                       }}
                       keyboardType="numeric"
                       value={amount}
@@ -177,12 +123,12 @@ export const EditTransactionSheet = ({
                           style={{
                             backgroundColor:
                               category === cat.name
-                                ? theme.primary
-                                : theme.surface,
+                                ? colors.primary
+                                : colors.surface,
                             borderColor:
                               category === cat.name
-                                ? theme.primary
-                                : theme.border,
+                                ? colors.primary
+                                : colors.border,
                           }}
                         >
                           <AppText
@@ -216,15 +162,15 @@ export const EditTransactionSheet = ({
                             backgroundColor:
                               selectedWalletId === w.id
                                 ? isDark
-                                  ? theme.text
-                                  : "#111827" // gray-900
-                                : theme.surface,
+                                  ? colors.text
+                                  : "#111827"
+                                : colors.surface,
                             borderColor:
                               selectedWalletId === w.id
                                 ? isDark
-                                  ? theme.text
+                                  ? colors.text
                                   : "#111827"
-                                : theme.border,
+                                : colors.border,
                           }}
                         >
                           <AppText
@@ -237,7 +183,7 @@ export const EditTransactionSheet = ({
                             }
                             style={
                               selectedWalletId === w.id && isDark
-                                ? { color: theme.background }
+                                ? { color: colors.background }
                                 : undefined
                             }
                           >
@@ -262,7 +208,7 @@ export const EditTransactionSheet = ({
 
                 <View
                   className="p-5 border-t pb-10"
-                  style={{ borderTopColor: theme.divider }}
+                  style={{ borderTopColor: colors.divider }}
                 >
                   <AppButton
                     title="Simpan Perubahan"

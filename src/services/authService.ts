@@ -30,6 +30,7 @@ export const AuthService = {
       const cred = await signInWithEmailAndPassword(auth, email, pass);
       await AuthService._updateLastLogin(cred.user.uid);
       AnalyticsService.logEvent("login", { method: "email" });
+      return cred.user;
     } catch (error: any) {
       throw new Error("Email atau password salah.");
     }
@@ -60,6 +61,7 @@ export const AuthService = {
 
       await AuthService._handleSocialUser(user);
       AnalyticsService.logEvent("login", { method: "google" });
+      return user;
     } catch (error: any) {
       throw new Error("Gagal login Google: " + error.message);
     }

@@ -1,5 +1,5 @@
-import { Colors, Fonts } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Fonts } from "@/constants/theme";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs, useRouter } from "expo-router";
@@ -7,16 +7,14 @@ import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: "#3B82F6",
-        tabBarInactiveTintColor: theme.tabIconDefault,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: false,
         tabBarShowLabel: true,
         tabBarLabelStyle: {
@@ -32,7 +30,7 @@ export default function TabLayout() {
           height: "auto",
           marginHorizontal: 16,
           borderRadius: 24,
-          backgroundColor: theme.background,
+          backgroundColor: colors.background,
           borderTopWidth: 0,
           elevation: 8,
           shadowColor: "#000",
@@ -45,7 +43,7 @@ export default function TabLayout() {
           paddingBottom: 0,
           paddingTop: 0,
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.border,
+          borderColor: colors.border,
         },
       }}
     >

@@ -1,18 +1,14 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { useWallets } from "@/src/features/wallets/hooks/useWallets";
-import { TemplateService } from "@/src/services/templateService";
-import { TransactionTemplate } from "@/src/types/template";
+import { TemplateItem } from "@/src/features/templates/components/TemplateItem";
+import { useManageTemplatesScreen } from "@/src/features/templates/hooks/useManageTemplatesScreen";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   FlatList,
   Modal,
@@ -20,85 +16,25 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 export default function ManageTemplatesScreen() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const { wallets } = useWallets();
+  const { colors: theme } = useTheme();
 
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
-
-  const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
-  const [isModalVisible, setModalVisible] = useState(false);
-
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("Makan");
-  const [selectedWalletId, setSelectedWalletId] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [confirmVisible, setConfirmVisible] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState({
-    title: "",
-    message: "",
-    confirmText: "",
-    variant: "primary",
-    onConfirm: () => {},
-  });
-
-  useEffect(() => {
-    if (!user) return;
-    const unsub = TemplateService.subscribeTemplates(user.uid, setTemplates);
-    return () => unsub();
-  }, [user]);
-
-  useEffect(() => {
-    if (wallets.length > 0 && !selectedWalletId)
-      setSelectedWalletId(wallets[0].id);
-  }, [wallets, isModalVisible]);
-
-  const handleSave = async () => {
-    if (!name || !amount || !selectedWalletId) {
-      Toast.show({ type: "error", text1: "Data tidak lengkap" });
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await TemplateService.addTemplate({
-        userId: user!.uid,
-        name,
-        amount: parseFloat(amount),
-        type: "expense",
-        category,
-        walletId: selectedWalletId,
-        icon: "flash",
-      });
-      Toast.show({ type: "success", text1: "Shortcut dibuat!" });
-      setModalVisible(false);
-      setName("");
-      setAmount("");
-    } catch (e) {
-      Toast.show({ type: "error", text1: "Gagal" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = (id: string) => {
-    setConfirmConfig({
-      title: "Hapus Shortcut",
-      message: "Yakin ingin menghapus shortcut ini?",
-      confirmText: "Hapus",
-      variant: "danger",
-      onConfirm: async () => {
-        await TemplateService.deleteTemplate(id);
-        setConfirmVisible(false);
-      },
-    });
-    setConfirmVisible(true);
-  };
+  const {
+    templates,
+    isLoading,
+    wallets,
+    isModalVisible,
+    setModalVisible,
+    form,
+    updateForm,
+    confirmVisible,
+    setConfirmVisible,
+    confirmConfig,
+    handleSave,
+    handleDelete,
+    handleBack,
+  } = useManageTemplatesScreen();
 
   return (
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
@@ -110,7 +46,7 @@ export default function ManageTemplatesScreen() {
         }}
       >
         <View className="flex-row items-center gap-3">
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={handleBack}>
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
           <AppText variant="h3" weight="bold">
@@ -127,40 +63,12 @@ export default function ManageTemplatesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20 }}
         renderItem={({ item }) => (
-          <View
-            className="flex-row items-center justify-between p-4 rounded-2xl mb-3 border"
-            style={{
-              backgroundColor: theme.card,
-              borderColor: theme.border,
-            }}
-          >
-            <View className="flex-row items-center gap-3">
-              <View
-                className="w-10 h-10 rounded-full items-center justify-center"
-                style={{
-                  backgroundColor: isDark
-                    ? "rgba(234, 88, 12, 0.15)"
-                    : "#FFEDD5",
-                }}
-              >
-                <Ionicons name="flash" size={20} color="#EA580C" />
-              </View>
-              <View>
-                <AppText weight="bold">{item.name}</AppText>
-                <AppText variant="caption">
-                  {item.category} • Rp {item.amount.toLocaleString()}
-                </AppText>
-              </View>
-            </View>
-            <TouchableOpacity onPress={() => handleDelete(item.id)}>
-              <Ionicons name="trash-outline" size={20} color={theme.danger} />
-            </TouchableOpacity>
-          </View>
+          <TemplateItem item={item} onDelete={handleDelete} />
         )}
         ListEmptyComponent={
           <EmptyState
             title="Belum Ada Shortcut"
-            message="Buat tombol cepat untuk transaksi yang sering kamu lakukan. Contoh: 'Kopi Pagi', 'Parkir', 'Uang Kas'."
+            message="Buat tombol cepat untuk transaksi yang sering kamu lakukan."
             icon="flash-outline"
             actionLabel="Buat Shortcut"
             onAction={() => setModalVisible(true)}
@@ -191,21 +99,21 @@ export default function ManageTemplatesScreen() {
               <AppInput
                 label="Nama Shortcut"
                 placeholder="Contoh: Kopi Kenangan"
-                value={name}
-                onChangeText={setName}
+                value={form.name}
+                onChangeText={(v) => updateForm("name", v)}
               />
               <AppInput
                 label="Nominal (Rp)"
                 placeholder="0"
                 keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
+                value={form.amount}
+                onChangeText={(v) => updateForm("amount", v)}
               />
               <AppInput
                 label="Kategori"
                 placeholder="Makan, Transport, dll"
-                value={category}
-                onChangeText={setCategory}
+                value={form.category}
+                onChangeText={(v) => updateForm("category", v)}
               />
 
               <AppText variant="label" className="mb-2 my-2">
@@ -217,11 +125,11 @@ export default function ManageTemplatesScreen() {
                 className="mb-4 mt-2"
               >
                 {wallets.map((w) => {
-                  const isSelected = selectedWalletId === w.id;
+                  const isSelected = form.walletId === w.id;
                   return (
                     <TouchableOpacity
                       key={w.id}
-                      onPress={() => setSelectedWalletId(w.id)}
+                      onPress={() => updateForm("walletId", w.id)}
                       className="mr-2 px-4 py-2 rounded-full border"
                       style={{
                         backgroundColor: isSelected
@@ -258,6 +166,7 @@ export default function ManageTemplatesScreen() {
         onConfirm={confirmConfig.onConfirm}
         onCancel={() => setConfirmVisible(false)}
         confirmText={confirmConfig.confirmText}
+        variant="danger"
       />
     </View>
   );

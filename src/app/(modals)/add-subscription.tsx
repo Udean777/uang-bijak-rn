@@ -1,62 +1,26 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { SubscriptionService } from "@/src/services/subscriptionService";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useAddSubscription } from "@/src/features/subscriptions/hooks/useAddSubscription";
+import { useTheme } from "@/src/hooks/useTheme";
+import React from "react";
 import { ScrollView, View } from "react-native";
-import Toast from "react-native-toast-message";
 
 export default function AddSubscriptionScreen() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors: theme } = useTheme();
 
-  const [name, setName] = useState("");
-  const [cost, setCost] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSave = async () => {
-    if (!name || !cost || !dueDate) {
-      Toast.show({ type: "error", text1: "Mohon Lengkapi Data" });
-      return;
-    }
-
-    const dateNum = parseInt(dueDate);
-    if (isNaN(dateNum) || dateNum < 1 || dateNum > 31) {
-      Toast.show({
-        type: "error",
-        text1: "Tanggal tidak valid",
-        text2: "Masukkan tanggal 1-31",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await SubscriptionService.addSubscription(user!.uid, {
-        name,
-        cost: parseFloat(cost),
-        dueDate: dateNum,
-      });
-      Toast.show({ type: "success", text1: "Langganan Disimpan" });
-      router.back();
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onClose = () => {
-    router.back();
-  };
+  const {
+    name,
+    setName,
+    cost,
+    setCost,
+    dueDate,
+    setDueDate,
+    isLoading,
+    handleSave,
+    onClose,
+  } = useAddSubscription();
 
   return (
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
@@ -67,7 +31,7 @@ export default function AddSubscriptionScreen() {
         onClose={onClose}
       />
 
-      <ScrollView className="p-5">
+      <ScrollView className="p-5" keyboardShouldPersistTaps="handled">
         <AppInput
           label="Nama Layanan"
           placeholder="Netflix, Spotify, Indihome"

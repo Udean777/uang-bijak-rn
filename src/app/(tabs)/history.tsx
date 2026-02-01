@@ -1,85 +1,38 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import {
-  FilterSheet,
-  TimeRangeMode,
-} from "@/src/features/transactions/components/FilterSheet";
+import { FilterSheet } from "@/src/features/transactions/components/FilterSheet";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
-import { TransactionService } from "@/src/services/transactionService";
-import { Transaction } from "@/src/types/transaction";
+import { useHistoryScreen } from "@/src/features/transactions/hooks/useHistoryScreen";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { FlatList, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function HistoryScreen() {
-  const router = useRouter();
-  const { user } = useAuth();
+  const { colors: theme } = useTheme();
 
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
-    "all",
-  );
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [rangeMode, setRangeMode] = useState<TimeRangeMode>("custom");
-  const [showFilter, setShowFilter] = useState(false);
-  const [limitCount, setLimitCount] = useState(10);
-  const [hasMore, setHasMore] = useState(true);
-
-  useEffect(() => {
-    if (!user) return;
-    setLoading(true);
-    const unsub = TransactionService.subscribeTransactions(
-      user.uid,
-      (data) => {
-        setTransactions(data);
-        setHasMore(data.length === limitCount);
-        setLoading(false);
-      },
-      limitCount,
-    );
-    return () => unsub();
-  }, [user, limitCount]);
-
-  const filteredData = useMemo(() => {
-    return transactions.filter((t) => {
-      const query = searchQuery.toLowerCase();
-      const amountStr = t.amount.toLocaleString("id-ID");
-
-      const matchSearch =
-        t.category.toLowerCase().includes(query) ||
-        (t.note && t.note.toLowerCase().includes(query)) ||
-        amountStr.includes(query) ||
-        t.type.toLowerCase().includes(query);
-
-      const matchType = filterType === "all" || t.type === filterType;
-
-      if (rangeMode === "all") return matchSearch && matchType;
-
-      const tDate = new Date(t.date);
-      const matchDate =
-        tDate.getDate() === selectedDate.getDate() &&
-        tDate.getMonth() === selectedDate.getMonth() &&
-        tDate.getFullYear() === selectedDate.getFullYear();
-
-      return matchSearch && matchType && matchDate;
-    });
-  }, [transactions, searchQuery, filterType, selectedDate, rangeMode]);
-
-  const handlePress = (item: Transaction) => {
-    router.push({
-      pathname: "/(modals)/transaction-detail",
-      params: { data: JSON.stringify(item) },
-    });
-  };
+  const {
+    loading,
+    searchQuery,
+    setSearchQuery,
+    filterType,
+    setFilterType,
+    selectedDate,
+    setSelectedDate,
+    rangeMode,
+    setRangeMode,
+    showFilter,
+    setShowFilter,
+    filteredData,
+    hasMore,
+    limitCount,
+    handlePress,
+    loadMore,
+    clearSearch,
+    formattedDate,
+    isFilterActive,
+  } = useHistoryScreen();
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -109,7 +62,7 @@ export default function HistoryScreen() {
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <TouchableOpacity onPress={clearSearch}>
                 <Ionicons name="close-circle" size={18} color="#9CA3AF" />
               </TouchableOpacity>
             )}
@@ -119,37 +72,21 @@ export default function HistoryScreen() {
             onPress={() => setShowFilter(true)}
             className="w-12 h-12 items-center justify-center rounded-xl border"
             style={{
-              backgroundColor:
-                filterType !== "all" || rangeMode !== "all"
-                  ? "#2563EB"
-                  : theme.surface,
-              borderColor:
-                filterType !== "all" || rangeMode !== "all"
-                  ? "#2563EB"
-                  : theme.border,
+              backgroundColor: isFilterActive ? "#2563EB" : theme.surface,
+              borderColor: isFilterActive ? "#2563EB" : theme.border,
             }}
           >
             <Ionicons
               name="options-outline"
               size={22}
-              color={
-                filterType !== "all" || rangeMode !== "all"
-                  ? "white"
-                  : theme.text
-              }
+              color={isFilterActive ? "white" : theme.text}
             />
           </TouchableOpacity>
         </View>
 
         <View className="mt-3 flex-row items-center justify-between">
           <AppText variant="caption">
-            {rangeMode === "all"
-              ? "Semua Waktu"
-              : selectedDate.toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+            {rangeMode === "all" ? "Semua Waktu" : formattedDate}
           </AppText>
           <AppText variant="caption">Total: {filteredData.length} Data</AppText>
         </View>
@@ -195,7 +132,7 @@ export default function HistoryScreen() {
           ListFooterComponent={() =>
             hasMore && filteredData.length >= limitCount ? (
               <TouchableOpacity
-                onPress={() => setLimitCount((prev) => prev + 10)}
+                onPress={loadMore}
                 className="py-4 items-center justify-center rounded-xl border-2 border-dashed mx-5 mb-10"
                 style={{ borderColor: theme.border }}
               >

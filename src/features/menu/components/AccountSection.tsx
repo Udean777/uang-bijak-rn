@@ -5,19 +5,18 @@ import React from "react";
 import { TouchableOpacity } from "react-native";
 import { MenuSection } from "./MenuSection";
 
+import { useTheme } from "@/src/hooks/useTheme";
+
 interface AccountSectionProps {
   onLogout: () => void;
   onDeleteAccount: () => void;
-  theme: any;
-  isDark: boolean;
 }
 
 export const AccountSection = ({
   onLogout,
   onDeleteAccount,
-  theme,
-  isDark,
 }: AccountSectionProps) => {
+  const { colors: theme, isDark } = useTheme();
   return (
     <MenuSection title="Akun">
       <AppButton

@@ -1,18 +1,18 @@
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import React from "react";
 import { View } from "react-native";
 
 interface UserProfileHeaderProps {
   displayName: string;
   email: string;
-  isDark: boolean;
 }
 
 export const UserProfileHeader = ({
   displayName,
   email,
-  isDark,
 }: UserProfileHeaderProps) => {
+  const { isDark } = useTheme();
   return (
     <View className="flex-row items-center mb-8 pt-4">
       <View

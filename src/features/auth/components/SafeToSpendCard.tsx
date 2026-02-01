@@ -1,7 +1,6 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
+import { useTheme } from "@/src/hooks/useTheme";
 import { formatRupiah } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -30,9 +29,7 @@ export const SafeToSpendCard = ({
   const [infoType, setInfoType] = useState<
     "safeToSpend" | "balance" | "status" | null
   >(null);
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors: theme, isDark } = useTheme();
 
   const statusColors = {
     safe: "bg-green-600",

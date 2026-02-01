@@ -1,4 +1,5 @@
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Classification } from "../hooks/useTransactionForm";
@@ -6,16 +7,14 @@ import { Classification } from "../hooks/useTransactionForm";
 interface ClassificationPickerProps {
   classification: Classification;
   setClassification: (val: Classification) => void;
-  theme: any;
-  isDark: boolean;
 }
 
 export const ClassificationPicker = ({
   classification,
   setClassification,
-  theme,
-  isDark,
 }: ClassificationPickerProps) => {
+  const { colors, isDark } = useTheme();
+
   return (
     <View className="mb-6">
       <AppText variant="caption" weight="bold" className="uppercase mb-3">
@@ -31,15 +30,15 @@ export const ClassificationPicker = ({
                 ? isDark
                   ? "rgba(37, 99, 235, 0.1)"
                   : "#EFF6FF"
-                : theme.surface,
-            borderColor: classification === "need" ? "#3B82F6" : theme.border,
+                : colors.surface,
+            borderColor: classification === "need" ? "#3B82F6" : colors.border,
           }}
         >
           <AppText
             weight="bold"
             className="text-lg mb-1"
             style={{
-              color: classification === "need" ? "#3B82F6" : theme.text,
+              color: classification === "need" ? "#3B82F6" : colors.text,
             }}
           >
             Needs 🍞
@@ -56,15 +55,15 @@ export const ClassificationPicker = ({
                 ? isDark
                   ? "rgba(147, 51, 234, 0.1)"
                   : "#FAF5FF"
-                : theme.surface,
-            borderColor: classification === "want" ? "#A855F7" : theme.border,
+                : colors.surface,
+            borderColor: classification === "want" ? "#A855F7" : colors.border,
           }}
         >
           <AppText
             weight="bold"
             className="text-lg mb-1"
             style={{
-              color: classification === "want" ? "#A855F7" : theme.text,
+              color: classification === "want" ? "#A855F7" : colors.text,
             }}
           >
             Wants 🎮

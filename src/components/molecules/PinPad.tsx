@@ -1,10 +1,10 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useState } from "react";
-import { Dimensions, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { AppText } from "../atoms/AppText";
+import { PIN_KEY_SIZE, PIN_KEYS } from "./config/variants";
 
 interface PinPadProps {
   onVerify: (pin: string) => void;
@@ -14,10 +14,8 @@ interface PinPadProps {
   isSettingUp?: boolean;
   onBiometricPress?: () => void;
   showBiometricButton?: boolean;
+  error?: string; // Add explicit error prop support if needed by parent
 }
-
-const { width } = Dimensions.get("window");
-const KEY_SIZE = width / 5;
 
 export function PinPad({
   onVerify,
@@ -27,18 +25,20 @@ export function PinPad({
   isSettingUp = false,
   onBiometricPress,
   showBiometricButton = false,
+  error: externalError,
 }: PinPadProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors } = useTheme();
 
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
-  const [error, setError] = useState("");
+  const [internalError, setInternalError] = useState("");
+
+  const error = externalError || internalError;
 
   const handlePress = (key: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setError("");
+    setInternalError("");
 
     if (key === "backspace") {
       setPin((prev) => prev.slice(0, -1));
@@ -69,7 +69,7 @@ export function PinPad({
         if (pin === confirmPin) {
           onVerify(pin);
         } else {
-          setError("PIN tidak cocok. Ulangi lagi.");
+          setInternalError("PIN tidak cocok. Ulangi lagi.");
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           setPin("");
           setConfirmPin("");
@@ -80,21 +80,6 @@ export function PinPad({
       onVerify(pin);
     }
   };
-
-  const keys = [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "",
-    "0",
-    "backspace",
-  ];
 
   const displayTitle = isConfirming ? "Konfirmasi PIN" : title;
   const displaySubtitle = error
@@ -112,7 +97,7 @@ export function PinPad({
         <AppText
           variant="body"
           className="text-center"
-          style={{ color: error ? theme.danger : theme.text }}
+          style={{ color: error ? colors.danger : colors.text }}
         >
           {displaySubtitle}
         </AppText>
@@ -124,28 +109,28 @@ export function PinPad({
             key={i}
             className="w-4 h-4 rounded-full border"
             style={{
-              borderColor: theme.text,
-              backgroundColor: i < pin.length ? theme.text : "transparent",
+              borderColor: colors.text,
+              backgroundColor: i < pin.length ? colors.text : "transparent",
             }}
           />
         ))}
       </View>
 
       <View className="flex-row flex-wrap justify-center w-full max-w-[350px]">
-        {keys.map((k, i) => {
+        {PIN_KEYS.map((k, i) => {
           if (k === "") {
             if (showBiometricButton && onBiometricPress && !isSettingUp) {
               return (
                 <TouchableOpacity
                   key="bio-button"
                   className="items-center justify-center m-3"
-                  style={{ width: KEY_SIZE, height: KEY_SIZE }}
+                  style={{ width: PIN_KEY_SIZE, height: PIN_KEY_SIZE }}
                   onPress={onBiometricPress}
                 >
                   <Ionicons
                     name="finger-print"
                     size={32}
-                    color={theme.primary}
+                    color={colors.primary}
                   />
                 </TouchableOpacity>
               );
@@ -153,7 +138,11 @@ export function PinPad({
             return (
               <View
                 key={`spacer-${i}`}
-                style={{ width: KEY_SIZE, height: KEY_SIZE, margin: 12 }}
+                style={{
+                  width: PIN_KEY_SIZE,
+                  height: PIN_KEY_SIZE,
+                  margin: 12,
+                }}
               />
             );
           }
@@ -164,16 +153,16 @@ export function PinPad({
               onPress={() => handlePress(k)}
               className="items-center justify-center rounded-full m-3"
               style={{
-                width: KEY_SIZE,
-                height: KEY_SIZE,
-                backgroundColor: theme.card,
+                width: PIN_KEY_SIZE,
+                height: PIN_KEY_SIZE,
+                backgroundColor: colors.card,
               }}
             >
               {k === "backspace" ? (
                 <Ionicons
                   name="backspace-outline"
                   size={24}
-                  color={theme.text}
+                  color={colors.text}
                 />
               ) : (
                 <AppText variant="h2" weight="medium">

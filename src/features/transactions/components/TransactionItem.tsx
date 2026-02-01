@@ -1,6 +1,5 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Transaction } from "@/src/types/transaction";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
@@ -15,9 +14,7 @@ export const TransactionItem = ({
   transaction,
   onPress,
 }: TransactionItemProps) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors: theme, isDark } = useTheme();
 
   const isExpense = transaction.type === "expense";
 

@@ -1,5 +1,4 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/src/hooks/useTheme";
 import { cn } from "@/src/utils/cn";
 import React from "react";
 import {
@@ -9,11 +8,19 @@ import {
   View,
 } from "react-native";
 import { AppText } from "./AppText";
+import {
+  BUTTON_CONTAINER_BASE,
+  BUTTON_SIZES,
+  BUTTON_TEXT_COLORS,
+  BUTTON_VARIANTS,
+  ButtonSize,
+  ButtonVariant,
+} from "./config/variants";
 
 interface AppButtonProps extends TouchableOpacityProps {
   title: string;
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
-  size?: "sm" | "md" | "lg";
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
 }
@@ -29,64 +36,36 @@ export const AppButton: React.FC<AppButtonProps> = ({
   style,
   ...props
 }) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-
-  const containerBase = "flex-row items-center justify-center rounded-xl";
-
-  const containerVariants = {
-    primary: "bg-primary border border-primary",
-    secondary:
-      "bg-blue-100 dark:bg-blue-900 border border-blue-100 dark:border-blue-900",
-    outline: "bg-transparent border",
-    ghost: "bg-transparent border-transparent",
-    danger: "bg-danger border border-danger",
-  };
-
-  const variantStyles = {
-    outline: { borderColor: theme.border },
-  };
-
-  const sizes = {
-    sm: "py-2 px-3",
-    md: "py-3 px-4",
-    lg: "py-4 px-6",
-  };
-
-  const textColors = {
-    primary: "white",
-    secondary: "primary",
-    outline: "default",
-    ghost: "white",
-    danger: "white",
-  } as const;
+  const { colors } = useTheme();
 
   const isDisabled = disabled || isLoading;
+  const variantStyle =
+    variant === "outline" ? { borderColor: colors.border } : undefined;
 
   return (
     <TouchableOpacity
       className={cn(
-        containerBase,
-        containerVariants[variant],
-        sizes[size],
+        BUTTON_CONTAINER_BASE,
+        BUTTON_VARIANTS[variant],
+        BUTTON_SIZES[size],
         isDisabled && "opacity-50",
-        className
+        className,
       )}
-      style={[variantStyles[variant as keyof typeof variantStyles], style]}
+      style={[variantStyle, style]}
       disabled={isDisabled}
       activeOpacity={0.7}
       {...props}
     >
       {isLoading ? (
         <ActivityIndicator
-          color={variant === "outline" ? theme.primary : theme.textInverse}
+          color={variant === "outline" ? colors.primary : colors.textInverse}
         />
       ) : (
         <>
           {leftIcon && <View className="mr-2">{leftIcon}</View>}
           <AppText
             weight="bold"
-            color={textColors[variant]}
+            color={BUTTON_TEXT_COLORS[variant]}
             variant="body"
             className="text-center py-2"
           >

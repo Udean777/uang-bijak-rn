@@ -1,11 +1,10 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
-import { AuthService } from "@/src/services/authService";
-import { Link, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useRegister } from "@/src/features/auth/hooks/useRegister";
+import { useTheme } from "@/src/hooks/useTheme";
+import { Link } from "expo-router";
+import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -13,68 +12,26 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 export default function RegisterScreen() {
-  const router = useRouter();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { colors } = useTheme();
 
-  const handleRegister = async () => {
-    if (!fullName || !email || !password) {
-      Toast.show({
-        type: "error",
-        text1: "Gagal!",
-        text2: "Mohon isi semua kolom.",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      Toast.show({
-        type: "error",
-        text1: "Gagal!",
-        text2: "Password minimal 6 karakter.",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await AuthService.register({
-        email,
-        password,
-        fullName,
-      });
-
-      Toast.show({
-        type: "success",
-        text1: "Berhasil!",
-        text2: "Akun Anda telah dibuat.",
-      });
-
-      // Redirect ke main tabs (layout will redirect to PIN setup if needed)
-      router.replace("/(tabs)");
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Gagal!",
-        text2: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    fullName,
+    setFullName,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    isLoading,
+    handleRegister,
+  } = useRegister();
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
-      style={{ backgroundColor: theme.background }}
+      style={{ backgroundColor: colors.background }}
     >
       <ScrollView
         contentContainerStyle={{
@@ -82,12 +39,15 @@ export default function RegisterScreen() {
           justifyContent: "center",
           padding: 24,
         }}
+        keyboardShouldPersistTaps="handled"
       >
         <View className="mb-8">
           <AppText variant="h1" weight="bold" className="mb-2">
             Buat Akun Baru 🚀
           </AppText>
-          <AppText>Mulai perjalanan finansial sehat Anda hari ini.</AppText>
+          <AppText variant="body">
+            Mulai perjalanan finansial sehat Anda hari ini.
+          </AppText>
         </View>
 
         <View className="gap-y-4">
@@ -130,10 +90,12 @@ export default function RegisterScreen() {
         </View>
 
         <View className="flex-row justify-center mt-8 items-center">
-          <AppText>Sudah punya akun? </AppText>
+          <AppText variant="body">Sudah punya akun? </AppText>
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
-              <AppText weight="bold">Masuk</AppText>
+              <AppText variant="body" weight="bold">
+                Masuk
+              </AppText>
             </TouchableOpacity>
           </Link>
         </View>

@@ -1,55 +1,39 @@
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useMemo } from "react";
 import { View } from "react-native";
 import { BaseToastProps } from "react-native-toast-message";
 import { AppText } from "../atoms/AppText";
+import { ToastType, getToastStyles } from "./config/variants";
 
-const ToastLayout = ({ type, text1, text2 }: any) => {
-  const styles = {
-    success: {
-      bg: "bg-green-100",
-      border: "border-green-500",
-      icon: "checkmark-circle",
-      color: "text-green-700",
-    },
-    error: {
-      bg: "bg-red-100",
-      border: "border-red-500",
-      icon: "alert-circle",
-      color: "text-red-700",
-    },
-    info: {
-      bg: "bg-blue-100",
-      border: "border-blue-500",
-      icon: "information-circle",
-      color: "text-blue-700",
-    },
-  };
+const ToastLayout = ({
+  type,
+  text1,
+  text2,
+}: BaseToastProps & { type: ToastType }) => {
+  const { isDark } = useTheme();
 
-  const style = styles[type as keyof typeof styles] || styles.info;
+  const styles = useMemo(() => getToastStyles(type, isDark), [type, isDark]);
 
   return (
     <View
-      className={`w-[90%] flex-row items-center p-4 rounded-2xl border-l-4 shadow-sm bg-white ${style.border}`}
+      className={`w-[90%] flex-row items-center p-4 rounded-2xl border-l-4 shadow-sm ${styles.bg} ${styles.border}`}
     >
       <Ionicons
-        name={style.icon as any}
+        name={styles.icon as any}
         size={28}
-        className={style.color}
-        color={
-          type === "error"
-            ? "#EF4444"
-            : type === "success"
-              ? "#10B981"
-              : "#3B82F6"
-        }
+        className={styles.color}
+        color={styles.iconColor}
       />
       <View className="ml-3 flex-1">
-        <AppText weight="bold" className="text-gray-900">
+        <AppText weight="bold" className={styles.color}>
           {text1}
         </AppText>
         {text2 && (
-          <AppText variant="caption" className="text-gray-600 mt-1">
+          <AppText
+            variant="caption"
+            className={`${styles.color} mt-1 opacity-90`}
+          >
             {text2}
           </AppText>
         )}

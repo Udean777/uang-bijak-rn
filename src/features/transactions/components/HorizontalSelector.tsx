@@ -1,4 +1,5 @@
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 
@@ -8,8 +9,6 @@ interface HorizontalSelectorProps<T> {
   onSelect: (id: string) => void;
   labelExtractor: (item: T) => string;
   idExtractor: (item: T) => string;
-  theme: any;
-  isDark: boolean;
   label?: string;
   renderExtra?: () => React.ReactNode;
   activeBgColor?: string;
@@ -21,12 +20,12 @@ export const HorizontalSelector = <T,>({
   onSelect,
   labelExtractor,
   idExtractor,
-  theme,
-  isDark,
   label,
   renderExtra,
   activeBgColor,
 }: HorizontalSelectorProps<T>) => {
+  const { colors, isDark } = useTheme();
+
   return (
     <View className="mb-6">
       {label && (
@@ -41,17 +40,17 @@ export const HorizontalSelector = <T,>({
           const isActive = selectedId === itemId;
 
           let bgColor = isActive
-            ? activeBgColor || theme.primary
-            : theme.surface;
+            ? activeBgColor || colors.primary
+            : colors.surface;
           let borderColor = isActive
-            ? activeBgColor || theme.primary
-            : theme.border;
+            ? activeBgColor || colors.primary
+            : colors.border;
           let textColor = isActive ? "white" : "default";
 
           // Special case for dark mode with default grey-ish selections
           if (isActive && isDark && !activeBgColor) {
-            bgColor = theme.text;
-            borderColor = theme.text;
+            bgColor = colors.text;
+            borderColor = colors.text;
             textColor = "default";
           }
 
@@ -70,7 +69,7 @@ export const HorizontalSelector = <T,>({
                 color={textColor as any}
                 style={
                   isActive && isDark && !activeBgColor
-                    ? { color: theme.background }
+                    ? { color: colors.background }
                     : undefined
                 }
               >

@@ -1,5 +1,3 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
@@ -10,15 +8,15 @@ import { ClassificationPicker } from "@/src/features/transactions/components/Cla
 import { HorizontalSelector } from "@/src/features/transactions/components/HorizontalSelector";
 import { TransactionTypePicker } from "@/src/features/transactions/components/TransactionTypePicker";
 import { useTransactionForm } from "@/src/features/transactions/hooks/useTransactionForm";
+import { useTheme } from "@/src/hooks/useTheme";
+import { Wallet } from "@/src/types/wallet";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function AddTransactionScreen() {
   const params = useLocalSearchParams();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors, isDark } = useTheme();
 
   const {
     type,
@@ -49,7 +47,7 @@ export default function AddTransactionScreen() {
   } = useTransactionForm({ editDataParam: params.editData as string });
 
   return (
-    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <ScreenLoader
         visible={isLoading}
         text={isEditMode ? "Updating..." : "Menyimpan..."}
@@ -64,12 +62,7 @@ export default function AddTransactionScreen() {
       />
 
       <ScrollView className="flex-1 p-5">
-        <TransactionTypePicker
-          type={type}
-          setType={setType}
-          theme={theme}
-          isDark={isDark}
-        />
+        <TransactionTypePicker type={type} setType={setType} />
 
         <View className="mb-6">
           <AppText variant="caption" weight="bold" className="uppercase mb-2">
@@ -77,10 +70,10 @@ export default function AddTransactionScreen() {
           </AppText>
           <TextInput
             className={`text-4xl font-bold pb-2 border-b ${isDark ? "text-white" : "text-[#333333]"}`}
-            style={{ borderBottomColor: theme.divider }}
+            style={{ borderBottomColor: colors.divider }}
             keyboardType="numeric"
             placeholder="0"
-            placeholderTextColor={theme.icon}
+            placeholderTextColor={colors.icon}
             value={amount}
             onChangeText={setAmount}
             autoFocus={!isEditMode}
@@ -95,12 +88,10 @@ export default function AddTransactionScreen() {
             idExtractor={(c) => c.name}
             labelExtractor={(c) => c.name}
             onSelect={setCategory}
-            theme={theme}
-            isDark={isDark}
             renderExtra={() => (
               <TouchableOpacity
                 className="mr-3 px-4 py-2 rounded-full border border-dashed justify-center"
-                style={{ borderColor: theme.border }}
+                style={{ borderColor: colors.border }}
                 onPress={() => setCategoryModalVisible(true)}
               >
                 <AppText weight="bold">+ Baru</AppText>
@@ -113,8 +104,6 @@ export default function AddTransactionScreen() {
           <ClassificationPicker
             classification={classification}
             setClassification={setClassification}
-            theme={theme}
-            isDark={isDark}
           />
         )}
 
@@ -124,24 +113,20 @@ export default function AddTransactionScreen() {
               label="Dari Dompet"
               data={wallets}
               selectedId={selectedWalletId}
-              idExtractor={(w) => w.id}
-              labelExtractor={(w) => w.name}
+              idExtractor={(w: Wallet) => w.id}
+              labelExtractor={(w: Wallet) => w.name}
               onSelect={(id) => {
                 setSelectedWalletId(id);
                 if (targetWalletId === id) setTargetWalletId("");
               }}
-              theme={theme}
-              isDark={isDark}
             />
             <HorizontalSelector
               label="Ke Dompet"
-              data={wallets.filter((w) => w.id !== selectedWalletId)}
+              data={wallets.filter((w: Wallet) => w.id !== selectedWalletId)}
               selectedId={targetWalletId}
-              idExtractor={(w) => w.id}
-              labelExtractor={(w) => w.name}
+              idExtractor={(w: Wallet) => w.id}
+              labelExtractor={(w: Wallet) => w.name}
               onSelect={setTargetWalletId}
-              theme={theme}
-              isDark={isDark}
               activeBgColor="#3B82F6"
             />
           </>
@@ -150,11 +135,9 @@ export default function AddTransactionScreen() {
             label="Sumber Dana"
             data={wallets}
             selectedId={selectedWalletId}
-            idExtractor={(w) => w.id}
-            labelExtractor={(w) => w.name}
+            idExtractor={(w: Wallet) => w.id}
+            labelExtractor={(w: Wallet) => w.name}
             onSelect={setSelectedWalletId}
-            theme={theme}
-            isDark={isDark}
           />
         )}
 
@@ -171,7 +154,7 @@ export default function AddTransactionScreen() {
         </View>
       </ScrollView>
 
-      <View className="p-5 border-t" style={{ borderTopColor: theme.divider }}>
+      <View className="p-5 border-t" style={{ borderTopColor: colors.divider }}>
         <AppButton
           title={isEditMode ? "Update Transaksi" : "Simpan Transaksi"}
           onPress={handleSave}
@@ -194,7 +177,6 @@ export default function AddTransactionScreen() {
         categoryName={newCategoryName}
         setCategoryName={setNewCategoryName}
         type={type}
-        theme={theme}
       />
     </View>
   );

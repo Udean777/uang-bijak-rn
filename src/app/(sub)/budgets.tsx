@@ -1,16 +1,12 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { useBudgetTracking } from "@/src/hooks/useBudgetTracking";
-import { BudgetService } from "@/src/services/budgetService";
-import { Category, CategoryService } from "@/src/services/categoryService";
+import { BudgetItem } from "@/src/features/budgets/components/BudgetItem";
+import { useBudgetsScreen } from "@/src/features/budgets/hooks/useBudgetsScreen";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   FlatList,
   Modal,
@@ -18,121 +14,24 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 export default function BudgetsScreen() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors: theme } = useTheme();
 
-  const now = new Date();
-  const [selectedMonth] = useState(now.getMonth());
-  const [selectedYear] = useState(now.getFullYear());
-
-  const { budgets, isLoading } = useBudgetTracking(selectedMonth, selectedYear);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isAddModalVisible, setAddModalVisible] = useState(false);
-
-  // Form State
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [limit, setLimit] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    const unsub = CategoryService.subscribeCategories(user.uid, (data) => {
-      setCategories(data.filter((c) => c.type === "expense"));
-    });
-    return () => unsub();
-  }, [user]);
-
-  const handleSetBudget = async () => {
-    if (!selectedCategory || !limit) {
-      Toast.show({
-        type: "error",
-        text1: "Mohon pilih kategori dan isi limit",
-      });
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await BudgetService.setBudget(user!.uid, {
-        categoryName: selectedCategory,
-        limitAmount: parseFloat(limit),
-        month: selectedMonth,
-        year: selectedYear,
-      });
-      setAddModalVisible(false);
-      setSelectedCategory("");
-      setLimit("");
-      Toast.show({ type: "success", text1: "Budget berhasil diatur!" });
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const renderBudgetItem = ({ item }: { item: any }) => {
-    const percentage = Math.round(item.percentage * 100);
-    const isOverBudget = item.currentSpending > item.limitAmount;
-
-    return (
-      <View
-        className="p-5 rounded-3xl mb-4 border"
-        style={{
-          backgroundColor: theme.card,
-          borderColor: theme.border,
-        }}
-      >
-        <View className="flex-row justify-between items-center mb-4">
-          <View>
-            <AppText weight="bold" variant="h3">
-              {item.categoryName}
-            </AppText>
-            <AppText variant="caption">
-              Limit: Rp {item.limitAmount.toLocaleString("id-ID")}
-            </AppText>
-          </View>
-          <View className="items-end">
-            <AppText weight="bold" color={isOverBudget ? "error" : "default"}>
-              {percentage}%
-            </AppText>
-            <AppText variant="caption">Terpakai</AppText>
-          </View>
-        </View>
-
-        {/* Progress Bar */}
-        <View
-          className="h-3 w-full rounded-full mb-3"
-          style={{ backgroundColor: isDark ? "#333" : "#F3F4F6" }}
-        >
-          <View
-            className="h-full rounded-full"
-            style={{
-              width: `${percentage}%`,
-              backgroundColor: isOverBudget ? theme.danger : theme.primary,
-            }}
-          />
-        </View>
-
-        <View className="flex-row justify-between items-center">
-          <AppText variant="caption">
-            Sisa: Rp {Math.max(0, item.remaining).toLocaleString("id-ID")}
-          </AppText>
-          <TouchableOpacity
-            onPress={() => BudgetService.deleteBudget(item.id)}
-            className="p-1"
-          >
-            <Ionicons name="trash-outline" size={18} color={theme.danger} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
+  const {
+    budgets,
+    isSaving,
+    categories,
+    isAddModalVisible,
+    setAddModalVisible,
+    selectedCategory,
+    setSelectedCategory,
+    limit,
+    setLimit,
+    handleSetBudget,
+    handleDeleteBudget,
+    handleBack,
+  } = useBudgetsScreen();
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -140,7 +39,7 @@ export default function BudgetsScreen() {
         className="px-5 pb-4 border-b flex-row justify-between items-center"
         style={{ borderBottomColor: theme.divider }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+        <TouchableOpacity onPress={handleBack} className="p-2 -ml-2">
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
         <AppText variant="h3" weight="bold">
@@ -157,7 +56,9 @@ export default function BudgetsScreen() {
       <FlatList
         data={budgets}
         keyExtractor={(item) => item.id}
-        renderItem={renderBudgetItem}
+        renderItem={({ item }) => (
+          <BudgetItem item={item} onDelete={handleDeleteBudget} />
+        )}
         contentContainerStyle={{ padding: 20 }}
         ListEmptyComponent={
           <View className="items-center py-20">

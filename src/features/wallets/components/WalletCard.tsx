@@ -1,5 +1,5 @@
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Wallet } from "@/src/types/wallet";
 import { formatRupiah } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,8 +12,7 @@ interface WalletCardProps {
 }
 
 export const WalletCard = ({ wallet, onPress }: WalletCardProps) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { isDark } = useTheme();
 
   const getIcon = () => {
     switch (wallet.type) {

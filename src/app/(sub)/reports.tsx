@@ -1,23 +1,10 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
-import { db } from "@/src/config/firebase";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { ExportService } from "@/src/services/ExportService";
-import { Transaction } from "@/src/types/transaction";
+import { useReportsScreen } from "@/src/features/reports/hooks/useReportsScreen";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
-import { useEffect, useState } from "react";
+import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
-import Toast from "react-native-toast-message";
 
 const MONTH_NAMES = [
   "Januari",
@@ -34,173 +21,31 @@ const MONTH_NAMES = [
   "Desember",
 ];
 
-interface CategoryData {
-  category: string;
-  amount: number;
-  color: string;
-}
-
-const CATEGORY_COLORS = [
-  "#3B82F6",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#EC4899",
-  "#06B6D4",
-  "#84CC16",
-  "#F97316",
-  "#6366F1",
-];
-
 export default function ReportsScreen() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors: theme, isDark } = useTheme();
 
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
-
-  // Subscribe to transactions
-  useEffect(() => {
-    if (!user) return;
-
-    const startDate = new Date(selectedYear, selectedMonth, 1).getTime();
-    const endDate = new Date(
-      selectedYear,
-      selectedMonth + 1,
-      0,
-      23,
-      59,
-      59,
-      999,
-    ).getTime();
-
-    const q = query(
-      collection(db, "transactions"),
-      where("userId", "==", user.uid),
-      orderBy("date", "desc"),
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const txs = snapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }) as Transaction)
-          .filter((t) => t.date >= startDate && t.date <= endDate);
-        setTransactions(txs);
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error("[Reports] Snapshot error:", error);
-        setIsLoading(false);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [user, selectedMonth, selectedYear]);
-
-  // Calculate summary
-  const totalIncome = transactions
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalExpense = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const needsTotal = transactions
-    .filter((t) => t.type === "expense" && t.classification === "need")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const wantsTotal = transactions
-    .filter((t) => t.type === "expense" && t.classification === "want")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  // Calculate category breakdown
-  const categoryData: CategoryData[] = [];
-  const categoryMap: Record<string, number> = {};
-
-  transactions
-    .filter((t) => t.type === "expense")
-    .forEach((t) => {
-      categoryMap[t.category] = (categoryMap[t.category] || 0) + t.amount;
-    });
-
-  Object.entries(categoryMap)
-    .sort((a, b) => b[1] - a[1])
-    .forEach(([category, amount], index) => {
-      categoryData.push({
-        category,
-        amount,
-        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-      });
-    });
-
-  const pieData = categoryData.map((c) => ({
-    value: c.amount,
-    color: c.color,
-    text: c.category,
-  }));
-
-  const goToPreviousMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(selectedYear - 1);
-    } else {
-      setSelectedMonth(selectedMonth - 1);
-    }
-  };
-
-  const goToNextMonth = () => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-
-    if (selectedYear === currentYear && selectedMonth === currentMonth) {
-      return; // Don't go beyond current month
-    }
-
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(selectedYear + 1);
-    } else {
-      setSelectedMonth(selectedMonth + 1);
-    }
-  };
-
-  const handleExport = async () => {
-    if (!user) return;
-    setIsExporting(true);
-    try {
-      await ExportService.exportMonthlySummaryToCSV(
-        user.uid,
-        selectedYear,
-        selectedMonth + 1,
-      );
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Export Gagal",
-        text2: error.message,
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  const {
+    selectedMonth,
+    selectedYear,
+    transactions,
+    isLoading,
+    isExporting,
+    totalIncome,
+    totalExpense,
+    needsTotal,
+    wantsTotal,
+    categoryData,
+    pieData,
+    goToPreviousMonth,
+    goToNextMonth,
+    handleExport,
+    isCurrentMonth,
+    handleBack,
+  } = useReportsScreen();
 
   const formatCurrency = (amount: number) => {
     return `Rp ${amount.toLocaleString("id-ID")}`;
   };
-
-  const isCurrentMonth =
-    selectedYear === new Date().getFullYear() &&
-    selectedMonth === new Date().getMonth();
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -209,7 +54,7 @@ export default function ReportsScreen() {
         className="px-5 pb-4 border-b flex-row justify-between items-center"
         style={{ borderBottomColor: theme.divider }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+        <TouchableOpacity onPress={handleBack} className="p-2 -ml-2">
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
         <AppText variant="h3" weight="bold">

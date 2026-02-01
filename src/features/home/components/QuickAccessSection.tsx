@@ -1,4 +1,5 @@
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import { TransactionTemplate } from "@/src/types/template";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
@@ -8,17 +9,15 @@ interface QuickAccessSectionProps {
   templates: TransactionTemplate[];
   onUseTemplate: (tpl: TransactionTemplate) => void;
   onManagePress: () => void;
-  theme: any;
-  isDark: boolean;
 }
 
 export const QuickAccessSection = ({
   templates,
   onUseTemplate,
   onManagePress,
-  theme,
-  isDark,
 }: QuickAccessSectionProps) => {
+  const { colors, isDark } = useTheme();
+
   if (templates.length === 0) return null;
 
   return (
@@ -49,8 +48,8 @@ export const QuickAccessSection = ({
             onPress={() => onUseTemplate(tpl)}
             className="mr-3 p-3 rounded-2xl border flex-row items-center gap-3 pr-5 shadow-sm"
             style={{
-              backgroundColor: theme.card,
-              borderColor: theme.border,
+              backgroundColor: colors.card,
+              borderColor: colors.border,
               shadowOpacity: isDark ? 0.2 : 0.05,
             }}
           >

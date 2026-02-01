@@ -1,4 +1,5 @@
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { TransactionType } from "../hooks/useTransactionForm";
@@ -6,16 +7,14 @@ import { TransactionType } from "../hooks/useTransactionForm";
 interface TransactionTypePickerProps {
   type: TransactionType;
   setType: (type: TransactionType) => void;
-  theme: any;
-  isDark: boolean;
 }
 
 export const TransactionTypePicker = ({
   type,
   setType,
-  theme,
-  isDark,
 }: TransactionTypePickerProps) => {
+  const { colors, isDark } = useTheme();
+
   const options: {
     label: string;
     value: TransactionType;
@@ -25,13 +24,13 @@ export const TransactionTypePicker = ({
     {
       label: "Pengeluaran",
       value: "expense",
-      activeColor: theme.danger,
+      activeColor: colors.danger,
       activeBg: isDark ? "rgba(239, 68, 68, 0.15)" : "#FEF2F2",
     },
     {
       label: "Pemasukan",
       value: "income",
-      activeColor: theme.success,
+      activeColor: colors.success,
       activeBg: isDark ? "rgba(16, 185, 129, 0.15)" : "#F0FDF4",
     },
     {
@@ -45,7 +44,7 @@ export const TransactionTypePicker = ({
   return (
     <View
       className="flex-row p-1 rounded-xl mb-6 shadow-sm"
-      style={{ backgroundColor: theme.surface }}
+      style={{ backgroundColor: colors.surface }}
     >
       {options.map((opt) => {
         const isActive = type === opt.value;
@@ -62,7 +61,7 @@ export const TransactionTypePicker = ({
                 color: isActive
                   ? opt.activeColor
                   : isDark
-                    ? theme.text
+                    ? colors.text
                     : "gray",
                 opacity: isActive ? 1 : 0.5,
               }}

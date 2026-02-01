@@ -4,14 +4,14 @@ import React from "react";
 import { Switch, TouchableOpacity, View } from "react-native";
 import { MenuSection } from "./MenuSection";
 
+import { useTheme } from "@/src/hooks/useTheme";
+
 interface SecuritySectionProps {
   isBiometricEnabled: boolean;
   onBiometricToggle: (val: boolean) => void;
   isNotificationsEnabled: boolean;
   onNotificationsToggle: (val: boolean) => void;
   onTestNotification: () => void;
-  theme: any;
-  isDark: boolean;
 }
 
 export const SecuritySection = ({
@@ -20,9 +20,8 @@ export const SecuritySection = ({
   isNotificationsEnabled,
   onNotificationsToggle,
   onTestNotification,
-  theme,
-  isDark,
 }: SecuritySectionProps) => {
+  const { colors: theme, isDark } = useTheme();
   return (
     <MenuSection title="Keamanan">
       <View

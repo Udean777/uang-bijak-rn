@@ -1,9 +1,8 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { TransactionItem } from "@/src/features/transactions/components/TransactionItem";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Transaction } from "@/src/types/transaction";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
@@ -31,12 +30,11 @@ export const TransactionHistorySheet = ({
   loading,
   onTransactionPress,
 }: TransactionHistorySheetProps) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors: theme } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
-    "all"
+    "all",
   );
 
   const filteredData = useMemo(() => {

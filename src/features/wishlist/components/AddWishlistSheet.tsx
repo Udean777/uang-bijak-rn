@@ -1,13 +1,11 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { WishlistService } from "@/src/services/wishlistService";
+import { useAddWishlist } from "@/src/features/wishlist/hooks/useAddWishlist";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React from "react";
 import {
   Keyboard,
   Modal,
@@ -16,7 +14,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 interface AddWishlistSheetProps {
   visible: boolean;
@@ -27,44 +24,18 @@ export const AddWishlistSheet = ({
   visible,
   onClose,
 }: AddWishlistSheetProps) => {
-  const { user } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors, isDark } = useTheme();
 
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [duration, setDuration] = useState(7);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSave = async () => {
-    if (!name || !price) {
-      Toast.show({ type: "error", text1: "Data tidak lengkap" });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await WishlistService.addWishlist(user!.uid, {
-        name,
-        price: parseFloat(price),
-        durationDays: duration,
-      });
-      Toast.show({
-        type: "success",
-        text1: "Masuk Wishlist",
-        text2: `Timer ${duration} hari dimulai!`,
-      });
-      setName("");
-      setPrice("");
-      setDuration(7);
-      onClose();
-    } catch (e) {
-      Toast.show({ type: "error", text1: "Gagal menyimpan" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    name,
+    setName,
+    price,
+    setPrice,
+    duration,
+    setDuration,
+    isLoading,
+    handleSave,
+  } = useAddWishlist(onClose);
 
   const DurationOption = ({ days, label }: { days: number; label: string }) => {
     const isSelected = duration === days;
@@ -77,13 +48,13 @@ export const AddWishlistSheet = ({
             ? isDark
               ? "rgba(147, 51, 234, 0.2)"
               : "#FAF5FF"
-            : theme.surface,
-          borderColor: isSelected ? "#9333EA" : theme.border,
+            : colors.surface,
+          borderColor: isSelected ? "#9333EA" : colors.border,
         }}
       >
         <AppText
           weight="bold"
-          style={{ color: isSelected ? "#9333EA" : theme.textSecondary }}
+          style={{ color: isSelected ? "#9333EA" : colors.textSecondary }}
         >
           {days} Hari
         </AppText>
@@ -102,12 +73,12 @@ export const AddWishlistSheet = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View
           className="flex-1 justify-end"
-          style={{ backgroundColor: theme.modalOverlay }}
+          style={{ backgroundColor: colors.modalOverlay }}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View
               className="rounded-t-3xl h-[70%] w-full"
-              style={{ backgroundColor: theme.background }}
+              style={{ backgroundColor: colors.background }}
             >
               <ModalHeader title="Wishlist Baru" onClose={onClose} />
 

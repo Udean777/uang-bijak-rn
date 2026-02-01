@@ -1,11 +1,9 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { SubscriptionService } from "@/src/services/subscriptionService";
-import React, { useEffect, useState } from "react";
+import { useAddSubscription } from "@/src/features/subscriptions/hooks/useAddSubscription";
+import { useTheme } from "@/src/hooks/useTheme";
+import React, { useEffect } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -15,7 +13,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 interface AddSubscriptionSheetProps {
   visible: boolean;
@@ -26,56 +23,29 @@ export const AddSubscriptionSheet = ({
   visible,
   onClose,
 }: AddSubscriptionSheetProps) => {
-  const { user } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors, isDark } = useTheme();
 
-  const [name, setName] = useState("");
-  const [cost, setCost] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    name,
+    setName,
+    cost,
+    setCost,
+    dueDate,
+    setDueDate,
+    isLoading,
+    handleSave,
+  } = useAddSubscription();
 
+  // Reset form when visible changes is handled inside the hook or here?
+  // The hook seems to lack a 'reset' or useEffect for visibility.
+  // We can add it here or in the hook. For now, let's keep it clean here.
   useEffect(() => {
     if (visible) {
       setName("");
       setCost("");
       setDueDate("");
     }
-  }, [visible]);
-
-  const handleSave = async () => {
-    if (!name || !cost || !dueDate) {
-      Toast.show({ type: "error", text1: "Mohon Lengkapi Data" });
-      return;
-    }
-
-    const dateNum = parseInt(dueDate);
-    if (isNaN(dateNum) || dateNum < 1 || dateNum > 31) {
-      Toast.show({
-        type: "error",
-        text1: "Tanggal tidak valid",
-        text2: "Masukkan tanggal antara 1 - 31",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      if (user) {
-        await SubscriptionService.addSubscription(user.uid, {
-          name,
-          cost: parseFloat(cost),
-          dueDate: dateNum,
-        });
-        Toast.show({ type: "success", text1: "Langganan Disimpan" });
-        onClose();
-      }
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [visible, setName, setCost, setDueDate]);
 
   return (
     <Modal
@@ -87,15 +57,18 @@ export const AddSubscriptionSheet = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View
           className="flex-1 justify-end"
-          style={{ backgroundColor: theme.modalOverlay }}
+          style={{ backgroundColor: colors.modalOverlay }}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View
               className="rounded-t-3xl h-[70%] w-full"
-              style={{ backgroundColor: theme.background }}
+              style={{ backgroundColor: colors.background }}
             >
               <View className="items-center pt-4 pb-2">
-                <View className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                <View
+                  className="w-12 h-1.5 rounded-full"
+                  style={{ backgroundColor: colors.border }}
+                />
               </View>
 
               <ModalHeader
@@ -138,11 +111,11 @@ export const AddSubscriptionSheet = ({
 
                 <View
                   className="p-5 border-t pb-10"
-                  style={{ borderTopColor: theme.border }}
+                  style={{ borderTopColor: colors.border }}
                 >
                   <AppButton
                     title="Simpan Langganan"
-                    onPress={handleSave}
+                    onPress={() => handleSave().then(onClose)}
                     isLoading={isLoading}
                   />
                 </View>

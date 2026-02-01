@@ -1,40 +1,29 @@
-import React from "react";
-import { View, StyleSheet } from "react-native";
-import { AppText } from "../atoms/AppText";
-import { SmartInsight } from "../../types/insight";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import React, { useMemo } from "react";
+import { View } from "react-native";
+import { SmartInsight } from "../../types/insight";
+import { AppText } from "../atoms/AppText";
+import { getInsightStyles } from "./config/variants";
 
 interface Props {
   insight: SmartInsight;
 }
 
 export const InsightCard: React.FC<Props> = ({ insight }) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors, isDark } = useTheme();
 
-  const getTypeStyles = () => {
-    switch (insight.type) {
-      case "danger":
-        return { bg: "#FEE2E2", text: "#EF4444", icon: "alert-circle" };
-      case "warning":
-        return { bg: "#FEF3C7", text: "#F59E0B", icon: "warning" };
-      case "success":
-        return { bg: "#D1FAE5", text: "#10B981", icon: "checkmark-circle" };
-      default:
-        return { bg: "#DBEAFE", text: "#3B82F6", icon: "information-circle" };
-    }
-  };
-
-  const styles = getTypeStyles();
+  const styles = useMemo(
+    () => getInsightStyles(insight.type, isDark, colors),
+    [insight.type, isDark, colors],
+  );
 
   return (
     <View
       className="p-4 rounded-2xl flex-row items-center gap-4 mb-3 border"
       style={{
-        backgroundColor: styles.bg + "20",
-        borderColor: styles.bg,
+        backgroundColor: styles.bg + (isDark ? "" : "20"), // Add opacity only for light mode if using hex
+        borderColor: styles.borderColor,
       }}
     >
       <View
@@ -47,7 +36,7 @@ export const InsightCard: React.FC<Props> = ({ insight }) => {
         <AppText weight="bold" style={{ color: styles.text }}>
           {insight.title}
         </AppText>
-        <AppText variant="caption" style={{ color: theme.text }}>
+        <AppText variant="caption" style={{ color: colors.text }}>
           {insight.message}
         </AppText>
       </View>

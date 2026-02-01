@@ -3,6 +3,8 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
+import { useTheme } from "@/src/hooks/useTheme";
+
 interface MenuListItemProps {
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
@@ -10,7 +12,6 @@ interface MenuListItemProps {
   title: string;
   description: string;
   onPress: () => void;
-  theme: any;
   disabled?: boolean;
 }
 
@@ -21,9 +22,9 @@ export const MenuListItem = ({
   title,
   description,
   onPress,
-  theme,
   disabled,
 }: MenuListItemProps) => {
+  const { colors: theme } = useTheme();
   return (
     <TouchableOpacity
       onPress={onPress}

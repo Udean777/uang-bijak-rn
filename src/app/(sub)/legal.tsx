@@ -1,6 +1,5 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScrollView, TouchableOpacity, View } from "react-native";
@@ -109,8 +108,7 @@ Untuk pertanyaan: support@uangbijak.app
 export default function LegalScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ type: "privacy" | "terms" }>();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const { colors: theme } = useTheme();
 
   const isPrivacy = params.type === "privacy";
   const title = isPrivacy ? "Kebijakan Privasi" : "Syarat & Ketentuan";

@@ -192,6 +192,35 @@ export const TransactionService = {
     );
   },
 
+  subscribeMonthlyTransactions: (
+    userId: string,
+    month: number,
+    year: number,
+    callback: (data: Transaction[]) => void,
+  ) => {
+    const startDate = new Date(year, month, 1).getTime();
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
+
+    const q = query(
+      collection(db, COLLECTION),
+      where("userId", "==", userId),
+      orderBy("date", "desc"),
+    );
+
+    return onSnapshot(
+      q,
+      (snapshot: QuerySnapshot) => {
+        const transactions = snapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }) as Transaction)
+          .filter((t) => t.date >= startDate && t.date <= endDate);
+        callback(transactions);
+      },
+      (error) => {
+        console.error("[TransactionService] Monthly Snapshot error:", error);
+      },
+    );
+  },
+
   deleteTransaction: async (transactionId: string, oldData: Transaction) => {
     try {
       await runTransaction(db, async (transaction) => {

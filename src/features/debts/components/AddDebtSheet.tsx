@@ -1,14 +1,12 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { DebtService } from "@/src/services/debtService";
+import { useAddDebt } from "@/src/features/debts/hooks/useAddDebt";
+import { useTheme } from "@/src/hooks/useTheme";
 import { DebtType } from "@/src/types/debt";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React from "react";
 import {
   Keyboard,
   Modal,
@@ -18,7 +16,6 @@ import {
   View,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import Toast from "react-native-toast-message";
 
 interface AddDebtSheetProps {
   visible: boolean;
@@ -26,59 +23,29 @@ interface AddDebtSheetProps {
 }
 
 export const AddDebtSheet = ({ visible, onClose }: AddDebtSheetProps) => {
-  const { user } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors, isDark } = useTheme();
 
-  const [personName, setPersonName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [type, setType] = useState<DebtType>("receivable");
-
-  const [dueDate, setDueDate] = useState(new Date());
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleConfirmDate = (date: Date) => {
-    setDueDate(date);
-    setDatePickerVisibility(false);
-  };
-
-  const handleSave = async () => {
-    if (!personName || !amount) {
-      Toast.show({ type: "error", text1: "Mohon lengkapi nama & nominal" });
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await DebtService.addDebt(user!.uid, {
-        personName,
-        amount: parseFloat(amount),
-        type,
-        dueDate: dueDate.getTime(),
-        note: "",
-      });
-      Toast.show({ type: "success", text1: "Data tersimpan" });
-
-      setPersonName("");
-      setAmount("");
-      setType("receivable");
-      setDueDate(new Date());
-      onClose();
-    } catch (e) {
-      Toast.show({ type: "error", text1: "Gagal menyimpan" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    personName,
+    setPersonName,
+    amount,
+    setAmount,
+    type,
+    setType,
+    dueDate,
+    isDatePickerVisible,
+    setDatePickerVisibility,
+    isLoading,
+    handleConfirmDate,
+    handleSave,
+  } = useAddDebt(onClose);
 
   const TypeOption = ({ val, label }: { val: DebtType; label: string }) => {
     const isSelected = type === val;
     const isReceivable = val === "receivable";
 
-    let bgColor = theme.surface;
-    let borderColor = theme.border;
+    let bgColor = colors.surface;
+    let borderColor = colors.border;
     let textColor: any = "default";
 
     if (isSelected) {
@@ -125,7 +92,7 @@ export const AddDebtSheet = ({ visible, onClose }: AddDebtSheetProps) => {
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View
               className="rounded-t-3xl h-[80%] w-full p-6"
-              style={{ backgroundColor: theme.background }}
+              style={{ backgroundColor: colors.background }}
             >
               <ModalHeader title="Catat Hutang/Piutang" onClose={onClose} />
 
@@ -157,8 +124,8 @@ export const AddDebtSheet = ({ visible, onClose }: AddDebtSheetProps) => {
                     onPress={() => setDatePickerVisibility(true)}
                     className="p-4 rounded-xl flex-row justify-between items-center border"
                     style={{
-                      backgroundColor: theme.surface,
-                      borderColor: theme.border,
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
                     }}
                   >
                     <AppText>
@@ -169,7 +136,7 @@ export const AddDebtSheet = ({ visible, onClose }: AddDebtSheetProps) => {
                     <Ionicons
                       name="calendar-outline"
                       size={20}
-                      color={theme.icon}
+                      color={colors.icon}
                     />
                   </TouchableOpacity>
                 </View>

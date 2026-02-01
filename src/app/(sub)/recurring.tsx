@@ -1,29 +1,20 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { useWallets } from "@/src/features/wallets/hooks/useWallets";
-import { Category, CategoryService } from "@/src/services/categoryService";
-import { RecurringService } from "@/src/services/recurringService";
-import {
-  RecurringFrequency,
-  RecurringTransaction,
-} from "@/src/types/recurring";
+import { RecurringItem } from "@/src/features/recurring/components/RecurringItem";
+import { useRecurringScreen } from "@/src/features/recurring/hooks/useRecurringScreen";
+import { useTheme } from "@/src/hooks/useTheme";
+import { RecurringFrequency } from "@/src/types/recurring";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   FlatList,
   Modal,
   ScrollView,
-  Switch,
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 const FREQUENCIES: { label: string; value: RecurringFrequency }[] = [
   { label: "Harian", value: "daily" },
@@ -33,139 +24,32 @@ const FREQUENCIES: { label: string; value: RecurringFrequency }[] = [
 ];
 
 export default function RecurringScreen() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const { wallets } = useWallets();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors: theme } = useTheme();
 
-  const [recurring, setRecurring] = useState<RecurringTransaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAddModalVisible, setAddModalVisible] = useState(false);
-
-  // Form State
-  const [type, setType] = useState<"income" | "expense">("expense");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
-  const [walletId, setWalletId] = useState("");
-  const [frequency, setFrequency] = useState<RecurringFrequency>("monthly");
-  const [note, setNote] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    const unsubR = RecurringService.subscribeRecurring(user.uid, (data) => {
-      setRecurring(data);
-      setIsLoading(false);
-    });
-    const unsubC = CategoryService.subscribeCategories(user.uid, setCategories);
-    return () => {
-      unsubR();
-      unsubC();
-    };
-  }, [user]);
-
-  useEffect(() => {
-    if (wallets.length > 0 && !walletId) {
-      setWalletId(wallets[0].id);
-    }
-  }, [wallets]);
-
-  const handleAddRecurring = async () => {
-    if (!amount || !category || !walletId) {
-      Toast.show({ type: "error", text1: "Mohon lengkapi data" });
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await RecurringService.addRecurring(user!.uid, {
-        walletId,
-        amount: parseFloat(amount),
-        type,
-        category,
-        frequency,
-        startDate: new Date(),
-        note,
-      });
-      setAddModalVisible(false);
-      resetForm();
-      Toast.show({ type: "success", text1: "Transaksi berulang ditambahkan!" });
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const resetForm = () => {
-    setAmount("");
-    setNote("");
-    if (wallets.length > 0) setWalletId(wallets[0].id);
-  };
-
-  const renderItem = ({ item }: { item: RecurringTransaction }) => {
-    const wallet = wallets.find((w) => w.id === item.walletId);
-    const freqLabel = FREQUENCIES.find(
-      (f) => f.value === item.frequency,
-    )?.label;
-
-    return (
-      <View
-        className="p-5 rounded-3xl mb-4 border"
-        style={{
-          backgroundColor: theme.card,
-          borderColor: theme.border,
-        }}
-      >
-        <View className="flex-row justify-between items-start mb-4">
-          <View className="flex-1">
-            <View className="flex-row items-center gap-2 mb-1">
-              <Ionicons
-                name={
-                  item.type === "income"
-                    ? "arrow-down-circle"
-                    : "arrow-up-circle"
-                }
-                size={20}
-                color={item.type === "income" ? "#10B981" : "#EF4444"}
-              />
-              <AppText weight="bold" variant="h3">
-                {item.category}
-              </AppText>
-            </View>
-            <AppText variant="caption">
-              {freqLabel} • Rp {item.amount.toLocaleString("id-ID")}
-            </AppText>
-            <AppText variant="caption" color="secondary">
-              Ke: {wallet?.name || "Dompet Terhapus"}
-            </AppText>
-          </View>
-          <Switch
-            value={item.isActive}
-            onValueChange={(val) => RecurringService.toggleActive(item.id, val)}
-          />
-        </View>
-
-        <View
-          className="flex-row justify-between items-center pt-2 border-t border-gray-100"
-          style={{ borderTopColor: theme.divider }}
-        >
-          <AppText variant="caption" color="secondary">
-            Next: {new Date(item.nextExecutionDate).toLocaleDateString("id-ID")}
-          </AppText>
-          <TouchableOpacity
-            onPress={() => RecurringService.deleteRecurring(item.id)}
-            className="p-1"
-          >
-            <Ionicons name="trash-outline" size={18} color={theme.danger} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
+  const {
+    recurring,
+    isSaving,
+    categories,
+    wallets,
+    isAddModalVisible,
+    setAddModalVisible,
+    type,
+    setType,
+    amount,
+    setAmount,
+    category,
+    setCategory,
+    walletId,
+    setWalletId,
+    frequency,
+    setFrequency,
+    note,
+    setNote,
+    handleAddRecurring,
+    handleDeleteRecurring,
+    handleToggleActive,
+    handleBack,
+  } = useRecurringScreen();
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -173,7 +57,7 @@ export default function RecurringScreen() {
         className="px-5 pb-4 border-b flex-row justify-between items-center"
         style={{ borderBottomColor: theme.divider }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+        <TouchableOpacity onPress={handleBack} className="p-2 -ml-2">
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
         <AppText variant="h3" weight="bold">
@@ -190,7 +74,14 @@ export default function RecurringScreen() {
       <FlatList
         data={recurring}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+        renderItem={({ item }) => (
+          <RecurringItem
+            item={item}
+            wallets={wallets}
+            onToggle={handleToggleActive}
+            onDelete={handleDeleteRecurring}
+          />
+        )}
         contentContainerStyle={{ padding: 20 }}
         ListEmptyComponent={
           <View className="items-center py-20">
@@ -222,7 +113,6 @@ export default function RecurringScreen() {
               onClose={() => setAddModalVisible(false)}
             />
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Type Selector */}
               <View
                 className="flex-row p-1 rounded-xl mb-6"
                 style={{ backgroundColor: theme.surface }}
@@ -302,28 +192,26 @@ export default function RecurringScreen() {
                 showsHorizontalScrollIndicator={false}
                 className="mb-6"
               >
-                {categories
-                  .filter((c) => c.type === type)
-                  .map((cat) => (
-                    <TouchableOpacity
-                      key={cat.id}
-                      onPress={() => setCategory(cat.name)}
-                      className="mr-3 px-4 py-2 rounded-full border"
-                      style={{
-                        backgroundColor:
-                          category === cat.name ? theme.primary : theme.surface,
-                        borderColor:
-                          category === cat.name ? theme.primary : theme.border,
-                      }}
+                {categories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    onPress={() => setCategory(cat.name)}
+                    className="mr-3 px-4 py-2 rounded-full border"
+                    style={{
+                      backgroundColor:
+                        category === cat.name ? theme.primary : theme.surface,
+                      borderColor:
+                        category === cat.name ? theme.primary : theme.border,
+                    }}
+                  >
+                    <AppText
+                      color={category === cat.name ? "white" : "default"}
+                      weight="bold"
                     >
-                      <AppText
-                        color={category === cat.name ? "white" : "default"}
-                        weight="bold"
-                      >
-                        {cat.name}
-                      </AppText>
-                    </TouchableOpacity>
-                  ))}
+                      {cat.name}
+                    </AppText>
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
 
               <AppText

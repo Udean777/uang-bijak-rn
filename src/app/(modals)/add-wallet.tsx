@@ -1,16 +1,13 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { WalletService } from "@/src/services/walletService";
+import { useAddWallet } from "@/src/features/wallets/hooks/useAddWallet";
+import { useTheme } from "@/src/hooks/useTheme";
 import { WalletType } from "@/src/types/wallet";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -18,108 +15,71 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
-const COLORS = [
-  "#2563EB",
-  "#16A34A",
-  "#DC2626",
-  "#9333EA",
-  "#EA580C",
-  "#0891B2",
-  "#1F2937",
-];
+const TypeOption = ({
+  type,
+  label,
+  icon,
+  selectedType,
+  onSelect,
+}: {
+  type: WalletType;
+  label: string;
+  icon: React.ReactElement;
+  selectedType: WalletType;
+  onSelect: (type: WalletType) => void;
+}) => {
+  const { colors, isDark } = useTheme();
+  const isActive = selectedType === type;
 
-export default function AddWalletScreen() {
-  const router = useRouter();
-  const params = useLocalSearchParams<{ type?: WalletType }>();
-  const { user } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
-
-  const [name, setName] = useState("");
-  const [initialBalance, setInitialBalance] = useState("");
-  const [selectedType, setSelectedType] = useState<WalletType>(
-    params.type || "bank",
-  );
-  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSave = async () => {
-    if (!name || !initialBalance) {
-      Toast.show({
-        type: "error",
-        text1: "Mohon Lengkapi Data",
-        text2: "Nama dan Saldo wajib diisi.",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const rawBalance = initialBalance.replace(/\./g, "");
-      await WalletService.createWallet(user!.uid, {
-        name,
-        type: selectedType,
-        initialBalance: parseFloat(rawBalance),
-        color: selectedColor,
-      });
-
-      Toast.show({
-        type: "success",
-        text1: "Berhasil!",
-        text2: "Dompet baru telah dibuat.",
-      });
-
-      // Kembali ke halaman sebelumnya
-      router.back();
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const TypeOption = ({
-    type,
-    label,
-    icon,
-  }: {
-    type: WalletType;
-    label: string;
-    icon: React.ReactNode;
-  }) => (
+  return (
     <TouchableOpacity
-      onPress={() => setSelectedType(type)}
+      onPress={() => onSelect(type)}
       className="flex-1 items-center p-3 rounded-xl border"
       style={{
-        backgroundColor:
-          selectedType === type
-            ? isDark
-              ? "rgba(37, 99, 235, 0.1)"
-              : "#EFF6FF"
-            : theme.surface,
-        borderColor: selectedType === type ? "#2563EB" : theme.border,
+        backgroundColor: isActive
+          ? isDark
+            ? "rgba(37, 99, 235, 0.1)"
+            : "#EFF6FF"
+          : colors.surface,
+        borderColor: isActive ? colors.primary : colors.border,
       }}
     >
-      {icon}
+      {React.cloneElement(icon, {
+        color: isActive ? colors.primary : colors.icon,
+      } as any)}
       <AppText
         variant="caption"
         className="mt-2"
-        weight={selectedType === type ? "bold" : "regular"}
-        style={{ color: selectedType === type ? "#2563EB" : theme.text }}
+        weight={isActive ? "bold" : "regular"}
+        style={{ color: isActive ? colors.primary : colors.text }}
       >
         {label}
       </AppText>
     </TouchableOpacity>
   );
+};
+
+export default function AddWalletScreen() {
+  const { colors, isDark } = useTheme();
+
+  const {
+    name,
+    setName,
+    initialBalance,
+    handleBalanceChange,
+    selectedType,
+    setSelectedType,
+    selectedColor,
+    setSelectedColor,
+    isLoading,
+    handleSave,
+    colors: availableColors,
+  } = useAddWallet();
 
   return (
-    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <ScreenLoader visible={isLoading} text="Membuat Dompet..." />
-
-      {/* Header standar tanpa custom close */}
       <ModalHeader title="Tambah Dompet" subtitle="Atur sumber dana baru" />
 
       <KeyboardAvoidingView
@@ -154,10 +114,7 @@ export default function AddWalletScreen() {
                 Saldo Awal
               </AppText>
               <AppText className="text-3xl font-bold" color="white">
-                Rp{" "}
-                {initialBalance
-                  ? parseInt(initialBalance).toLocaleString("id-ID")
-                  : "0"}
+                Rp {initialBalance || "0"}
               </AppText>
               <AppText className="font-medium mt-2" color="white">
                 {name || "Nama Dompet"}
@@ -178,12 +135,7 @@ export default function AddWalletScreen() {
               placeholder="0"
               keyboardType="numeric"
               value={initialBalance}
-              onChangeText={(val) => {
-                const numeric = val.replace(/\D/g, "");
-                setInitialBalance(
-                  numeric ? parseInt(numeric).toLocaleString("id-ID") : "",
-                );
-              }}
+              onChangeText={handleBalanceChange}
             />
 
             <View>
@@ -194,50 +146,30 @@ export default function AddWalletScreen() {
                 <TypeOption
                   type="bank"
                   label="Bank"
-                  icon={
-                    <Ionicons
-                      name="business"
-                      size={24}
-                      color={selectedType === "bank" ? "#2563EB" : theme.icon}
-                    />
-                  }
+                  selectedType={selectedType}
+                  onSelect={setSelectedType}
+                  icon={<Ionicons name="business" size={24} />}
                 />
                 <TypeOption
                   type="e-wallet"
                   label="E-Wallet"
-                  icon={
-                    <Ionicons
-                      name="phone-portrait"
-                      size={24}
-                      color={
-                        selectedType === "e-wallet" ? "#2563EB" : theme.icon
-                      }
-                    />
-                  }
+                  selectedType={selectedType}
+                  onSelect={setSelectedType}
+                  icon={<Ionicons name="phone-portrait" size={24} />}
                 />
                 <TypeOption
                   type="cash"
                   label="Tunai"
-                  icon={
-                    <Ionicons
-                      name="cash"
-                      size={24}
-                      color={selectedType === "cash" ? "#2563EB" : theme.icon}
-                    />
-                  }
+                  selectedType={selectedType}
+                  onSelect={setSelectedType}
+                  icon={<Ionicons name="cash" size={24} />}
                 />
                 <TypeOption
                   type="savings"
                   label="Tabungan"
-                  icon={
-                    <FontAwesome6
-                      name="piggy-bank"
-                      size={22}
-                      color={
-                        selectedType === "savings" ? "#2563EB" : theme.icon
-                      }
-                    />
-                  }
+                  selectedType={selectedType}
+                  onSelect={setSelectedType}
+                  icon={<FontAwesome6 name="piggy-bank" size={22} />}
                 />
               </View>
             </View>
@@ -247,15 +179,15 @@ export default function AddWalletScreen() {
                 Warna
               </AppText>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {COLORS.map((color) => (
+                {availableColors.map((color) => (
                   <TouchableOpacity
                     key={color}
                     onPress={() => setSelectedColor(color)}
-                    className={`w-10 h-10 rounded-full mr-3 border-2 ${selectedColor === color ? "border-gray-800" : "border-transparent"}`}
+                    className="w-10 h-10 rounded-full mr-3 border-2"
                     style={{
                       backgroundColor: color,
                       borderColor:
-                        selectedColor === color ? theme.text : "transparent",
+                        selectedColor === color ? colors.text : "transparent",
                     }}
                   />
                 ))}
@@ -266,7 +198,7 @@ export default function AddWalletScreen() {
 
         <View
           className="p-5 border-t pb-8"
-          style={{ borderTopColor: theme.divider }}
+          style={{ borderTopColor: colors.divider }}
         >
           <AppButton title="Simpan Dompet" onPress={handleSave} />
         </View>

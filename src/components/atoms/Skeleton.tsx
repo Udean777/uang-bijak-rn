@@ -9,11 +9,12 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import { SKELETON_VARIANTS, SkeletonVariant } from "./config/variants";
 
 interface SkeletonProps {
   width?: DimensionValue;
   height?: DimensionValue;
-  variant?: "box" | "circle" | "text";
+  variant?: SkeletonVariant;
   className?: string;
   style?: ViewStyle;
 }
@@ -31,27 +32,21 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     opacity.value = withRepeat(
       withSequence(
         withTiming(0.7, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.3, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+        withTiming(0.3, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
-      true
+      true,
     );
-  }, []);
+  }, [opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
 
-  const baseStyles = {
-    box: "rounded-xl",
-    circle: "rounded-full",
-    text: "rounded h-4 my-1",
-  };
-
   return (
     <Animated.View
       style={[{ width, height }, style, animatedStyle]}
-      className={cn("bg-gray-300", baseStyles[variant], className)}
+      className={cn("bg-gray-300", SKELETON_VARIANTS[variant], className)}
     />
   );
 };

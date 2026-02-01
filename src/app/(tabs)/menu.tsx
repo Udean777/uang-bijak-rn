@@ -1,5 +1,3 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { AccountSection } from "@/src/features/menu/components/AccountSection";
 import { MenuListItem } from "@/src/features/menu/components/MenuListItem";
@@ -9,15 +7,14 @@ import { UserProfileHeader } from "@/src/features/menu/components/UserProfileHea
 import { useMenuLogic } from "@/src/features/menu/hooks/useMenuLogic";
 import { AddSubscriptionSheet } from "@/src/features/subscriptions/components/AddSubscriptionSheet";
 import { SubscriptionList } from "@/src/features/subscriptions/components/SubscriptionList";
+import { useTheme } from "@/src/hooks/useTheme";
 import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, View } from "react-native";
 
 export default function MenuScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors: theme, isDark } = useTheme();
 
   const {
     userProfile,
@@ -49,7 +46,6 @@ export default function MenuScreen() {
         <UserProfileHeader
           displayName={userProfile?.displayName || "User"}
           email={userProfile?.email || ""}
-          isDark={isDark}
         />
 
         <MenuSection
@@ -68,7 +64,6 @@ export default function MenuScreen() {
             title="Target Menabung"
             description="Mencapai tujuan finansialmu"
             onPress={() => router.push("/(sub)/goals" as any)}
-            theme={theme}
           />
           <MenuListItem
             icon="pie-chart"
@@ -77,7 +72,6 @@ export default function MenuScreen() {
             title="Budget Kategori"
             description="Atur batasan pengeluaran"
             onPress={() => router.push("/(sub)/budgets" as any)}
-            theme={theme}
           />
           <MenuListItem
             icon="heart"
@@ -86,7 +80,6 @@ export default function MenuScreen() {
             title="Wishlist & Timer"
             description="Cegah belanja impulsif"
             onPress={() => router.push("/(sub)/wishlist")}
-            theme={theme}
           />
           <MenuListItem
             icon="people"
@@ -95,7 +88,6 @@ export default function MenuScreen() {
             title="Hutang & Piutang"
             description="Catat pinjaman teman"
             onPress={() => router.push("/(sub)/debts")}
-            theme={theme}
           />
           <MenuListItem
             icon="repeat"
@@ -104,7 +96,6 @@ export default function MenuScreen() {
             title="Transaksi Berulang"
             description="Otomasi pemasukan & pengeluaran"
             onPress={() => router.push("/(sub)/recurring" as any)}
-            theme={theme}
           />
           <MenuListItem
             icon="flash"
@@ -113,7 +104,6 @@ export default function MenuScreen() {
             title="Shortcut Transaksi"
             description="Template input cepat"
             onPress={() => router.push("/(sub)/manage-templates")}
-            theme={theme}
           />
         </MenuSection>
 
@@ -123,8 +113,6 @@ export default function MenuScreen() {
           isNotificationsEnabled={isNotificationsEnabled}
           onNotificationsToggle={toggleNotifications}
           onTestNotification={handleTestNotification}
-          theme={theme}
-          isDark={isDark}
         />
 
         <MenuSection title="Data">
@@ -135,7 +123,6 @@ export default function MenuScreen() {
             title="Laporan Bulanan"
             description="Ringkasan keuangan per bulan"
             onPress={() => router.push("/(sub)/reports" as any)}
-            theme={theme}
           />
           <MenuListItem
             icon="download-outline"
@@ -144,7 +131,6 @@ export default function MenuScreen() {
             title={isExporting ? "Mengexport..." : "Export Transaksi"}
             description="Download data dalam format CSV"
             onPress={handleExportData}
-            theme={theme}
             disabled={isExporting}
           />
         </MenuSection>
@@ -162,7 +148,6 @@ export default function MenuScreen() {
                 params: { type: "privacy" },
               } as any)
             }
-            theme={theme}
           />
           <MenuListItem
             icon="document-text"
@@ -176,15 +161,12 @@ export default function MenuScreen() {
                 params: { type: "terms" },
               } as any)
             }
-            theme={theme}
           />
         </MenuSection>
 
         <AccountSection
           onLogout={() => setShowLogoutDialog(true)}
           onDeleteAccount={() => setShowDeleteDialog(true)}
-          theme={theme}
-          isDark={isDark}
         />
       </ScrollView>
 

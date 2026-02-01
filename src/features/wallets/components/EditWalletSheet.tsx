@@ -1,12 +1,10 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
-import { WalletService } from "@/src/services/walletService";
+import { useTheme } from "@/src/hooks/useTheme";
 import { Wallet, WalletType } from "@/src/types/wallet";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -17,17 +15,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
-
-const COLORS = [
-  "#2563EB",
-  "#16A34A",
-  "#DC2626",
-  "#9333EA",
-  "#EA580C",
-  "#0891B2",
-  "#1F2937",
-];
+import { useEditWallet } from "../hooks/useEditWallet";
 
 interface EditWalletSheetProps {
   visible: boolean;
@@ -40,49 +28,13 @@ export const EditWalletSheet = ({
   onClose,
   wallet,
 }: EditWalletSheetProps) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const isDark = colorScheme === "dark";
+  const { colors, isDark } = useTheme();
 
-  const [name, setName] = useState("");
-  const [balance, setBalance] = useState("");
-  const [selectedType, setSelectedType] = useState<WalletType>("bank");
-  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { formState, setters, isLoading, handleUpdate, availableColors } =
+    useEditWallet({ wallet, visible, onClose });
 
-  useEffect(() => {
-    if (wallet && visible) {
-      setName(wallet.name);
-      setBalance(wallet.balance.toString());
-      setSelectedType(wallet.type);
-      setSelectedColor(wallet.color);
-    }
-  }, [wallet, visible]);
-
-  const handleUpdate = async () => {
-    if (!wallet) return;
-
-    setIsLoading(true);
-    try {
-      await WalletService.updateWallet(wallet.id, {
-        name,
-        type: selectedType,
-        color: selectedColor,
-        balance: parseFloat(balance),
-      } as any);
-
-      Toast.show({ type: "success", text1: "Dompet Berhasil Diupdate" });
-      onClose();
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Gagal Update",
-        text2: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { name, balance, selectedType, selectedColor } = formState;
+  const { setName, setBalance, setSelectedType, setSelectedColor } = setters;
 
   const TypeOption = ({
     type,
@@ -98,19 +50,24 @@ export const EditWalletSheet = ({
       className="flex-1 items-center p-3 rounded-xl border"
       style={{
         backgroundColor:
-          selectedType === type ? "rgba(37, 99, 235, 0.1)" : theme.background,
-        borderColor: selectedType === type ? theme.primary : theme.border,
+          selectedType === type
+            ? isDark
+              ? "rgba(37, 99, 235, 0.1)"
+              : "#EFF6FF"
+            : colors.background,
+        borderColor: selectedType === type ? colors.primary : colors.border,
       }}
     >
       <Ionicons
         name={icon}
         size={24}
-        color={selectedType === type ? theme.primary : theme.icon}
+        color={selectedType === type ? colors.primary : colors.icon}
       />
       <AppText
         variant="caption"
         className="mt-2"
         weight={selectedType === type ? "bold" : "regular"}
+        style={{ color: selectedType === type ? colors.primary : colors.text }}
       >
         {label}
       </AppText>
@@ -129,18 +86,18 @@ export const EditWalletSheet = ({
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View
               className="rounded-t-3xl h-[85%] w-full"
-              style={{ backgroundColor: theme.background }}
+              style={{ backgroundColor: colors.background }}
             >
               <View className="items-center pt-4 pb-2">
                 <View
                   className="w-12 h-1.5 rounded-full"
-                  style={{ backgroundColor: theme.border }}
+                  style={{ backgroundColor: colors.border }}
                 />
               </View>
 
               <View
                 className="px-5 pb-4 flex-row justify-between items-center border-b"
-                style={{ borderBottomColor: theme.divider }}
+                style={{ borderBottomColor: colors.divider }}
               >
                 <AppText variant="h3" weight="bold">
                   Edit Dompet
@@ -148,9 +105,9 @@ export const EditWalletSheet = ({
                 <TouchableOpacity
                   onPress={onClose}
                   className="p-2 rounded-full"
-                  style={{ backgroundColor: theme.surface }}
+                  style={{ backgroundColor: colors.surface }}
                 >
-                  <Ionicons name="close" size={20} color={theme.icon} />
+                  <Ionicons name="close" size={20} color={colors.icon} />
                 </TouchableOpacity>
               </View>
 
@@ -232,7 +189,7 @@ export const EditWalletSheet = ({
                         horizontal
                         showsHorizontalScrollIndicator={false}
                       >
-                        {COLORS.map((color) => (
+                        {availableColors.map((color) => (
                           <TouchableOpacity
                             key={color}
                             onPress={() => setSelectedColor(color)}
@@ -241,7 +198,7 @@ export const EditWalletSheet = ({
                               backgroundColor: color,
                               borderColor:
                                 selectedColor === color
-                                  ? theme.text
+                                  ? colors.text
                                   : "transparent",
                             }}
                           />
@@ -253,7 +210,7 @@ export const EditWalletSheet = ({
 
                 <View
                   className="p-5 border-t pb-10"
-                  style={{ borderTopColor: theme.divider }}
+                  style={{ borderTopColor: colors.divider }}
                 >
                   <AppButton
                     title="Simpan Perubahan"

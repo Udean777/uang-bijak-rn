@@ -1,5 +1,6 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
+import { useTheme } from "@/src/hooks/useTheme";
 import React from "react";
 import {
   Keyboard,
@@ -16,7 +17,6 @@ interface AddCategoryModalProps {
   categoryName: string;
   setCategoryName: (val: string) => void;
   type: "income" | "expense" | "transfer";
-  theme: any;
 }
 
 export const AddCategoryModal = ({
@@ -26,8 +26,9 @@ export const AddCategoryModal = ({
   categoryName,
   setCategoryName,
   type,
-  theme,
 }: AddCategoryModalProps) => {
+  const { colors } = useTheme();
+
   return (
     <Modal
       animationType="fade"
@@ -39,7 +40,7 @@ export const AddCategoryModal = ({
         <View className="flex-1 bg-black/50 justify-center items-center p-5">
           <View
             className="w-full rounded-2xl p-6 shadow-lg"
-            style={{ backgroundColor: theme.background }}
+            style={{ backgroundColor: colors.background }}
           >
             <AppText variant="h3" weight="bold" className="mb-2">
               Tambah Kategori
@@ -52,12 +53,12 @@ export const AddCategoryModal = ({
             <TextInput
               className="border rounded-xl p-4 mb-6 text-base"
               style={{
-                backgroundColor: theme.surface,
-                borderColor: theme.border,
-                color: theme.text,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                color: colors.text,
               }}
               placeholder="Contoh: Investasi, Parkir, Amal"
-              placeholderTextColor={theme.icon}
+              placeholderTextColor={colors.icon}
               value={categoryName}
               onChangeText={setCategoryName}
               autoFocus={true}

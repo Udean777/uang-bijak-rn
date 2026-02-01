@@ -1,4 +1,3 @@
-import { Colors } from "@/constants/theme";
 import { useThemeControl } from "@/hooks/use-color-scheme";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
@@ -12,6 +11,7 @@ import { RecentTransactionsSection } from "@/src/features/home/components/Recent
 import { WalletSection } from "@/src/features/home/components/WalletSection";
 import { useHomeData } from "@/src/features/home/hooks/useHomeData";
 import { TransactionHistorySheet } from "@/src/features/transactions/components/TransactionHistorySheet";
+import { useTheme } from "@/src/hooks/useTheme";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
@@ -19,9 +19,8 @@ import { RefreshControl, ScrollView, View } from "react-native";
 export default function HomeScreen() {
   const router = useRouter();
   const { userProfile } = useAuth();
-  const { colorScheme, toggleColorScheme } = useThemeControl();
-  const isDark = colorScheme === "dark";
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { toggleColorScheme } = useThemeControl();
+  const { colors } = useTheme();
 
   const {
     wallets,
@@ -49,7 +48,7 @@ export default function HomeScreen() {
   if (walletsLoading) {
     return (
       <View
-        style={{ flex: 1, backgroundColor: theme.background }}
+        style={{ flex: 1, backgroundColor: colors.background }}
         className="justify-center items-center p-5"
       >
         <Skeleton variant="circle" width={80} height={80} className="mb-4" />
@@ -62,15 +61,13 @@ export default function HomeScreen() {
   if (wallets.length === 0) {
     return (
       <View
-        style={{ flex: 1, backgroundColor: theme.background }}
+        style={{ flex: 1, backgroundColor: colors.background }}
         className="px-5"
       >
         <HomeHeader
           displayName={userProfile?.displayName || "Pengguna Baru"}
-          isDark={isDark}
           toggleColorScheme={toggleColorScheme}
           onMenuPress={() => router.push("/(tabs)/menu")}
-          theme={theme}
         />
         <View className="flex-1 justify-center -mt-20">
           <EmptyState
@@ -86,23 +83,21 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
         className="flex-1 px-5"
         refreshControl={
           <RefreshControl
             refreshing={walletsLoading}
             onRefresh={() => {}}
-            tintColor={theme.primary}
+            tintColor={colors.primary}
           />
         }
       >
         <HomeHeader
           displayName={userProfile?.displayName || "Pengguna"}
-          isDark={isDark}
           toggleColorScheme={toggleColorScheme}
           onMenuPress={() => router.push("/(tabs)/menu")}
-          theme={theme}
         />
 
         <View className="mb-8">
@@ -130,8 +125,6 @@ export default function HomeScreen() {
           templates={templates}
           onUseTemplate={handleUseTemplate}
           onManagePress={() => router.push("/(sub)/manage-templates")}
-          theme={theme}
-          isDark={isDark}
         />
 
         <InsightSection insights={insights} />
@@ -146,8 +139,6 @@ export default function HomeScreen() {
               params: { data: JSON.stringify(item) },
             })
           }
-          theme={theme}
-          isDark={isDark}
         />
       </ScrollView>
 

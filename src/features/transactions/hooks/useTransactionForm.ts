@@ -1,10 +1,10 @@
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { useWallets } from "@/src/features/wallets/hooks/useWallets";
+import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { Category, CategoryService } from "@/src/services/categoryService";
-import { TransactionService } from "@/src/services/transactionService";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
+import { useWalletStore } from "../../wallets/store/useWalletStore";
+import { useTransactionStore } from "../store/useTransactionStore";
 
 export type TransactionType = "income" | "expense" | "transfer";
 export type Classification = "need" | "want";
@@ -17,8 +17,10 @@ export const useTransactionForm = ({
   editDataParam,
 }: UseTransactionFormProps = {}) => {
   const router = useRouter();
-  const { user } = useAuth();
-  const { wallets } = useWallets();
+  const { user } = useAuthStore();
+  const { wallets } = useWalletStore();
+  const { addTransaction, updateTransaction, addCategory, isLoading } =
+    useTransactionStore();
 
   // Basic Form State
   const [type, setType] = useState<TransactionType>("expense");
@@ -29,7 +31,6 @@ export const useTransactionForm = ({
   const [selectedWalletId, setSelectedWalletId] = useState<string>("");
   const [targetWalletId, setTargetWalletId] = useState<string>("");
   const [note, setNote] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   // Edit Mode State
   const [isEditMode, setIsEditMode] = useState(false);
@@ -89,7 +90,7 @@ export const useTransactionForm = ({
     if (!newCategoryName.trim() || !user || type === "transfer") return;
 
     try {
-      await CategoryService.addCategory(user.uid, newCategoryName, type);
+      await addCategory(user.uid, newCategoryName, type);
       setCategory(newCategoryName);
       setCategoryModalVisible(false);
       setNewCategoryName("");
@@ -118,7 +119,6 @@ export const useTransactionForm = ({
       return;
     }
 
-    setIsLoading(true);
     try {
       // Parse amount (remove thousand separators)
       const rawAmount = amount.replace(/\./g, "");
@@ -135,22 +135,16 @@ export const useTransactionForm = ({
       };
 
       if (isEditMode && editTxId && oldTxData) {
-        await TransactionService.updateTransaction(
-          editTxId,
-          oldTxData,
-          payload as any,
-        );
+        await updateTransaction(editTxId, oldTxData, payload as any);
         Toast.show({ type: "success", text1: "Transaksi Diperbarui" });
         router.dismissAll();
       } else {
-        await TransactionService.addTransaction(user!.uid, payload as any);
+        await addTransaction(user!.uid, payload as any);
         Toast.show({ type: "success", text1: "Transaksi Disimpan" });
         router.back();
       }
     } catch (error: any) {
       Toast.show({ type: "error", text1: "Gagal", text2: error.message });
-    } finally {
-      setIsLoading(false);
     }
   };
 

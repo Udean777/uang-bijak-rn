@@ -1,21 +1,22 @@
-import { Colors } from "@/constants/theme";
-import { SecurityService } from "@/src/services/SecurityService";
-import React, { useEffect, useState } from "react";
-import { StyleSheet, useColorScheme, View } from "react-native";
-import { AppText } from "../atoms/AppText";
+import { useSettingsStore } from "@/src/features/settings/store/useSettingsStore";
+import { useTheme } from "@/src/hooks/useTheme";
+import React, { useCallback, useEffect, useState } from "react";
+import { View } from "react-native";
 import { ConfirmDialog } from "../molecules/ConfirmDialog";
 import { PinPad } from "../molecules/PinPad";
+import { ScreenLoader } from "../molecules/ScreenLoader";
+import { useBiometricLock } from "./hooks/useBiometricLock";
 
 interface BiometricLockProps {
   onUnlock: () => void;
 }
 
 export function BiometricLock({ onUnlock }: BiometricLockProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const { colors } = useTheme();
+  const { checkBiometricHardware } = useSettingsStore();
   const [showBioButton, setShowBioButton] = useState(false);
-  const [dialog, setDialog] = useState({
+
+  const [dialogConfig, setDialogConfig] = useState<any>({
     visible: false,
     title: "",
     message: "",
@@ -26,147 +27,62 @@ export function BiometricLock({ onUnlock }: BiometricLockProps) {
     onCancel: () => {},
   });
 
-  const hideDialog = () => {
-    setDialog((prev) => ({ ...prev, visible: false }));
-  };
-
-  const handleBiometricAuthenticate = async () => {
-    setIsAuthenticating(true);
-
-    // Cek dulu apakah Biometric tersedia & enabled
-    const bioEnabled = await SecurityService.isBiometricEnabled();
-    const hasHardware = await SecurityService.checkHardware();
-
-    if (bioEnabled && hasHardware) {
-      const success = await SecurityService.authenticateBiometric();
-      if (success) {
-        onUnlock();
-        return;
-      }
-    } else {
-      if (!hasHardware) {
-        setDialog({
-          visible: true,
-          title: "Perangkat Biometrik",
-          message: "Perangkat Anda tidak mendukung fitur ini.",
-          confirmText: "OK",
-          cancelText: "",
-          showCancel: false,
-          onConfirm: hideDialog,
-          onCancel: hideDialog,
-        });
-      } else {
-        // Tawarkan untuk mengaktifkan
-        setDialog({
-          visible: true,
-          title: "Aktifkan Biometrik?",
-          message: "Fitur ini belum aktif. Ingin mengaktifkannya sekarang?",
-          confirmText: "Aktifkan",
-          cancelText: "Batal",
-          showCancel: true,
-          onCancel: () => {
-            setIsAuthenticating(false);
-            hideDialog();
-          },
-          onConfirm: async () => {
-            hideDialog(); // Close dialog first or after? Maybe immediately
-            const success = await SecurityService.authenticateBiometric();
-            if (success) {
-              await SecurityService.setBiometricEnabled(true);
-              onUnlock();
-            } else {
-              setIsAuthenticating(false);
-            }
-          },
-        });
-        return;
-      }
-    }
-
-    setIsAuthenticating(false);
-  };
-
-  const handlePinVerify = async (pin: string) => {
-    const isValid = await SecurityService.validatePin(pin);
-    if (isValid) {
-      onUnlock();
-    } else {
-      setDialog({
-        visible: true,
-        title: "PIN Salah",
-        message: "Periksa kembali PIN Anda.",
-        confirmText: "OK",
-        cancelText: "",
-        showCancel: false,
-        onConfirm: hideDialog,
-        onCancel: hideDialog,
-      });
-    }
-  };
-
-  // Check usage
-  useEffect(() => {
-    const init = async () => {
-      const hasHardware = await SecurityService.checkHardware();
-      setShowBioButton(hasHardware);
-    };
-    init();
+  const hideDialog = useCallback(() => {
+    setDialogConfig((prev: any) => ({ ...prev, visible: false }));
   }, []);
 
+  const showDialog = useCallback(
+    (config: any) => {
+      setDialogConfig({
+        ...config,
+        visible: true,
+        onConfirm: config.onConfirm || hideDialog,
+        onCancel: config.onCancel || hideDialog,
+      });
+    },
+    [hideDialog],
+  );
+
+  const {
+    isAuthenticating,
+    error,
+    handleBiometricAuthenticate,
+    handlePinVerify,
+  } = useBiometricLock({ onUnlock });
+
+  useEffect(() => {
+    checkBiometricHardware().then(setShowBioButton);
+  }, [checkBiometricHardware]);
+
+  const onBiometricPress = () =>
+    handleBiometricAuthenticate(showDialog, hideDialog);
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View
+      className="flex-1 w-full h-full"
+      style={{ backgroundColor: colors.background }}
+    >
       <PinPad
         title="Masukkan PIN"
         subtitle="Buka kunci aplikasi"
         onVerify={handlePinVerify}
         showBiometricButton={showBioButton}
-        onBiometricPress={handleBiometricAuthenticate}
+        onBiometricPress={onBiometricPress}
+        error={error}
       />
 
-      {isAuthenticating && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 100,
-          }}
-        >
-          <View
-            style={{
-              padding: 20,
-              backgroundColor: theme.card,
-              borderRadius: 10,
-            }}
-          >
-            <AppText style={{ fontWeight: "bold" }}>Memverifikasi...</AppText>
-          </View>
-        </View>
-      )}
+      <ScreenLoader visible={isAuthenticating} text="Memverifikasi..." />
 
       <ConfirmDialog
-        visible={dialog.visible}
-        title={dialog.title}
-        message={dialog.message}
-        confirmText={dialog.confirmText}
-        cancelText={dialog.cancelText}
-        showCancel={dialog.showCancel}
-        onConfirm={dialog.onConfirm}
-        onCancel={dialog.onCancel}
+        visible={dialogConfig.visible}
+        title={dialogConfig.title}
+        message={dialogConfig.message}
+        confirmText={dialogConfig.confirmText}
+        cancelText={dialogConfig.cancelText}
+        showCancel={dialogConfig.showCancel}
+        onConfirm={dialogConfig.onConfirm}
+        onCancel={dialogConfig.onCancel}
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
-});
