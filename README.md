@@ -38,7 +38,8 @@
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (LTS)
-- [Bun](https://bun.sh/) or [npm/yarn]
+- [Bun](https://bun.sh/)
+- [EAS CLI](https://docs.expo.dev/build/setup/) (`npm install -g eas-cli`)
 - [Expo Go](https://expo.dev/client) app installed on your physical device.
 
 ### Installation
@@ -51,10 +52,41 @@
     ```bash
     bun install
     ```
-3.  **Start Development:**
-    ```bash
-    bun run ios  # or bun run android
+3.  **Android SDK Setup:**
+    Create `android/local.properties` and add your SDK path:
+    ```properties
+    sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
     ```
+
+## 🛠️ Commands & Scripts
+
+### Development
+
+```bash
+bun run start   # Start Expo development server
+bun run android # Run on Android emulator/device
+bun run ios     # Run on iOS simulator
+```
+
+### Testing
+
+```bash
+bun run test     # Run all tests
+bun run test:all # Run comprehensive test suite
+```
+
+### Building (EAS)
+
+```bash
+# Android
+bun run android:build:dev  # Build Development Client (Internal)
+bun run android:build:apk  # Build Installable APK (Preview)
+bun run android:build:prod # Build App Bundle (Production/Play Store)
+
+# iOS
+bun run ios:build:dev      # Build Development Client (Internal)
+bun run ios:build:prod     # Build App Store Version
+```
 
 ## 📂 Project Structure
 
