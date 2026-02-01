@@ -14,6 +14,7 @@
     "android:build:dev": "eas build -p android --profile development",
     "android:build:prod": "eas build -p android --profile production",
     "android:build:apk": "eas build -p android --profile apk",
+    "android:build:aab": "eas build -p android --profile aab",
     "ios:build:dev": "eas build -p ios --profile development",
     "ios:build:prod": "eas build -p ios --profile production"
   },
@@ -28,6 +29,7 @@
     "clsx": "^2.1.1",
     "expo": "~54.0.31",
     "expo-auth-session": "~7.0.10",
+    "expo-build-properties": "~1.0.10",
     "expo-constants": "~18.0.13",
     "expo-crypto": "~15.0.8",
     "expo-dev-client": "~6.0.20",

@@ -1,0 +1,97 @@
+const IS_SENTRY_CONFIGURED = !!process.env.SENTRY_AUTH_TOKEN;
+
+export default {
+  expo: {
+    name: "uang-bijak",
+    slug: "uang-bijak",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/images/icon.png",
+    scheme: "uangbijak",
+    userInterfaceStyle: "automatic",
+    newArchEnabled: true,
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: "com.uangbijak.app",
+    },
+    android: {
+      adaptiveIcon: {
+        backgroundColor: "#E6F4FE",
+        foregroundImage: "./assets/images/android-icon-foreground.png",
+        backgroundImage: "./assets/images/android-icon-background.png",
+        monochromeImage: "./assets/images/android-icon-monochrome.png",
+      },
+      edgeToEdgeEnabled: true,
+      predictiveBackGestureEnabled: false,
+      package: "com.uangbijak.app",
+    },
+    web: {
+      output: "static",
+      favicon: "./assets/images/favicon.png",
+    },
+    plugins: [
+      "expo-router",
+      // Only include Sentry plugin if token is available to prevent build failure
+      ...(IS_SENTRY_CONFIGURED
+        ? [
+            [
+              "@sentry/react-native/expo",
+              {
+                url: "https://sentry.io/",
+                project: "uang-bijak",
+                organization: "sajudn",
+              },
+            ],
+          ]
+        : []),
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/images/splash-icon.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: "#ffffff",
+          dark: {
+            backgroundColor: "#000000",
+          },
+        },
+      ],
+      [
+        "expo-local-authentication",
+        {
+          faceIDPermission:
+            "Izinkan Uang Bijak menggunakan FaceID untuk mengamankan data keuangan Anda.",
+        },
+      ],
+      "expo-web-browser",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/images/notification-icon.png",
+          color: "#2563EB",
+          defaultChannel: "default",
+        },
+      ],
+      [
+        "expo-build-properties",
+        {
+          android: {
+            enableProguardInReleaseBuilds: true,
+            enableShrinkResourcesInReleaseBuilds: true,
+          },
+        },
+      ],
+    ],
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true,
+    },
+    extra: {
+      router: {},
+      eas: {
+        projectId: "c0a0be13-f157-4eea-b7d8-560f0ddffbed",
+      },
+    },
+  },
+};
