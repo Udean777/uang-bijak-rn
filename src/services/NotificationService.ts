@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
@@ -15,7 +17,24 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const NOTIFICATIONS_ENABLED_KEY = "is_notifications_enabled";
+
 export const NotificationService = {
+  /**
+   * Check if notifications are enabled by user
+   */
+  isNotificationsEnabled: async (): Promise<boolean> => {
+    const value = await AsyncStorage.getItem(NOTIFICATIONS_ENABLED_KEY);
+    return value === "true";
+  },
+
+  /**
+   * Set notification enabled status
+   */
+  setNotificationsEnabled: async (enabled: boolean): Promise<void> => {
+    await AsyncStorage.setItem(NOTIFICATIONS_ENABLED_KEY, String(enabled));
+  },
+
   /**
    * Request notification permissions
    */
@@ -64,44 +83,86 @@ export const NotificationService = {
   },
 
   /**
+   * Get Expo Push Token
+   */
+  getPushToken: async (): Promise<string | null> => {
+    try {
+      if (!Device.isDevice) return null;
+
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== "granted") return null;
+
+      const projectId =
+        Constants?.expoConfig?.extra?.eas?.projectId ||
+        Constants?.easConfig?.projectId;
+
+      const token = await Notifications.getExpoPushTokenAsync({
+        projectId,
+      });
+
+      return token.data;
+    } catch (error) {
+      console.error("Error getting push token:", error);
+      return null;
+    }
+  },
+
+  /**
    * Schedule a notification for a subscription bill
    */
   scheduleBillReminder: async (
     subscription: Subscription,
-  ): Promise<string | null> => {
+  ): Promise<string[] | null> => {
     try {
-      // Cancel existing notification for this subscription
-      await NotificationService.cancelNotification(`bill-${subscription.id}`);
+      // Cancel existing notifications for this subscription
+      await NotificationService.cancelNotification(
+        `bill-${subscription.id}-1d`,
+      );
+      await NotificationService.cancelNotification(
+        `bill-${subscription.id}-2d`,
+      );
 
       const nextPaymentDate = new Date(subscription.nextPaymentDate);
       const now = new Date();
+      const identifiers: string[] = [];
 
-      // Schedule reminder 1 day before due date
-      const reminderDate = new Date(nextPaymentDate);
-      reminderDate.setDate(reminderDate.getDate() - 1);
-      reminderDate.setHours(9, 0, 0, 0); // 9 AM
+      // Schedule reminders for 1 day and 2 days before due date
+      const daysBefore = [1, 2];
 
-      // Don't schedule if reminder date is in the past
-      if (reminderDate <= now) {
-        return null;
+      for (const offset of daysBefore) {
+        const reminderDate = new Date(nextPaymentDate);
+        reminderDate.setDate(reminderDate.getDate() - offset);
+        reminderDate.setHours(9, 0, 0, 0); // 9 AM
+
+        // Don't schedule if reminder date is in the past
+        if (reminderDate > now) {
+          const identifier = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "Tagihan Mendatang! 💸",
+              body: `${subscription.name} - Rp ${subscription.cost.toLocaleString("id-ID")} jatuh tempo ${offset} hari lagi.`,
+              data: { type: "subscription", id: subscription.id },
+              sound: "default",
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: reminderDate,
+              channelId: "bills",
+            },
+            identifier: `bill-${subscription.id}-${offset}d`,
+          });
+          identifiers.push(identifier);
+        }
       }
 
-      const identifier = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Tagihan Besok! 💸",
-          body: `${subscription.name} - Rp ${subscription.cost.toLocaleString("id-ID")} jatuh tempo besok.`,
-          data: { type: "subscription", id: subscription.id },
-          sound: "default",
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: reminderDate,
-          channelId: "bills",
-        },
-        identifier: `bill-${subscription.id}`,
-      });
-
-      return identifier;
+      return identifiers.length > 0 ? identifiers : null;
     } catch (error) {
       console.error("Failed to schedule bill reminder:", error);
       return null;

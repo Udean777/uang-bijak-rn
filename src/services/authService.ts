@@ -99,6 +99,10 @@ export const AuthService = {
     await updateDoc(doc(db, "users", uid), { emailVerified: true });
   },
 
+  updatePushToken: async (uid: string, token: string) => {
+    await updateDoc(doc(db, "users", uid), { pushToken: token });
+  },
+
   logout: async () => {
     await signOut(auth);
   },
