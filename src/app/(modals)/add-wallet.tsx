@@ -8,8 +8,8 @@ import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { WalletService } from "@/src/services/walletService";
 import { WalletType } from "@/src/types/wallet";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -32,6 +32,7 @@ const COLORS = [
 
 export default function AddWalletScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ type?: WalletType }>();
   const { user } = useAuth();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
@@ -39,7 +40,9 @@ export default function AddWalletScreen() {
 
   const [name, setName] = useState("");
   const [initialBalance, setInitialBalance] = useState("");
-  const [selectedType, setSelectedType] = useState<WalletType>("bank");
+  const [selectedType, setSelectedType] = useState<WalletType>(
+    params.type || "bank",
+  );
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -84,7 +87,7 @@ export default function AddWalletScreen() {
   }: {
     type: WalletType;
     label: string;
-    icon: any;
+    icon: React.ReactNode;
   }) => (
     <TouchableOpacity
       onPress={() => setSelectedType(type)}
@@ -99,11 +102,7 @@ export default function AddWalletScreen() {
         borderColor: selectedType === type ? "#2563EB" : theme.border,
       }}
     >
-      <Ionicons
-        name={icon}
-        size={24}
-        color={selectedType === type ? "#2563EB" : theme.icon}
-      />
+      {icon}
       <AppText
         variant="caption"
         className="mt-2"
@@ -186,13 +185,54 @@ export default function AddWalletScreen() {
                 Tipe Akun
               </AppText>
               <View className="flex-row gap-3">
-                <TypeOption type="bank" label="Bank" icon="business" />
+                <TypeOption
+                  type="bank"
+                  label="Bank"
+                  icon={
+                    <Ionicons
+                      name="business"
+                      size={24}
+                      color={selectedType === "bank" ? "#2563EB" : theme.icon}
+                    />
+                  }
+                />
                 <TypeOption
                   type="e-wallet"
                   label="E-Wallet"
-                  icon="phone-portrait"
+                  icon={
+                    <Ionicons
+                      name="phone-portrait"
+                      size={24}
+                      color={
+                        selectedType === "e-wallet" ? "#2563EB" : theme.icon
+                      }
+                    />
+                  }
                 />
-                <TypeOption type="cash" label="Tunai" icon="cash" />
+                <TypeOption
+                  type="cash"
+                  label="Tunai"
+                  icon={
+                    <Ionicons
+                      name="cash"
+                      size={24}
+                      color={selectedType === "cash" ? "#2563EB" : theme.icon}
+                    />
+                  }
+                />
+                <TypeOption
+                  type="savings"
+                  label="Tabungan"
+                  icon={
+                    <FontAwesome6
+                      name="piggy-bank"
+                      size={22}
+                      color={
+                        selectedType === "savings" ? "#2563EB" : theme.icon
+                      }
+                    />
+                  }
+                />
               </View>
             </View>
 

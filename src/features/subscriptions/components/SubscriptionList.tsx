@@ -15,6 +15,7 @@ import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppCard } from "@/src/components/atoms/AppCard";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 
 const formatRupiah = (val: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -58,17 +59,22 @@ export const SubscriptionList = () => {
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null);
   const [selectedWalletId, setSelectedWalletId] = useState<string>("");
 
+  // Delete State
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [subToDelete, setSubToDelete] = useState<Subscription | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     const unsub = SubscriptionService.subscribeSubscriptions(
       user.uid,
       (data) => {
         const sorted = data.sort(
-          (a, b) => (a.nextPaymentDate || 0) - (b.nextPaymentDate || 0)
+          (a, b) => (a.nextPaymentDate || 0) - (b.nextPaymentDate || 0),
         );
         setSubs(sorted);
         setLoading(false);
-      }
+      },
     );
     return () => unsub();
   }, [user]);
@@ -96,7 +102,7 @@ export const SubscriptionList = () => {
       await SubscriptionService.renewSubscription(
         selectedSub.id,
         currentNextDate,
-        selectedSub.dueDate
+        selectedSub.dueDate,
       );
 
       Toast.show({
@@ -113,6 +119,25 @@ export const SubscriptionList = () => {
   const onPayPress = (sub: Subscription) => {
     setSelectedSub(sub);
     setPayModalVisible(true);
+  };
+
+  const onDeletePress = (sub: Subscription) => {
+    setSubToDelete(sub);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!subToDelete) return;
+    setIsDeleting(true);
+    try {
+      await SubscriptionService.deleteSubscription(subToDelete.id);
+      Toast.show({ type: "success", text1: "Berhasil Dihapus" });
+      setShowDeleteDialog(false);
+    } catch (error: any) {
+      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading)
@@ -219,17 +244,34 @@ export const SubscriptionList = () => {
               </View>
 
               <View className="items-end gap-2">
-                <View
-                  className="px-2 py-1 rounded-md"
-                  style={{ backgroundColor: bgBadge }}
-                >
-                  <AppText
-                    variant="caption"
-                    weight="bold"
-                    style={{ color: badgeTextColor }}
+                <View className="flex-row items-center gap-2">
+                  <TouchableOpacity
+                    onPress={() => onDeletePress(item)}
+                    className="p-1 px-2 rounded-lg"
+                    style={{
+                      backgroundColor: isDark
+                        ? "rgba(239, 68, 68, 0.1)"
+                        : "#FEF2F2",
+                    }}
                   >
-                    {statusText}
-                  </AppText>
+                    <Ionicons
+                      name="trash-outline"
+                      size={16}
+                      color={theme.danger}
+                    />
+                  </TouchableOpacity>
+                  <View
+                    className="px-2 py-1 rounded-md"
+                    style={{ backgroundColor: bgBadge }}
+                  >
+                    <AppText
+                      variant="caption"
+                      weight="bold"
+                      style={{ color: badgeTextColor }}
+                    >
+                      {statusText}
+                    </AppText>
+                  </View>
                 </View>
 
                 <AppText weight="bold">{formatRupiah(item.cost)}</AppText>
@@ -339,6 +381,18 @@ export const SubscriptionList = () => {
           </View>
         </View>
       </Modal>
+
+      <ConfirmDialog
+        visible={showDeleteDialog}
+        title="Hapus Langganan?"
+        message={`Apakah Anda yakin ingin menghapus ${subToDelete?.name}? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
     </View>
   );
 };

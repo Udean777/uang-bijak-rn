@@ -49,7 +49,7 @@ export const AppText: React.FC<AppTextProps> = ({
   };
 
   const colors: Record<string, string> = {
-    default: "text-white",
+    default: "",
     primary: "text-primary",
     secondary: "text-secondary",
     error: "text-danger",

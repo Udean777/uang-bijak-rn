@@ -26,10 +26,10 @@ export default function TabLayout() {
         },
         tabBarStyle: {
           position: "absolute",
-          bottom: Platform.OS === "ios" ? 24 : 16,
+          bottom: Platform.OS === "ios" ? 16 : 16,
           left: 16,
           right: 16,
-          height: 72,
+          height: "auto",
           marginHorizontal: 16,
           borderRadius: 24,
           backgroundColor: theme.background,

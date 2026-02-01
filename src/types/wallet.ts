@@ -1,4 +1,10 @@
-export type WalletType = "cash" | "bank" | "e-wallet" | "credit-card" | "other";
+export type WalletType =
+  | "cash"
+  | "bank"
+  | "e-wallet"
+  | "credit-card"
+  | "savings"
+  | "other";
 
 export interface Wallet {
   id: string;

@@ -165,12 +165,13 @@ export const TransactionService = {
   subscribeTransactions: (
     userId: string,
     callback: (data: Transaction[]) => void,
+    limitCount: number = 50,
   ) => {
     const q = query(
       collection(db, COLLECTION),
       where("userId", "==", userId),
       orderBy("date", "desc"),
-      limit(50),
+      limit(limitCount),
     );
 
     return onSnapshot(

@@ -3,13 +3,16 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import {
   Modal,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+
+export type TimeRangeMode = "all" | "custom";
 
 interface FilterSheetProps {
   visible: boolean;
@@ -18,6 +21,8 @@ interface FilterSheetProps {
   onTypeChange: (type: "all" | "income" | "expense") => void;
   selectedDate: Date;
   onDateChange: (date: Date) => void;
+  rangeMode: TimeRangeMode;
+  onRangeModeChange: (mode: TimeRangeMode) => void;
 }
 
 export const FilterSheet = ({
@@ -27,55 +32,61 @@ export const FilterSheet = ({
   onTypeChange,
   selectedDate,
   onDateChange,
+  rangeMode,
+  onRangeModeChange,
 }: FilterSheetProps) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
   const isDark = colorScheme === "dark";
 
-  const changeMonth = (increment: number) => {
-    const newDate = new Date(selectedDate);
-    newDate.setMonth(newDate.getMonth() + increment);
-    onDateChange(newDate);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+  const handleConfirm = (date: Date) => {
+    onDateChange(date);
+    onRangeModeChange("custom");
+    setDatePickerVisibility(false);
   };
 
   const FilterOption = ({
     label,
     value,
     active,
+    onPress,
   }: {
     label: string;
     value: any;
     active: boolean;
+    onPress: (val: any) => void;
   }) => (
     <TouchableOpacity
-      onPress={() => onTypeChange(value)}
-      className={`flex-1 py-3 px-2 rounded-xl border items-center ${
-        active
-          ? "bg-blue-50 dark:bg-blue-900/30 border-blue-600"
-          : "bg-white border-gray-200"
+      onPress={() => onPress(value)}
+      className={`flex-1 py-3 px-2 rounded-xl border items-center justify-center ${
+        active ? "bg-blue-600 border-blue-600" : "bg-white border-gray-200"
       }`}
       style={
         !active
-          ? { backgroundColor: theme.background, borderColor: theme.border }
+          ? {
+              backgroundColor: theme.background,
+              borderColor: theme.border,
+            }
           : {}
       }
     >
       <AppText
+        variant="caption"
         weight={active ? "bold" : "regular"}
-        color={
-          active
-            ? isDark
-              ? "white"
-              : "primary"
-            : isDark
-              ? "white"
-              : "secondary"
-        }
+        color={active ? "white" : "secondary"}
       >
         {label}
       </AppText>
     </TouchableOpacity>
   );
+
+  const handleReset = () => {
+    onTypeChange("all");
+    onRangeModeChange("all");
+    onDateChange(new Date());
+  };
 
   return (
     <Modal
@@ -88,64 +99,69 @@ export const FilterSheet = ({
         <View className="flex-1 bg-black/50 justify-end">
           <TouchableWithoutFeedback>
             <View
-              className="rounded-t-3xl p-6 w-full"
+              className="rounded-t-[40px] p-6 w-full"
               style={{ backgroundColor: theme.background }}
             >
               <View className="flex-row justify-between items-center mb-6">
+                <TouchableOpacity onPress={handleReset} activeOpacity={0.7}>
+                  <AppText
+                    variant="label"
+                    weight="medium"
+                    style={{ color: theme.primary }}
+                  >
+                    Reset
+                  </AppText>
+                </TouchableOpacity>
                 <AppText variant="h3" weight="bold">
                   Filter Transaksi
                 </AppText>
-                <TouchableOpacity onPress={onClose}>
+                <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
                   <Ionicons name="close" size={24} color={theme.icon} />
                 </TouchableOpacity>
               </View>
 
+              {/* Date Filter Section */}
               <View className="mb-6">
                 <AppText variant="label" className="mb-3">
-                  Periode
+                  Berdasarkan Tanggal
                 </AppText>
-                <View
-                  className="flex-row items-center justify-between p-2 rounded-xl border"
-                  style={{
-                    backgroundColor: theme.surface,
-                    borderColor: theme.border,
-                  }}
-                >
+                <View className="flex-row gap-3">
                   <TouchableOpacity
-                    onPress={() => changeMonth(-1)}
-                    className="p-2 rounded-lg"
-                    style={{ backgroundColor: theme.background }}
+                    onPress={() => setDatePickerVisibility(true)}
+                    activeOpacity={0.7}
+                    className="flex-1 flex-row items-center justify-between p-2 rounded-xl border"
+                    style={{
+                      backgroundColor:
+                        rangeMode === "custom" ? "#2563EB" : theme.surface,
+                      borderColor:
+                        rangeMode === "custom" ? "#2563EB" : theme.border,
+                    }}
                   >
-                    <Ionicons
-                      name="chevron-back"
-                      size={20}
-                      color={theme.text}
-                    />
-                  </TouchableOpacity>
-
-                  <View className="items-center">
-                    <AppText weight="bold" className="text-lg">
-                      {selectedDate.toLocaleDateString("id-ID", {
-                        month: "long",
-                        year: "numeric",
-                      })}
+                    <AppText
+                      variant="caption"
+                      weight={rangeMode === "custom" ? "bold" : "regular"}
+                      style={{
+                        color: rangeMode === "custom" ? "#FFFFFF" : theme.text,
+                      }}
+                    >
+                      {rangeMode === "custom"
+                        ? selectedDate.toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "Pilih Tanggal"}
                     </AppText>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => changeMonth(1)}
-                    className="p-2 rounded-lg"
-                    style={{ backgroundColor: theme.background }}
-                  >
                     <Ionicons
-                      name="chevron-forward"
-                      size={20}
-                      color={theme.text}
+                      name="calendar-outline"
+                      size={18}
+                      color={rangeMode === "custom" ? "#FFFFFF" : theme.icon}
                     />
                   </TouchableOpacity>
                 </View>
               </View>
 
+              {/* Transaction Type Section */}
               <View className="mb-8">
                 <AppText variant="label" className="mb-3">
                   Tipe Transaksi
@@ -155,21 +171,32 @@ export const FilterSheet = ({
                     label="Semua"
                     value="all"
                     active={selectedType === "all"}
+                    onPress={onTypeChange}
                   />
                   <FilterOption
                     label="Masuk"
                     value="income"
                     active={selectedType === "income"}
+                    onPress={onTypeChange}
                   />
                   <FilterOption
                     label="Keluar"
                     value="expense"
                     active={selectedType === "expense"}
+                    onPress={onTypeChange}
                   />
                 </View>
               </View>
 
               <AppButton title="Terapkan Filter" onPress={onClose} />
+
+              <DateTimePickerModal
+                isVisible={isDatePickerVisible}
+                mode="date"
+                date={selectedDate}
+                onConfirm={handleConfirm}
+                onCancel={() => setDatePickerVisibility(false)}
+              />
             </View>
           </TouchableWithoutFeedback>
         </View>
