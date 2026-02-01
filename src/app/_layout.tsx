@@ -20,7 +20,8 @@ import Toast from "react-native-toast-message";
 import { BiometricLock } from "../components/organisms/BiometricLock";
 import { initSentry } from "../config/sentry";
 import { AuthProvider } from "../features/auth/context/AuthContext";
-import { useAuth } from "../features/auth/hooks/useAuth";
+import { useAuthStore } from "../features/auth/store/useAuthStore";
+import { useSettingsStore } from "../features/settings/store/useSettingsStore";
 import { useNotifications } from "../hooks/useNotifications";
 import { useRecurringProcessor } from "../hooks/useRecurringProcessor";
 import { SecurityService } from "../services/SecurityService";
@@ -36,11 +37,12 @@ configureReanimatedLogger({
 SplashScreen.preventAutoHideAsync();
 
 function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
-  const { user, isLoading, hasSeenOnboarding } = useAuth();
+  const { user, isLoading, hasSeenOnboarding, initializeAuth } = useAuthStore();
+  const { isLocked, setIsLocked, initializeSettings, lock } =
+    useSettingsStore();
   const segments = useSegments();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
   const [isCheckingPin, setIsCheckingPin] = useState(true);
 
   // Initialize push notifications for bill reminders
@@ -51,31 +53,24 @@ function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
 
   useEffect(() => {
     setIsMounted(true);
+    initializeAuth();
+    initializeSettings();
+  }, [initializeAuth, initializeSettings]);
+
+  useEffect(() => {
+    Sentry.init({
+      dsn: "https://be0a4cd2c651724af1ff0cd9de9237c9@o4510798962491392.ingest.us.sentry.io/4510798965506048",
+      sendDefaultPii: true,
+      enableLogs: true,
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1,
+      integrations: [
+        Sentry.mobileReplayIntegration(),
+        Sentry.feedbackIntegration(),
+      ],
+    });
   }, []);
 
-  Sentry.init({
-    dsn: "https://be0a4cd2c651724af1ff0cd9de9237c9@o4510798962491392.ingest.us.sentry.io/4510798965506048",
-
-    // Adds more context data to events (IP address, cookies, user, etc.)
-    // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-    sendDefaultPii: true,
-
-    // Enable Logs
-    enableLogs: true,
-
-    // Configure Session Replay
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1,
-    integrations: [
-      Sentry.mobileReplayIntegration(),
-      Sentry.feedbackIntegration(),
-    ],
-
-    // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-    // spotlight: __DEV__,
-  });
-
-  // 1. Check if user needs to set up PIN
   // 1. Check if user needs to set up PIN or OTP
   useEffect(() => {
     const checkAuthRequirements = async () => {
@@ -105,16 +100,10 @@ function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
 
     const inAuthGroup = segments[0] === "(auth)";
     const inOnboarding = segments[0] === "onboarding";
-    // Setup PIN screen is part of (auth) but allowed for logged in users
     const inSetupPin = inAuthGroup && (segments[1] as string) === "setup-pin";
 
     if (user) {
-      // If user is logged in, they should generally be in (tabs)
-      // UNLESS they are setting up PIN
       if (inAuthGroup && !inSetupPin) {
-        // Only redirect to tabs if done with setup
-        // The checkAuthRequirements effect handles the enforcement of pin
-        // Here we just prevent staying in login/register pages
         router.replace("/(tabs)");
       } else if (inOnboarding) {
         router.replace("/(tabs)");
@@ -160,10 +149,7 @@ function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === "background") {
         if (user) {
-          const hasPin = await SecurityService.hasPin();
-          if (hasPin) {
-            setIsLocked(true);
-          }
+          lock();
         }
       }
     };
@@ -171,21 +157,10 @@ function InitialLayout({ fontsLoaded }: { fontsLoaded: boolean }) {
       "change",
       handleAppStateChange,
     );
-    // Initial check saat fresh launch
-    checkInitialLock();
     return () => {
       subscription.remove();
     };
-  }, [user]);
-
-  const checkInitialLock = async () => {
-    if (user) {
-      const hasPin = await SecurityService.hasPin();
-      if (hasPin) {
-        setIsLocked(true);
-      }
-    }
-  };
+  }, [user, lock]);
 
   if (isLoading || hasSeenOnboarding === null || !fontsLoaded || isCheckingPin)
     return null;

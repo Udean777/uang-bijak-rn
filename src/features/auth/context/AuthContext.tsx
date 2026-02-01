@@ -1,21 +1,17 @@
 import { auth } from "@/src/config/firebase";
-import {
-  clearUser as clearSentryUser,
-  setUser as setSentryUser,
-} from "@/src/config/sentry";
 import { AuthService } from "@/src/services/authService";
 import { UserProfile } from "@/src/types/user";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { createContext, ReactNode, useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { createContext, ReactNode, useEffect } from "react";
+import { useAuthStore } from "../store/useAuthStore";
 
 interface AuthContextType {
-  user: User | null;
+  user: any | null; // Keep as any to avoid type conflicts with firebase/auth User during refactor if needed
   userProfile: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   hasSeenOnboarding: boolean | null;
-  setHasSeenOnboarding: (value: boolean) => void;
+  setHasSeenOnboarding: (value: boolean) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -25,58 +21,33 @@ export const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   isAuthenticated: false,
   hasSeenOnboarding: null,
-  setHasSeenOnboarding: () => {},
+  setHasSeenOnboarding: async () => {},
   refreshProfile: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasSeenOnboarding, setHasSeenOnboardingState] = useState<
-    boolean | null
-  >(null);
+  const {
+    user,
+    userProfile,
+    isLoading,
+    hasSeenOnboarding,
+    setUser,
+    setUserProfile,
+    setIsLoading,
+    setHasSeenOnboarding,
+    initializeAuth,
+    refreshProfile,
+  } = useAuthStore();
 
   useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        const value = await AsyncStorage.getItem("hasSeenOnboarding");
-        setHasSeenOnboardingState(value === "true");
-      } catch (e) {
-        setHasSeenOnboardingState(false);
-      }
-    };
-    checkOnboarding();
-  }, []);
-
-  const setHasSeenOnboarding = async (value: boolean) => {
-    try {
-      await AsyncStorage.setItem("hasSeenOnboarding", value.toString());
-      setHasSeenOnboardingState(value);
-    } catch (e) {
-      console.error("Gagal simpan onboarding status", e);
-    }
-  };
-
-  const refreshProfile = async () => {
-    if (user) {
-      try {
-        const profile = await AuthService.getUserProfile(user.uid);
-        setUserProfile(profile);
-      } catch (error) {
-        console.error("Failed to refresh profile", error);
-      }
-    }
-  };
+    initializeAuth();
+  }, [initializeAuth]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
       if (currentUser) {
-        // Set Sentry user for crash tracking
-        setSentryUser(currentUser.uid, currentUser.email || undefined);
-
         const fetchProfile = async (retry = 0) => {
           try {
             const profile = await AuthService.getUserProfile(currentUser.uid);
@@ -100,8 +71,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         await fetchProfile();
       } else {
-        // Clear Sentry user on logout
-        clearSentryUser();
         setUserProfile(null);
       }
 
@@ -109,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [setUser, setUserProfile, setIsLoading]);
 
   return (
     <AuthContext.Provider

@@ -5,177 +5,48 @@ import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
-import { useAuth } from "@/src/features/auth/hooks/useAuth";
-import { useWallets } from "@/src/features/wallets/hooks/useWallets";
-import { Category, CategoryService } from "@/src/services/categoryService";
-import { TransactionService } from "@/src/services/transactionService";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import {
-  Keyboard,
-  Modal,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
-import Toast from "react-native-toast-message";
+import { AddCategoryModal } from "@/src/features/transactions/components/AddCategoryModal";
+import { ClassificationPicker } from "@/src/features/transactions/components/ClassificationPicker";
+import { HorizontalSelector } from "@/src/features/transactions/components/HorizontalSelector";
+import { TransactionTypePicker } from "@/src/features/transactions/components/TransactionTypePicker";
+import { useTransactionForm } from "@/src/features/transactions/hooks/useTransactionForm";
+import { useLocalSearchParams } from "expo-router";
+import React from "react";
+import { ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function AddTransactionScreen() {
-  const router = useRouter();
   const params = useLocalSearchParams();
-  const { user } = useAuth();
-  const { wallets } = useWallets();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
   const isDark = colorScheme === "dark";
 
-  const [type, setType] = useState<"income" | "expense" | "transfer">("expense");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [classification, setClassification] = useState<"need" | "want">("need");
-  const [selectedWalletId, setSelectedWalletId] = useState<string>("");
-  const [targetWalletId, setTargetWalletId] = useState<string>("");
-  const [note, setNote] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editTxId, setEditTxId] = useState<string | null>(null);
-  const [oldTxData, setOldTxData] = useState<any>(null);
-  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-
-  useEffect(() => {
-    if (!user) return;
-
-    const unsubscribe = CategoryService.subscribeCategories(
-      user.uid,
-      (data) => {
-        setCategories(data);
-
-        if (data.length > 0 && !category) {
-          const defaultCat = data.find((c) => c.type === type) || data[0];
-          setCategory(defaultCat.name);
-        }
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user, type]);
-
-  useEffect(() => {
-    if (wallets.length > 0 && !selectedWalletId) {
-      setSelectedWalletId(wallets[0].id);
-    }
-  }, [wallets]);
-
-  useEffect(() => {
-    if (params.editData) {
-      try {
-        const data = JSON.parse(params.editData as string);
-
-        setIsEditMode(true);
-        setEditTxId(data.id);
-        setOldTxData(data);
-
-        setAmount(data.amount.toString());
-        setType(data.type);
-        setCategory(data.category);
-        setClassification(data.classification || "need");
-        setSelectedWalletId(data.walletId);
-        setNote(data.note || "");
-      } catch (e) {
-        console.error("Gagal parse editData", e);
-      }
-    }
-  }, [params.editData]);
-
-  const handleAddCategory = () => {
-    setNewCategoryName("");
-    setCategoryModalVisible(true);
-  };
-
-  const saveNewCategory = async () => {
-    if (!newCategoryName.trim()) {
-      return; // Jangan simpan jika kosong
-    }
-
-    // Only allow adding categories for income/expense, not transfer
-    if (type === "transfer") {
-      return;
-    }
-
-    if (user) {
-      try {
-        await CategoryService.addCategory(user.uid, newCategoryName, type);
-        setCategory(newCategoryName);
-        setCategoryModalVisible(false);
-        Toast.show({ type: "success", text1: "Kategori ditambahkan" });
-      } catch (error) {
-        Toast.show({ type: "error", text1: "Gagal menambah kategori" });
-      }
-    }
-  };
-
-  const handleSave = async () => {
-    if (!amount || !selectedWalletId) {
-      Toast.show({
-        type: "error",
-        text1: "Data Belum Lengkap",
-        text2: "Mohon isi nominal dan pilih dompet.",
-      });
-      return;
-    }
-
-    // Validate transfer requirements
-    if (type === "transfer" && !targetWalletId) {
-      Toast.show({
-        type: "error",
-        text1: "Data Belum Lengkap",
-        text2: "Mohon pilih dompet tujuan untuk transfer.",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const payload = {
-        walletId: selectedWalletId,
-        targetWalletId: type === "transfer" ? targetWalletId : undefined,
-        amount: parseFloat(amount),
-        type,
-        category: type === "transfer" ? "Transfer" : category,
-        classification: type === "expense" ? classification : null,
-        date: new Date(),
-        note,
-      };
-
-      if (isEditMode && editTxId && oldTxData) {
-        await TransactionService.updateTransaction(
-          editTxId,
-          oldTxData,
-          payload as any
-        );
-        Toast.show({ type: "success", text1: "Transaksi Diperbarui" });
-        router.dismissAll();
-      } else {
-        await TransactionService.addTransaction(user!.uid, payload as any);
-        Toast.show({ type: "success", text1: "Transaksi Disimpan" });
-        router.back();
-      }
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fungsi Close Navigasi
-  const handleClose = () => {
-    router.back();
-  };
+  const {
+    type,
+    setType,
+    amount,
+    setAmount,
+    category,
+    setCategory,
+    categories,
+    classification,
+    setClassification,
+    selectedWalletId,
+    setSelectedWalletId,
+    targetWalletId,
+    setTargetWalletId,
+    note,
+    setNote,
+    isLoading,
+    isEditMode,
+    isCategoryModalVisible,
+    setCategoryModalVisible,
+    newCategoryName,
+    setNewCategoryName,
+    wallets,
+    handleSave,
+    saveNewCategory,
+    handleClose,
+  } = useTransactionForm({ editDataParam: params.editData as string });
 
   return (
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
@@ -193,68 +64,12 @@ export default function AddTransactionScreen() {
       />
 
       <ScrollView className="flex-1 p-5">
-        <View
-          className="flex-row p-1 rounded-xl mb-6"
-          style={{ backgroundColor: theme.surface }}
-        >
-          <TouchableOpacity
-            onPress={() => setType("expense")}
-            className={`flex-1 py-3 rounded-lg items-center ${type === "expense" ? (isDark ? "bg-red-900/30" : "bg-red-100") : ""}`}
-          >
-            <AppText
-              weight="bold"
-              style={{
-                color:
-                  type === "expense"
-                    ? theme.danger
-                    : isDark
-                      ? theme.text
-                      : "gray",
-                opacity: type === "expense" ? 1 : 0.5,
-              }}
-            >
-              Pengeluaran
-            </AppText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setType("income")}
-            className={`flex-1 py-3 rounded-lg items-center ${type === "income" ? (isDark ? "bg-green-900/30" : "bg-green-100") : ""}`}
-          >
-            <AppText
-              weight="bold"
-              style={{
-                color:
-                  type === "income"
-                    ? theme.success
-                    : isDark
-                      ? theme.text
-                      : "gray",
-                opacity: type === "income" ? 1 : 0.5,
-              }}
-            >
-              Pemasukan
-            </AppText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setType("transfer")}
-            className={`flex-1 py-3 rounded-lg items-center ${type === "transfer" ? (isDark ? "bg-blue-900/30" : "bg-blue-100") : ""}`}
-          >
-            <AppText
-              weight="bold"
-              style={{
-                color:
-                  type === "transfer"
-                    ? "#3B82F6"
-                    : isDark
-                      ? theme.text
-                      : "gray",
-                opacity: type === "transfer" ? 1 : 0.5,
-              }}
-            >
-              Transfer
-            </AppText>
-          </TouchableOpacity>
-        </View>
+        <TransactionTypePicker
+          type={type}
+          setType={setType}
+          theme={theme}
+          isDark={isDark}
+        />
 
         <View className="mb-6">
           <AppText variant="caption" weight="bold" className="uppercase mb-2">
@@ -262,9 +77,7 @@ export default function AddTransactionScreen() {
           </AppText>
           <TextInput
             className={`text-4xl font-bold pb-2 border-b ${isDark ? "text-white" : "text-[#333333]"}`}
-            style={{
-              borderBottomColor: theme.divider,
-            }}
+            style={{ borderBottomColor: theme.divider }}
             keyboardType="numeric"
             placeholder="0"
             placeholderTextColor={theme.icon}
@@ -274,250 +87,75 @@ export default function AddTransactionScreen() {
           />
         </View>
 
-        {/* Category section - hidden for transfers */}
         {type !== "transfer" && (
-          <View className="mb-6">
-            <AppText variant="caption" weight="bold" className="uppercase mb-2">
-              Kategori
-            </AppText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <HorizontalSelector
+            label="Kategori"
+            data={categories.filter((c) => c.type === type)}
+            selectedId={category}
+            idExtractor={(c) => c.name}
+            labelExtractor={(c) => c.name}
+            onSelect={setCategory}
+            theme={theme}
+            isDark={isDark}
+            renderExtra={() => (
               <TouchableOpacity
                 className="mr-3 px-4 py-2 rounded-full border border-dashed justify-center"
                 style={{ borderColor: theme.border }}
-                onPress={handleAddCategory}
+                onPress={() => setCategoryModalVisible(true)}
               >
                 <AppText weight="bold">+ Baru</AppText>
               </TouchableOpacity>
-
-              {categories
-                .filter((c) => c.type === type)
-                .map((cat) => (
-                  <TouchableOpacity
-                    key={cat.id}
-                    onPress={() => setCategory(cat.name)}
-                    className="mr-3 px-4 py-2 rounded-full border"
-                    style={{
-                      backgroundColor:
-                        category === cat.name ? theme.primary : theme.surface,
-                      borderColor:
-                        category === cat.name ? theme.primary : theme.border,
-                    }}
-                  >
-                    <AppText
-                      weight="bold"
-                      color={category === cat.name ? "white" : "default"}
-                    >
-                      {cat.name}
-                    </AppText>
-                  </TouchableOpacity>
-                ))}
-            </ScrollView>
-          </View>
+            )}
+          />
         )}
 
         {type === "expense" && (
-          <View className="mb-6">
-            <AppText variant="caption" weight="bold" className="uppercase mb-3">
-              Jenis Pengeluaran (Analisa)
-            </AppText>
-            <View className="flex-row gap-4">
-              <TouchableOpacity
-                onPress={() => setClassification("need")}
-                className="flex-1 p-4 rounded-xl border-2"
-                style={{
-                  backgroundColor:
-                    classification === "need"
-                      ? isDark
-                        ? "rgba(37, 99, 235, 0.1)"
-                        : "#EFF6FF"
-                      : theme.surface,
-                  borderColor:
-                    classification === "need" ? "#3B82F6" : theme.border,
-                }}
-              >
-                <AppText
-                  weight="bold"
-                  className="text-lg mb-1"
-                  style={{
-                    color: classification === "need" ? "#3B82F6" : theme.text,
-                  }}
-                >
-                  Needs 🍞
-                </AppText>
-                <AppText variant="caption">Wajib, Primer, Tagihan.</AppText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setClassification("want")}
-                className="flex-1 p-4 rounded-xl border-2"
-                style={{
-                  backgroundColor:
-                    classification === "want"
-                      ? isDark
-                        ? "rgba(147, 51, 234, 0.1)"
-                        : "#FAF5FF"
-                      : theme.surface,
-                  borderColor:
-                    classification === "want" ? "#A855F7" : theme.border,
-                }}
-              >
-                <AppText
-                  weight="bold"
-                  className="text-lg mb-1"
-                  style={{
-                    color: classification === "want" ? "#A855F7" : theme.text,
-                  }}
-                >
-                  Wants 🎮
-                </AppText>
-                <AppText variant="caption">Hiburan, Jajan, Hobi.</AppText>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <ClassificationPicker
+            classification={classification}
+            setClassification={setClassification}
+            theme={theme}
+            isDark={isDark}
+          />
         )}
 
-        {/* Wallet selection - different UI for transfers */}
         {type === "transfer" ? (
           <>
-            <View className="mb-6">
-              <AppText variant="caption" weight="bold" className="uppercase mb-2">
-                Dari Dompet
-              </AppText>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {wallets.map((w) => (
-                  <TouchableOpacity
-                    key={w.id}
-                    onPress={() => {
-                      setSelectedWalletId(w.id);
-                      // Reset target if same as source
-                      if (targetWalletId === w.id) {
-                        setTargetWalletId("");
-                      }
-                    }}
-                    className="mr-3 px-4 py-2 rounded-full border"
-                    style={{
-                      backgroundColor:
-                        selectedWalletId === w.id
-                          ? isDark
-                            ? theme.text
-                            : "#111827"
-                          : theme.surface,
-                      borderColor:
-                        selectedWalletId === w.id
-                          ? isDark
-                            ? theme.text
-                            : "#111827"
-                          : theme.border,
-                    }}
-                  >
-                    <AppText
-                      color={
-                        selectedWalletId === w.id
-                          ? isDark
-                            ? "default"
-                            : "white"
-                          : "default"
-                      }
-                      weight={selectedWalletId === w.id ? "bold" : "regular"}
-                      style={
-                        selectedWalletId === w.id && isDark
-                          ? { color: theme.background }
-                          : undefined
-                      }
-                    >
-                      {w.name}
-                    </AppText>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            <View className="mb-6">
-              <AppText variant="caption" weight="bold" className="uppercase mb-2">
-                Ke Dompet
-              </AppText>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {wallets
-                  .filter((w) => w.id !== selectedWalletId)
-                  .map((w) => (
-                    <TouchableOpacity
-                      key={w.id}
-                      onPress={() => setTargetWalletId(w.id)}
-                      className="mr-3 px-4 py-2 rounded-full border"
-                      style={{
-                        backgroundColor:
-                          targetWalletId === w.id
-                            ? "#3B82F6"
-                            : theme.surface,
-                        borderColor:
-                          targetWalletId === w.id
-                            ? "#3B82F6"
-                            : theme.border,
-                      }}
-                    >
-                      <AppText
-                        color={targetWalletId === w.id ? "white" : "default"}
-                        weight={targetWalletId === w.id ? "bold" : "regular"}
-                      >
-                        {w.name}
-                      </AppText>
-                    </TouchableOpacity>
-                  ))}
-              </ScrollView>
-              {wallets.filter((w) => w.id !== selectedWalletId).length === 0 && (
-                <AppText variant="caption" color="default" className="mt-2">
-                  Tidak ada dompet lain. Tambah dompet baru untuk transfer.
-                </AppText>
-              )}
-            </View>
+            <HorizontalSelector
+              label="Dari Dompet"
+              data={wallets}
+              selectedId={selectedWalletId}
+              idExtractor={(w) => w.id}
+              labelExtractor={(w) => w.name}
+              onSelect={(id) => {
+                setSelectedWalletId(id);
+                if (targetWalletId === id) setTargetWalletId("");
+              }}
+              theme={theme}
+              isDark={isDark}
+            />
+            <HorizontalSelector
+              label="Ke Dompet"
+              data={wallets.filter((w) => w.id !== selectedWalletId)}
+              selectedId={targetWalletId}
+              idExtractor={(w) => w.id}
+              labelExtractor={(w) => w.name}
+              onSelect={setTargetWalletId}
+              theme={theme}
+              isDark={isDark}
+              activeBgColor="#3B82F6"
+            />
           </>
         ) : (
-          <View className="mb-6">
-            <AppText variant="caption" weight="bold" className="uppercase mb-2">
-              Sumber Dana
-            </AppText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {wallets.map((w) => (
-                <TouchableOpacity
-                  key={w.id}
-                  onPress={() => setSelectedWalletId(w.id)}
-                  className="mr-3 px-4 py-2 rounded-full border"
-                  style={{
-                    backgroundColor:
-                      selectedWalletId === w.id
-                        ? isDark
-                          ? theme.text
-                          : "#111827"
-                        : theme.surface,
-                    borderColor:
-                      selectedWalletId === w.id
-                        ? isDark
-                          ? theme.text
-                          : "#111827"
-                        : theme.border,
-                  }}
-                >
-                  <AppText
-                    color={
-                      selectedWalletId === w.id
-                        ? isDark
-                          ? "default"
-                          : "white"
-                        : "default"
-                    }
-                    weight={selectedWalletId === w.id ? "bold" : "regular"}
-                    style={
-                      selectedWalletId === w.id && isDark
-                        ? { color: theme.background }
-                        : undefined
-                    }
-                  >
-                    {w.name}
-                  </AppText>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+          <HorizontalSelector
+            label="Sumber Dana"
+            data={wallets}
+            selectedId={selectedWalletId}
+            idExtractor={(w) => w.id}
+            labelExtractor={(w) => w.name}
+            onSelect={setSelectedWalletId}
+            theme={theme}
+            isDark={isDark}
+          />
         )}
 
         <View className="mb-8">
@@ -549,60 +187,15 @@ export default function AddTransactionScreen() {
         />
       </View>
 
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <AddCategoryModal
         visible={isCategoryModalVisible}
-        onRequestClose={() => setCategoryModalVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1 bg-black/50 justify-center items-center p-5">
-            <View
-              className="w-full rounded-2xl p-6 shadow-lg"
-              style={{ backgroundColor: theme.background }}
-            >
-              <AppText variant="h3" weight="bold" className="mb-2">
-                Tambah Kategori
-              </AppText>
-              <AppText color="default" className="mb-4">
-                Masukkan nama kategori{" "}
-                {type === "income" ? "Pemasukan" : "Pengeluaran"} baru.
-              </AppText>
-
-              <TextInput
-                className="border rounded-xl p-4 mb-6 text-base"
-                style={{
-                  backgroundColor: theme.surface,
-                  borderColor: theme.border,
-                  color: theme.text,
-                }}
-                placeholder="Contoh: Investasi, Parkir, Amal"
-                placeholderTextColor={theme.icon}
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
-                autoFocus={true}
-              />
-
-              <View className="flex-row gap-3">
-                <View className="flex-1">
-                  <AppButton
-                    title="Batal"
-                    variant="danger"
-                    onPress={() => setCategoryModalVisible(false)}
-                  />
-                </View>
-                <View className="flex-1">
-                  <AppButton
-                    title="Simpan"
-                    onPress={saveNewCategory}
-                    disabled={!newCategoryName.trim()}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+        onClose={() => setCategoryModalVisible(false)}
+        onSave={saveNewCategory}
+        categoryName={newCategoryName}
+        setCategoryName={setNewCategoryName}
+        type={type}
+        theme={theme}
+      />
     </View>
   );
 }

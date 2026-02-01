@@ -58,10 +58,11 @@ export default function AddWalletScreen() {
 
     setIsLoading(true);
     try {
+      const rawBalance = initialBalance.replace(/\./g, "");
       await WalletService.createWallet(user!.uid, {
         name,
         type: selectedType,
-        initialBalance: parseFloat(initialBalance),
+        initialBalance: parseFloat(rawBalance),
         color: selectedColor,
       });
 
@@ -177,7 +178,12 @@ export default function AddWalletScreen() {
               placeholder="0"
               keyboardType="numeric"
               value={initialBalance}
-              onChangeText={setInitialBalance}
+              onChangeText={(val) => {
+                const numeric = val.replace(/\D/g, "");
+                setInitialBalance(
+                  numeric ? parseInt(numeric).toLocaleString("id-ID") : "",
+                );
+              }}
             />
 
             <View>
