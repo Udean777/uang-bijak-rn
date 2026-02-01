@@ -15,6 +15,17 @@ jest.mock("expo-notifications", () => ({
 // Mock Expo Device
 jest.mock("expo-device", () => ({ isDevice: true }));
 
+// Mock Expo Constants
+jest.mock("expo-constants", () => ({
+  expoConfig: {
+    extra: {
+      eas: {
+        projectId: "test-project-id",
+      },
+    },
+  },
+}));
+
 // Mock React Native Platform
 jest.mock("react-native", () => ({ Platform: { OS: "ios" } }));
 

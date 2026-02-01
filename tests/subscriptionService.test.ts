@@ -19,6 +19,12 @@ jest.mock("firebase/firestore", () => ({
 }));
 jest.mock("@react-native-async-storage/async-storage", () => ({}));
 jest.mock("@/src/config/firebase", () => ({ db: {} }));
+jest.mock("../src/services/NotificationService", () => ({
+  NotificationService: {
+    isNotificationsEnabled: jest.fn().mockResolvedValue(true),
+    sendLocalNotification: jest.fn(),
+  },
+}));
 
 import { addDoc } from "firebase/firestore";
 import { SubscriptionService } from "../src/services/subscriptionService";
