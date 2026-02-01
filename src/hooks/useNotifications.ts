@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "../features/auth/hooks/useAuth";
+import { AuthService } from "../services/authService";
 import { DebtService } from "../services/debtService";
 import { NotificationService } from "../services/NotificationService";
 import { SubscriptionService } from "../services/subscriptionService";
@@ -17,10 +18,22 @@ export const useNotifications = () => {
 
   // Request permissions once when user logs in
   useEffect(() => {
-    if (user && !hasRequestedPermission.current) {
-      hasRequestedPermission.current = true;
-      NotificationService.requestPermissions();
-    }
+    const checkAndRequest = async () => {
+      if (user && !hasRequestedPermission.current) {
+        const enabled = await NotificationService.isNotificationsEnabled();
+        if (enabled) {
+          hasRequestedPermission.current = true;
+          await NotificationService.requestPermissions();
+
+          // Register for push notifications
+          const token = await NotificationService.getPushToken();
+          if (token) {
+            await AuthService.updatePushToken(user.uid, token);
+          }
+        }
+      }
+    };
+    checkAndRequest();
   }, [user]);
 
   // Subscribe to subscriptions and schedule reminders
@@ -30,6 +43,9 @@ export const useNotifications = () => {
     const unsubscribe = SubscriptionService.subscribeSubscriptions(
       user.uid,
       async (subscriptions: Subscription[]) => {
+        const enabled = await NotificationService.isNotificationsEnabled();
+        if (!enabled) return;
+
         // Schedule reminders for active subscriptions
         for (const sub of subscriptions) {
           if (sub.isActive) {
@@ -49,6 +65,9 @@ export const useNotifications = () => {
     const unsubscribe = DebtService.subscribeDebts(
       user.uid,
       async (debts: Debt[]) => {
+        const enabled = await NotificationService.isNotificationsEnabled();
+        if (!enabled) return;
+
         for (const debt of debts) {
           if (debt.status === "unpaid") {
             await NotificationService.scheduleDebtReminder(debt);
@@ -67,6 +86,9 @@ export const useNotifications = () => {
     const unsubscribe = WishlistService.subscribeWishlists(
       user.uid,
       async (wishlist: Wishlist[]) => {
+        const enabled = await NotificationService.isNotificationsEnabled();
+        if (!enabled) return;
+
         for (const item of wishlist) {
           if (item.status === "waiting") {
             await NotificationService.scheduleWishlistReady(

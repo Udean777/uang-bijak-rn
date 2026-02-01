@@ -14,6 +14,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import { NotificationService } from "./NotificationService";
 
 const COLLECTION = "subscriptions";
 
@@ -81,6 +82,15 @@ export const SubscriptionService = {
       isActive: true,
       createdAt: Date.now(),
     });
+
+    // Send confirmation notification
+    const enabled = await NotificationService.isNotificationsEnabled();
+    if (enabled) {
+      await NotificationService.sendLocalNotification(
+        "Langganan Ditambahkan 📥",
+        `${data.name} telah berhasil ditambahkan ke daftar langganan Anda.`,
+      );
+    }
   },
 
   subscribeSubscriptions: (
@@ -127,6 +137,15 @@ export const SubscriptionService = {
       await updateDoc(subRef, {
         nextPaymentDate: newDate,
       });
+
+      // Send confirmation notification
+      const enabled = await NotificationService.isNotificationsEnabled();
+      if (enabled) {
+        await NotificationService.sendLocalNotification(
+          "Langganan Diperbarui 🔄",
+          `Pembayaran telah dikonfirmasi dan jatuh tempo berikutnya diperbarui.`,
+        );
+      }
     } catch (error) {
       console.error(error);
       throw error;

@@ -34,11 +34,17 @@ export default function MenuScreen() {
 
   React.useEffect(() => {
     loadBiometricStatus();
+    loadNotificationStatus();
   }, []);
 
   const loadBiometricStatus = async () => {
     const enabled = await SecurityService.isBiometricEnabled();
     setIsBiometricEnabled(enabled);
+  };
+
+  const loadNotificationStatus = async () => {
+    const enabled = await NotificationService.isNotificationsEnabled();
+    setIsNotificationsEnabled(enabled);
   };
 
   const onLogoutPress = () => {
@@ -124,6 +130,7 @@ export default function MenuScreen() {
     } else {
       await NotificationService.cancelAllNotifications();
     }
+    await NotificationService.setNotificationsEnabled(value);
     setIsNotificationsEnabled(value);
   };
 

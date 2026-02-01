@@ -13,6 +13,7 @@ import {
 import { db } from "../config/firebase";
 import { CreateTransactionPayload, Transaction } from "../types/transaction";
 import { WalletType } from "../types/wallet";
+import { stripUndefined } from "../utils/firestoreUtils";
 import { AnalyticsService } from "./AnalyticsService";
 
 const COLLECTION = "transactions";
@@ -137,12 +138,15 @@ export const TransactionService = {
           updatedAt: serverTimestamp(),
         });
 
-        transaction.set(newtxRef, {
-          ...data,
-          userId,
-          date: data.date.getTime(),
-          createdAt: serverTimestamp(),
-        });
+        transaction.set(
+          newtxRef,
+          stripUndefined({
+            ...data,
+            userId,
+            date: data.date.getTime(),
+            createdAt: serverTimestamp(),
+          }),
+        );
       });
 
       AnalyticsService.logEvent("add_transaction", {
@@ -339,11 +343,14 @@ export const TransactionService = {
           });
         }
 
-        transaction.update(txRef, {
-          ...newData,
-          date: newData.date.getTime(),
-          updatedAt: serverTimestamp(),
-        });
+        transaction.update(
+          txRef,
+          stripUndefined({
+            ...newData,
+            date: newData.date.getTime(),
+            updatedAt: serverTimestamp(),
+          }),
+        );
       });
     } catch (error: any) {
       throw new Error("Gagal mengupdate: " + error.message);

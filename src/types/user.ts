@@ -11,6 +11,7 @@ export interface UserProfile {
     language: "id" | "en";
     theme: "light" | "dark" | "system";
   };
+  pushToken?: string;
 }
 
 export interface RegisterPayload {
