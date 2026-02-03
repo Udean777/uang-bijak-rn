@@ -143,10 +143,7 @@ export const EditWalletSheet = ({
                         Preview Saldo
                       </AppText>
                       <AppText weight="bold" color="white" className="text-2xl">
-                        Rp{" "}
-                        {balance
-                          ? parseFloat(balance).toLocaleString("id-ID")
-                          : "0"}
+                        Rp {balance || "0"}
                       </AppText>
                     </View>
                   </View>

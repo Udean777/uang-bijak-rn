@@ -1,3 +1,4 @@
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { Wallet, WalletType } from "@/src/types/wallet";
 import { useCallback, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -35,7 +36,8 @@ export const useEditWallet = ({
   useEffect(() => {
     if (wallet && visible) {
       setName(wallet.name);
-      setBalance(wallet.balance.toString());
+      // Ensure we display formatted value when opening for edit
+      setBalance(wallet.balance.toLocaleString("id-ID"));
       setSelectedType(wallet.type);
       setSelectedColor(wallet.color);
     }
@@ -50,7 +52,7 @@ export const useEditWallet = ({
         name,
         type: selectedType,
         color: selectedColor,
-        balance: parseFloat(balance),
+        balance: parseCurrency(balance),
       } as any);
 
       Toast.show({ type: "success", text1: "Dompet Berhasil Diupdate" });

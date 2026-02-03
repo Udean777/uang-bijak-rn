@@ -1,5 +1,6 @@
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { useTransactionStore } from "@/src/features/transactions/store/useTransactionStore";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { Category, CategoryService } from "@/src/services/categoryService";
 import { Transaction } from "@/src/types/transaction";
 import { useCallback, useEffect, useState } from "react";
@@ -30,7 +31,8 @@ export const useEditTransactionSheet = ({
   // Initialize form when transaction changes or modal opens
   useEffect(() => {
     if (transaction && visible) {
-      setAmount(transaction.amount.toString());
+      // Display absolute value to avoid double negatives or formatting issues
+      setAmount(Math.abs(transaction.amount).toLocaleString("id-ID"));
       setNote(transaction.note || "");
       setCategory(transaction.category);
       setSelectedWalletId(transaction.walletId);
@@ -52,8 +54,17 @@ export const useEditTransactionSheet = ({
 
     setIsLoading(true);
     try {
+      // Determine sign based on original amount or type
+      let sign = Math.sign(transaction.amount);
+      if (sign === 0) {
+        sign = transaction.type === "income" ? 1 : -1;
+      }
+
+      // Restore sign
+      const finalAmount = Math.abs(parseCurrency(amount)) * sign;
+
       await updateTransaction(transaction.id, transaction, {
-        amount: parseFloat(amount),
+        amount: finalAmount,
         category,
         note,
         walletId: selectedWalletId,

@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
@@ -32,7 +33,7 @@ export const useAddSubscription = () => {
     try {
       await addSubscription(user!.uid, {
         name,
-        cost: parseFloat(cost),
+        cost: parseCurrency(cost),
         dueDate: dateNum,
       });
       Toast.show({ type: "success", text1: "Langganan Disimpan" });

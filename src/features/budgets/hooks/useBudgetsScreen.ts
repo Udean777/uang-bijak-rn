@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useBudgetStore } from "@/src/features/budgets/store/useBudgetStore";
 import { useTransactionStore } from "@/src/features/transactions/store/useTransactionStore";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -110,7 +111,7 @@ export const useBudgetsScreen = () => {
     try {
       await setBudget(user!.uid, {
         categoryName: selectedCategory,
-        limitAmount: parseFloat(limit),
+        limitAmount: parseCurrency(limit),
         month: selectedMonth,
         year: selectedYear,
       });

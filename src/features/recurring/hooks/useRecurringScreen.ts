@@ -2,6 +2,7 @@ import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useRecurringStore } from "@/src/features/recurring/store/useRecurringStore";
 import { useTransactionStore } from "@/src/features/transactions/store/useTransactionStore";
 import { useWalletStore } from "@/src/features/wallets/store/useWalletStore";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { RecurringFrequency } from "@/src/types/recurring";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -71,7 +72,7 @@ export const useRecurringScreen = () => {
     try {
       await addRecurring(user!.uid, {
         walletId,
-        amount: parseFloat(amount),
+        amount: parseCurrency(amount),
         type,
         category,
         frequency,

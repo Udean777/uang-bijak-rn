@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useGoalStore } from "@/src/features/goals/store/useGoalStore";
 import { useWalletStore } from "@/src/features/wallets/store/useWalletStore";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -68,7 +69,7 @@ export const useGoalsScreen = () => {
     try {
       await addGoal(user!.uid, {
         name,
-        targetAmount: parseFloat(target),
+        targetAmount: parseCurrency(target),
         currentAmount: 0,
         walletId: selectedWalletId,
         color: "#3B82F6",

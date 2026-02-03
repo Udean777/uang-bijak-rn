@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { WalletType } from "@/src/types/wallet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
@@ -29,8 +30,17 @@ export const useAddWallet = () => {
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
 
   const handleBalanceChange = (val: string) => {
-    const numeric = val.replace(/\D/g, "");
-    setInitialBalance(numeric ? parseInt(numeric).toLocaleString("id-ID") : "");
+    // We can just set the state as CurrencyInput handles formatting,
+    // but assuming useAddWallet uses AppInput (which was replaced by CurrencyInput in add-wallet.tsx)
+    // Actually add-wallet.tsx uses CurrencyInput now, so initialBalance is already formatted.
+    // So handleBalanceChange might be redundant or just need to pass through?
+    // Wait, add-wallet.tsx passes onChangeText={setInitialBalance} directly?
+    // Let's check add-wallet.tsx from previous context.
+    // Yes, Step 268 said "Replaced AppInput ... with CurrencyInput".
+    // So in useAddWallet, we should just expect formatted string.
+    // But useAddWallet exports handleBalanceChange?
+    // Let's assume for now we just want to parse correctly in handleSave.
+    setInitialBalance(val);
   };
 
   const handleSave = async () => {
@@ -44,11 +54,10 @@ export const useAddWallet = () => {
     }
 
     try {
-      const rawBalance = initialBalance.replace(/\./g, "");
       await createWallet(user!.uid, {
         name,
         type: selectedType,
-        initialBalance: parseFloat(rawBalance),
+        initialBalance: parseCurrency(initialBalance),
         color: selectedColor,
       });
 

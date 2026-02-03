@@ -73,11 +73,30 @@ export const useHistoryScreen = () => {
   const loadMore = () => setLimitCount((prev) => prev + 10);
   const clearSearch = () => setSearchQuery("");
 
-  const formattedDate = selectedDate.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const formattedDate = useMemo(() => {
+    const today = new Date();
+    const isToday =
+      selectedDate.getDate() === today.getDate() &&
+      selectedDate.getMonth() === today.getMonth() &&
+      selectedDate.getFullYear() === today.getFullYear();
+
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    const isYesterday =
+      selectedDate.getDate() === yesterday.getDate() &&
+      selectedDate.getMonth() === yesterday.getMonth() &&
+      selectedDate.getFullYear() === yesterday.getFullYear();
+
+    const dateStr = selectedDate.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    if (isToday) return `Hari Ini, ${dateStr}`;
+    if (isYesterday) return `Kemarin, ${dateStr}`;
+    return dateStr;
+  }, [selectedDate]);
 
   const isFilterActive = filterType !== "all" || rangeMode !== "all";
 

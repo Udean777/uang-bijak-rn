@@ -85,7 +85,7 @@ export default function HistoryScreen() {
         </View>
 
         <View className="mt-3 flex-row items-center justify-between">
-          <AppText variant="caption">
+          <AppText variant="body" weight="bold">
             {rangeMode === "all" ? "Semua Waktu" : formattedDate}
           </AppText>
           <AppText variant="caption">Total: {filteredData.length} Data</AppText>

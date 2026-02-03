@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useWalletStore } from "@/src/features/wallets/store/useWalletStore";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -76,7 +77,7 @@ export const useManageTemplatesScreen = () => {
     await addTemplate({
       userId: user!.uid,
       name: form.name,
-      amount: parseFloat(form.amount),
+      amount: parseCurrency(form.amount),
       type: "expense",
       category: form.category,
       walletId: form.walletId,
