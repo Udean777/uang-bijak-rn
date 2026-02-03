@@ -21,6 +21,7 @@ interface RecurringItemProps {
   wallets: Wallet[];
   onToggle: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
+  onEdit?: (item: RecurringTransaction) => void;
 }
 
 export const RecurringItem = ({
@@ -28,6 +29,7 @@ export const RecurringItem = ({
   wallets,
   onToggle,
   onDelete,
+  onEdit,
 }: RecurringItemProps) => {
   const { colors: theme } = useTheme();
 
@@ -76,9 +78,14 @@ export const RecurringItem = ({
         <AppText variant="caption" color="secondary">
           Next: {new Date(item.nextExecutionDate).toLocaleDateString("id-ID")}
         </AppText>
-        <TouchableOpacity onPress={() => onDelete(item.id)} className="p-1">
-          <Ionicons name="trash-outline" size={18} color={theme.danger} />
-        </TouchableOpacity>
+        <View className="flex-row gap-2">
+          <TouchableOpacity onPress={() => onEdit?.(item)} className="p-1">
+            <Ionicons name="create-outline" size={18} color={theme.info} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onDelete(item.id)} className="p-1">
+            <Ionicons name="trash-outline" size={18} color={theme.danger} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

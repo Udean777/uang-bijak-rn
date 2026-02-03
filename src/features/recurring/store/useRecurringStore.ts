@@ -15,6 +15,10 @@ interface RecurringState {
   addRecurring: (userId: string, data: CreateRecurringPayload) => Promise<void>;
   deleteRecurring: (id: string) => Promise<void>;
   toggleActive: (id: string, isActive: boolean) => Promise<void>;
+  updateRecurring: (
+    id: string,
+    data: Partial<CreateRecurringPayload>,
+  ) => Promise<void>;
 }
 
 export const useRecurringStore = create<RecurringState>((set) => ({
@@ -53,6 +57,15 @@ export const useRecurringStore = create<RecurringState>((set) => ({
       await RecurringService.toggleActive(id, isActive);
     } catch (error) {
       throw error;
+    }
+  },
+
+  updateRecurring: async (id, data) => {
+    set({ isLoading: true });
+    try {
+      await RecurringService.updateRecurring(id, data);
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));

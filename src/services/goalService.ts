@@ -81,6 +81,19 @@ export const GoalService = {
     }
   },
 
+  updateGoal: async (goalId: string, data: Partial<CreateGoalPayload>) => {
+    try {
+      const goalRef = doc(db, COLLECTION, goalId);
+      const updateData: any = { ...data, updatedAt: Date.now() };
+      if (data.deadline) {
+        updateData.deadline = data.deadline.getTime();
+      }
+      await updateDoc(goalRef, updateData);
+    } catch (error: any) {
+      throw new Error("Gagal memperbarui goal: " + error.message);
+    }
+  },
+
   deleteGoal: async (goalId: string) => {
     try {
       await deleteDoc(doc(db, COLLECTION, goalId));

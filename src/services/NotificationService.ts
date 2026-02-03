@@ -149,7 +149,6 @@ export const NotificationService = {
               title: "Tagihan Mendatang! 💸",
               body: `${subscription.name} - Rp ${subscription.cost.toLocaleString("id-ID")} jatuh tempo ${offset} hari lagi.`,
               data: { type: "subscription", id: subscription.id },
-              sound: "default",
             },
             trigger: {
               type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -201,7 +200,6 @@ export const NotificationService = {
           title,
           body,
           data: { type: "debt", id: debt.id },
-          sound: "default",
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -242,7 +240,6 @@ export const NotificationService = {
           title: "Wishlist Siap! 🎉",
           body: `Masa tunggu "${name}" sudah selesai. Saatnya memutuskan!`,
           data: { type: "wishlist", id: wishlistId },
-          sound: "default",
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -297,7 +294,6 @@ export const NotificationService = {
         title,
         body,
         data: data || {},
-        sound: "default",
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,

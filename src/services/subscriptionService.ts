@@ -151,4 +151,30 @@ export const SubscriptionService = {
       throw error;
     }
   },
+
+  updateSubscription: async (
+    id: string,
+    data: Partial<CreateSubscriptionPayload>,
+  ) => {
+    try {
+      const subRef = doc(db, COLLECTION, id);
+      const updateData: any = { ...data };
+
+      // If dueDate changed, we might need to recalculate nextPaymentDate.
+      // However, usually editing implies correcting data.
+      // If the user changes dueDate, we should probably update nextPaymentDate logic
+      // but it's complex if payment already happened.
+      // For simplicity, let's just update the fields.
+      // If due date changes, maybe next payment date should be re-calculated?
+      // Let's re-calculate nextPaymentDate if dueDate is provided.
+      if (data.dueDate) {
+        updateData.nextPaymentDate = calculateInitialNextPayment(data.dueDate);
+      }
+
+      await updateDoc(subRef, updateData);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
 };

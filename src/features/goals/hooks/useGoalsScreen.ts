@@ -21,6 +21,13 @@ export const useGoalsScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalVisible, setAddModalVisible] = useState(false);
 
+  // Dialog State
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState<string | null>(null);
+
+  // Edit State
+  const [editingGoal, setEditingGoal] = useState<any | null>(null);
+
   // Form State
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
@@ -55,42 +62,80 @@ export const useGoalsScreen = () => {
 
   // Auto-select first savings wallet
   useEffect(() => {
-    if (hasSavingsWallet && !selectedWalletId) {
+    if (hasSavingsWallet && !selectedWalletId && !editingGoal) {
       setSelectedWalletId(savingsWallets[0].id);
     }
-  }, [hasSavingsWallet, savingsWallets, selectedWalletId]);
+  }, [hasSavingsWallet, savingsWallets, selectedWalletId, editingGoal]);
 
-  const handleAddGoal = async () => {
+  const resetForm = () => {
+    setName("");
+    setTarget("");
+    setSelectedWalletId(savingsWallets[0]?.id || "");
+    setEditingGoal(null);
+  };
+
+  const handleOpenAdd = () => {
+    resetForm();
+    setAddModalVisible(true);
+  };
+
+  const handleEditGoal = (goal: any) => {
+    setEditingGoal(goal);
+    setName(goal.name);
+    setTarget(goal.targetAmount.toLocaleString("id-ID"));
+    setSelectedWalletId(goal.walletId || "");
+    setAddModalVisible(true);
+  };
+
+  const handleSaveGoal = async () => {
     if (!name || !target) {
       Toast.show({ type: "error", text1: "Mohon isi nama dan target dana" });
       return;
     }
 
     try {
-      await addGoal(user!.uid, {
-        name,
-        targetAmount: parseCurrency(target),
-        currentAmount: 0,
-        walletId: selectedWalletId,
-        color: "#3B82F6",
-        icon: "trophy",
-      });
+      if (editingGoal) {
+        // UPDATE MODE
+        await useGoalStore.getState().updateGoal(editingGoal.id, {
+          name,
+          targetAmount: parseCurrency(target),
+          walletId: selectedWalletId,
+        });
+        Toast.show({ type: "success", text1: "Goal diperbarui! ✏️" });
+      } else {
+        // CREATE MODE
+        await addGoal(user!.uid, {
+          name,
+          targetAmount: parseCurrency(target),
+          currentAmount: 0,
+          walletId: selectedWalletId,
+          color: "#3B82F6",
+          icon: "trophy",
+        });
+        Toast.show({ type: "success", text1: "Goal ditambahkan! 🎯" });
+      }
       setAddModalVisible(false);
-      setName("");
-      setTarget("");
-      setSelectedWalletId(savingsWallets[0]?.id || "");
-      Toast.show({ type: "success", text1: "Goal ditambahkan! 🎯" });
+      resetForm();
     } catch (error: any) {
       Toast.show({ type: "error", text1: error.message });
     }
   };
 
-  const handleDeleteGoal = async (goalId: string) => {
+  const handleDeletePress = (goalId: string) => {
+    setGoalToDelete(goalId);
+    setConfirmDeleteVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!goalToDelete) return;
     try {
-      await deleteGoal(goalId);
+      await deleteGoal(goalToDelete);
       Toast.show({ type: "success", text1: "Goal dihapus" });
     } catch (error: any) {
       Toast.show({ type: "error", text1: error.message });
+    } finally {
+      setConfirmDeleteVisible(false);
+      setGoalToDelete(null);
     }
   };
 
@@ -119,9 +164,15 @@ export const useGoalsScreen = () => {
     savingsWallets,
     hasSavingsWallet,
     wallets,
-    handleAddGoal,
-    handleDeleteGoal,
+    handleSaveGoal,
+    handleDeletePress,
+    handleEditGoal,
+    handleConfirmDelete,
+    confirmDeleteVisible,
+    setConfirmDeleteVisible,
     handleBack,
     handleCreateSavingsWallet,
+    handleOpenAdd,
+    editingGoal,
   };
 };

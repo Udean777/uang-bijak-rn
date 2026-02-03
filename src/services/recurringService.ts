@@ -141,4 +141,21 @@ export const RecurringService = {
       updatedAt: Date.now(),
     });
   },
+
+  updateRecurring: async (
+    id: string,
+    data: Partial<CreateRecurringPayload>,
+  ) => {
+    const updateData: any = { ...data, updatedAt: Date.now() };
+    if (data.startDate) {
+      updateData.startDate = data.startDate.getTime();
+      // If start date changed, re-calculate next execution date based on frequency
+      // This logic can be complex depending on if we want to reset or keep schedule.
+      // For now, let's assume editing doesn't reset "nextExecutionDate" unless explicitly handled,
+      // or we can re-set nextExecutionDate to startDate if it's in the future.
+      // SImple approach: Update nextExecutionDate to new startDate
+      updateData.nextExecutionDate = data.startDate.getTime();
+    }
+    await updateDoc(doc(db, COLLECTION, id), updateData);
+  },
 };

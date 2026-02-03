@@ -29,6 +29,13 @@ export const useBudgetsScreen = () => {
   const [selectedYear] = useState(now.getFullYear());
   const [isAddModalVisible, setAddModalVisible] = useState(false);
 
+  // Dialog State
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
+
+  // Edit State
+  const [editingBudget, setEditingBudget] = useState<any | null>(null);
+
   // Form State
   const [selectedCategory, setSelectedCategory] = useState("");
   const [limit, setLimit] = useState("");
@@ -99,6 +106,24 @@ export const useBudgetsScreen = () => {
     });
   }, [rawBudgets, transactions, selectedMonth, selectedYear]);
 
+  const resetForm = () => {
+    setSelectedCategory("");
+    setLimit("");
+    setEditingBudget(null);
+  };
+
+  const handleOpenAdd = () => {
+    resetForm();
+    setAddModalVisible(true);
+  };
+
+  const handleEditBudget = (item: any) => {
+    setEditingBudget(item);
+    setSelectedCategory(item.categoryName);
+    setLimit(item.limitAmount.toLocaleString("id-ID"));
+    setAddModalVisible(true);
+  };
+
   const handleSetBudget = async () => {
     if (!selectedCategory || !limit) {
       Toast.show({
@@ -116,20 +141,28 @@ export const useBudgetsScreen = () => {
         year: selectedYear,
       });
       setAddModalVisible(false);
-      setSelectedCategory("");
-      setLimit("");
+      resetForm();
       Toast.show({ type: "success", text1: "Budget berhasil diatur!" });
     } catch (error: any) {
       Toast.show({ type: "error", text1: error.message });
     }
   };
 
-  const handleDeleteBudget = async (id: string) => {
+  const handleDeletePress = (id: string) => {
+    setBudgetToDelete(id);
+    setConfirmDeleteVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!budgetToDelete) return;
     try {
-      await deleteBudget(id);
+      await deleteBudget(budgetToDelete);
       Toast.show({ type: "success", text1: "Budget dihapus" });
     } catch (error: any) {
       Toast.show({ type: "error", text1: error.message });
+    } finally {
+      setConfirmDeleteVisible(false);
+      setBudgetToDelete(null);
     }
   };
 
@@ -147,7 +180,13 @@ export const useBudgetsScreen = () => {
     limit,
     setLimit,
     handleSetBudget,
-    handleDeleteBudget,
+    handleDeletePress,
+    handleEditBudget,
+    handleConfirmDelete,
+    confirmDeleteVisible,
+    setConfirmDeleteVisible,
     handleBack,
+    handleOpenAdd,
+    editingBudget,
   };
 };

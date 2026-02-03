@@ -2,6 +2,7 @@ import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { GoalItem } from "@/src/features/goals/components/GoalItem";
 import { useGoalsScreen } from "@/src/features/goals/hooks/useGoalsScreen";
@@ -33,10 +34,16 @@ export default function GoalsScreen() {
     savingsWallets,
     hasSavingsWallet,
     wallets,
-    handleAddGoal,
-    handleDeleteGoal,
+    handleSaveGoal,
+    handleDeletePress,
+    handleEditGoal,
+    confirmDeleteVisible,
+    setConfirmDeleteVisible,
+    handleConfirmDelete,
     handleBack,
     handleCreateSavingsWallet,
+    handleOpenAdd,
+    editingGoal,
   } = useGoalsScreen();
 
   return (
@@ -51,10 +58,7 @@ export default function GoalsScreen() {
         <AppText variant="h3" weight="bold">
           Target Menabung
         </AppText>
-        <TouchableOpacity
-          onPress={() => setAddModalVisible(true)}
-          className="p-2 -mr-2"
-        >
+        <TouchableOpacity onPress={handleOpenAdd} className="p-2 -mr-2">
           <Ionicons name="add-circle" size={28} color={theme.primary} />
         </TouchableOpacity>
       </View>
@@ -63,7 +67,12 @@ export default function GoalsScreen() {
         data={goals}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <GoalItem item={item} wallets={wallets} onDelete={handleDeleteGoal} />
+          <GoalItem
+            item={item}
+            wallets={wallets}
+            onDelete={handleDeletePress}
+            onEdit={handleEditGoal}
+          />
         )}
         contentContainerStyle={{ padding: 20 }}
         ListEmptyComponent={
@@ -75,7 +84,7 @@ export default function GoalsScreen() {
             <AppButton
               title="Buat Target"
               className="mt-6 px-8"
-              onPress={() => setAddModalVisible(true)}
+              onPress={handleOpenAdd}
             />
           </View>
         }
@@ -92,7 +101,7 @@ export default function GoalsScreen() {
             style={{ backgroundColor: theme.background }}
           >
             <ModalHeader
-              title="Target Baru"
+              title={editingGoal ? "Edit Target" : "Target Baru"}
               onClose={() => setAddModalVisible(false)}
             />
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -193,8 +202,8 @@ export default function GoalsScreen() {
                   </View>
 
                   <AppButton
-                    title="Simpan Target"
-                    onPress={handleAddGoal}
+                    title={editingGoal ? "Simpan Perubahan" : "Simpan Target"}
+                    onPress={handleSaveGoal}
                     isLoading={isSaving}
                     disabled={!selectedWalletId}
                   />
@@ -204,6 +213,17 @@ export default function GoalsScreen() {
           </View>
         </View>
       </Modal>
+
+      <ConfirmDialog
+        visible={confirmDeleteVisible}
+        title="Hapus Target?"
+        message="Apakah Anda yakin ingin menghapus target menabung ini? Data tidak dapat dikembalikan."
+        confirmText="Hapus"
+        cancelText="Batal"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDeleteVisible(false)}
+      />
     </View>
   );
 }

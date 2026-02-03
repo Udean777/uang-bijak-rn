@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppText } from "@/src/components/atoms/AppText";
 import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { BudgetItem } from "@/src/features/budgets/components/BudgetItem";
 import { useBudgetsScreen } from "@/src/features/budgets/hooks/useBudgetsScreen";
@@ -29,8 +30,14 @@ export default function BudgetsScreen() {
     limit,
     setLimit,
     handleSetBudget,
-    handleDeleteBudget,
+    handleDeletePress,
+    handleEditBudget,
     handleBack,
+    handleOpenAdd,
+    editingBudget,
+    confirmDeleteVisible,
+    setConfirmDeleteVisible,
+    handleConfirmDelete,
   } = useBudgetsScreen();
 
   return (
@@ -45,10 +52,7 @@ export default function BudgetsScreen() {
         <AppText variant="h3" weight="bold">
           Budget Kategori
         </AppText>
-        <TouchableOpacity
-          onPress={() => setAddModalVisible(true)}
-          className="p-2 -mr-2"
-        >
+        <TouchableOpacity onPress={handleOpenAdd} className="p-2 -mr-2">
           <Ionicons name="add-circle" size={28} color={theme.primary} />
         </TouchableOpacity>
       </View>
@@ -57,7 +61,11 @@ export default function BudgetsScreen() {
         data={budgets}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <BudgetItem item={item} onDelete={handleDeleteBudget} />
+          <BudgetItem
+            item={item}
+            onDelete={handleDeletePress}
+            onEdit={handleEditBudget}
+          />
         )}
         contentContainerStyle={{ padding: 20 }}
         ListEmptyComponent={
@@ -69,7 +77,7 @@ export default function BudgetsScreen() {
             <AppButton
               title="Atur Budget"
               className="mt-6 px-8"
-              onPress={() => setAddModalVisible(true)}
+              onPress={handleOpenAdd}
             />
           </View>
         }
@@ -86,7 +94,7 @@ export default function BudgetsScreen() {
             style={{ backgroundColor: theme.background }}
           >
             <ModalHeader
-              title="Atur Budget"
+              title={editingBudget ? "Edit Budget" : "Atur Budget"}
               onClose={() => setAddModalVisible(false)}
             />
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -106,6 +114,10 @@ export default function BudgetsScreen() {
                   <TouchableOpacity
                     key={cat.id}
                     onPress={() => setSelectedCategory(cat.name)}
+                    // Disable category selection in Edit mode if desired, but letting it be editable corresponds to switching budget context.
+                    // However, to keep it "Editing" the same item, usually we lock it.
+                    // Given the service upsert logic, changing category changes WHICH budget we are targeting.
+                    // For now, let's keep it consistent: You can select any category.
                     className="mr-3 px-4 py-2 rounded-full border"
                     style={{
                       backgroundColor:
@@ -138,7 +150,7 @@ export default function BudgetsScreen() {
               />
 
               <AppButton
-                title="Simpan Budget"
+                title={editingBudget ? "Simpan Perubahan" : "Simpan Budget"}
                 onPress={handleSetBudget}
                 isLoading={isSaving}
               />
@@ -146,6 +158,17 @@ export default function BudgetsScreen() {
           </View>
         </View>
       </Modal>
+
+      <ConfirmDialog
+        visible={confirmDeleteVisible}
+        title="Hapus Budget?"
+        message="Apakah Anda yakin ingin menghapus budget ini? Batasan pengeluaran akan dihapus."
+        confirmText="Hapus"
+        cancelText="Batal"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDeleteVisible(false)}
+      />
     </View>
   );
 }

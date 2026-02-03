@@ -7,9 +7,10 @@ import { TouchableOpacity, View } from "react-native";
 interface BudgetItemProps {
   item: any;
   onDelete: (id: string) => void;
+  onEdit?: (item: any) => void;
 }
 
-export const BudgetItem = ({ item, onDelete }: BudgetItemProps) => {
+export const BudgetItem = ({ item, onDelete, onEdit }: BudgetItemProps) => {
   const { colors: theme, isDark } = useTheme();
 
   const percentage = Math.round(item.percentage * 100);
@@ -57,9 +58,14 @@ export const BudgetItem = ({ item, onDelete }: BudgetItemProps) => {
         <AppText variant="caption">
           Sisa: Rp {Math.max(0, item.remaining).toLocaleString("id-ID")}
         </AppText>
-        <TouchableOpacity onPress={() => onDelete(item.id)} className="p-1">
-          <Ionicons name="trash-outline" size={18} color={theme.danger} />
-        </TouchableOpacity>
+        <View className="flex-row gap-2">
+          <TouchableOpacity onPress={() => onEdit?.(item)} className="p-1">
+            <Ionicons name="create-outline" size={18} color={theme.info} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onDelete(item.id)} className="p-1">
+            <Ionicons name="trash-outline" size={18} color={theme.danger} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

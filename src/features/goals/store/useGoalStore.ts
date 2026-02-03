@@ -12,6 +12,10 @@ interface GoalState {
   addGoal: (userId: string, data: CreateGoalPayload) => Promise<void>;
   updateProgress: (goalId: string, amount: number) => Promise<void>;
   updateStatus: (goalId: string, status: Goal["status"]) => Promise<void>;
+  updateGoal: (
+    goalId: string,
+    data: Partial<CreateGoalPayload>,
+  ) => Promise<void>;
   deleteGoal: (goalId: string) => Promise<void>;
 }
 
@@ -51,6 +55,15 @@ export const useGoalStore = create<GoalState>((set) => ({
       await GoalService.updateGoalStatus(goalId, status);
     } catch (error) {
       throw error;
+    }
+  },
+
+  updateGoal: async (goalId, data) => {
+    set({ isLoading: true });
+    try {
+      await GoalService.updateGoal(goalId, data);
+    } finally {
+      set({ isLoading: false });
     }
   },
 

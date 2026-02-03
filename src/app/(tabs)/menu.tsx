@@ -35,6 +35,9 @@ export default function MenuScreen() {
     toggleNotifications,
     handleExportData,
     handleTestNotification,
+    editingSubscription,
+    handleOpenAddSubscription,
+    handleEditSubscription,
   } = useMenuLogic();
 
   return (
@@ -51,9 +54,9 @@ export default function MenuScreen() {
         <MenuSection
           title="Langganan & Tagihan"
           actionText="+ Tambah"
-          onActionPress={() => setShowAddSheet(true)}
+          onActionPress={handleOpenAddSubscription}
         >
-          <SubscriptionList />
+          <SubscriptionList onEdit={handleEditSubscription} />
         </MenuSection>
 
         <MenuSection title="Fitur Cerdas">
@@ -173,6 +176,7 @@ export default function MenuScreen() {
       <AddSubscriptionSheet
         visible={showAddSheet}
         onClose={() => setShowAddSheet(false)}
+        editingSubscription={editingSubscription}
       />
 
       <ConfirmDialog

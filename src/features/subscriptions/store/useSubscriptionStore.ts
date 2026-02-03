@@ -23,6 +23,10 @@ interface SubscriptionState {
     fixedDay: number,
   ) => Promise<void>;
   getPendingBillsTotal: () => number;
+  updateSubscription: (
+    id: string,
+    data: Partial<CreateSubscriptionPayload>,
+  ) => Promise<void>;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
@@ -68,6 +72,15 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         currentNextPayment,
         fixedDay,
       );
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  updateSubscription: async (id, data) => {
+    set({ isLoading: true });
+    try {
+      await SubscriptionService.updateSubscription(id, data);
     } finally {
       set({ isLoading: false });
     }

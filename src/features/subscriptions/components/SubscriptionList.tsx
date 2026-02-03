@@ -38,7 +38,13 @@ const getDaysLeft = (targetTimestamp: number) => {
   return diffDays;
 };
 
-export const SubscriptionList = () => {
+import { Subscription } from "@/src/types/subscription";
+
+interface SubscriptionListProps {
+  onEdit?: (item: Subscription) => void;
+}
+
+export const SubscriptionList = ({ onEdit }: SubscriptionListProps) => {
   const { colors, isDark } = useTheme();
 
   const {
@@ -159,21 +165,38 @@ export const SubscriptionList = () => {
 
               <View className="items-end gap-2">
                 <View className="flex-row items-center gap-2">
-                  <TouchableOpacity
-                    onPress={() => onDeletePress(item)}
-                    className="p-1 px-2 rounded-lg"
-                    style={{
-                      backgroundColor: isDark
-                        ? "rgba(239, 68, 68, 0.1)"
-                        : "#FEF2F2",
-                    }}
-                  >
-                    <Ionicons
-                      name="trash-outline"
-                      size={16}
-                      color={colors.danger}
-                    />
-                  </TouchableOpacity>
+                  <View className="flex-row gap-1">
+                    <TouchableOpacity
+                      onPress={() => onEdit?.(item)}
+                      className="p-1 px-2 rounded-lg"
+                      style={{
+                        backgroundColor: isDark
+                          ? "rgba(59, 130, 246, 0.1)"
+                          : "#EFF6FF",
+                      }}
+                    >
+                      <Ionicons
+                        name="create-outline"
+                        size={16}
+                        color={colors.info}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => onDeletePress(item)}
+                      className="p-1 px-2 rounded-lg"
+                      style={{
+                        backgroundColor: isDark
+                          ? "rgba(239, 68, 68, 0.1)"
+                          : "#FEF2F2",
+                      }}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={colors.danger}
+                      />
+                    </TouchableOpacity>
+                  </View>
                   <View
                     className="px-2 py-1 rounded-md"
                     style={{ backgroundColor: bgBadge }}

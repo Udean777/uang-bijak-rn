@@ -2,6 +2,7 @@ import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { RecurringItem } from "@/src/features/recurring/components/RecurringItem";
 import { useRecurringScreen } from "@/src/features/recurring/hooks/useRecurringScreen";
@@ -46,10 +47,16 @@ export default function RecurringScreen() {
     setFrequency,
     note,
     setNote,
-    handleAddRecurring,
-    handleDeleteRecurring,
+    handleSaveRecurring,
+    handleDeletePress,
+    handleEditRecurring,
     handleToggleActive,
     handleBack,
+    handleOpenAdd,
+    editingRecurring,
+    confirmDeleteVisible,
+    setConfirmDeleteVisible,
+    handleConfirmDelete,
   } = useRecurringScreen();
 
   return (
@@ -64,10 +71,7 @@ export default function RecurringScreen() {
         <AppText variant="h3" weight="bold">
           Transaksi Berulang
         </AppText>
-        <TouchableOpacity
-          onPress={() => setAddModalVisible(true)}
-          className="p-2 -mr-2"
-        >
+        <TouchableOpacity onPress={handleOpenAdd} className="p-2 -mr-2">
           <Ionicons name="add-circle" size={28} color={theme.primary} />
         </TouchableOpacity>
       </View>
@@ -80,7 +84,8 @@ export default function RecurringScreen() {
             item={item}
             wallets={wallets}
             onToggle={handleToggleActive}
-            onDelete={handleDeleteRecurring}
+            onDelete={handleDeletePress}
+            onEdit={handleEditRecurring}
           />
         )}
         contentContainerStyle={{ padding: 20 }}
@@ -93,7 +98,7 @@ export default function RecurringScreen() {
             <AppButton
               title="Tambah Sekarang"
               className="mt-6 px-8"
-              onPress={() => setAddModalVisible(true)}
+              onPress={handleOpenAdd}
             />
           </View>
         }
@@ -110,7 +115,11 @@ export default function RecurringScreen() {
             style={{ backgroundColor: theme.background }}
           >
             <ModalHeader
-              title="Atur Transaksi Otomatis"
+              title={
+                editingRecurring
+                  ? "Edit Transaksi Otomatis"
+                  : "Atur Transaksi Otomatis"
+              }
               onClose={() => setAddModalVisible(false)}
             />
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -256,14 +265,27 @@ export default function RecurringScreen() {
               />
 
               <AppButton
-                title="Simpan Transaksi"
-                onPress={handleAddRecurring}
+                title={
+                  editingRecurring ? "Simpan Perubahan" : "Simpan Transaksi"
+                }
+                onPress={handleSaveRecurring}
                 isLoading={isSaving}
               />
             </ScrollView>
           </View>
         </View>
       </Modal>
+
+      <ConfirmDialog
+        visible={confirmDeleteVisible}
+        title="Hapus Transaksi Berulang?"
+        message="Apakah Anda yakin ingin menghapus transaksi berulang ini? Transaksi yang sudah terjadi tidak akan dihapus."
+        confirmText="Hapus"
+        cancelText="Batal"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDeleteVisible(false)}
+      />
     </View>
   );
 }

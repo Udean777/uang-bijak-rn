@@ -14,6 +14,11 @@ export const useMenuLogic = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
 
+  // Edit States
+  const [editingSubscription, setEditingSubscription] = useState<any | null>(
+    null,
+  );
+
   // Loading States
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -36,6 +41,16 @@ export const useMenuLogic = () => {
   const loadNotificationStatus = async () => {
     const enabled = await NotificationService.isNotificationsEnabled();
     setIsNotificationsEnabled(enabled);
+  };
+
+  const handleOpenAddSubscription = () => {
+    setEditingSubscription(null);
+    setShowAddSheet(true);
+  };
+
+  const handleEditSubscription = (sub: any) => {
+    setEditingSubscription(sub);
+    setShowAddSheet(true);
   };
 
   const handleLogout = async () => {
@@ -172,5 +187,8 @@ export const useMenuLogic = () => {
     toggleNotifications,
     handleExportData,
     handleTestNotification,
+    editingSubscription,
+    handleOpenAddSubscription,
+    handleEditSubscription,
   };
 };

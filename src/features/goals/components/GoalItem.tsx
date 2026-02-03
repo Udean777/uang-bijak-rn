@@ -10,9 +10,15 @@ interface GoalItemProps {
   item: Goal;
   wallets: Wallet[];
   onDelete: (id: string) => void;
+  onEdit?: (item: Goal) => void;
 }
 
-export const GoalItem = ({ item, wallets, onDelete }: GoalItemProps) => {
+export const GoalItem = ({
+  item,
+  wallets,
+  onDelete,
+  onEdit,
+}: GoalItemProps) => {
   const { colors: theme, isDark } = useTheme();
 
   const progress = Math.min(item.currentAmount / item.targetAmount, 1);
@@ -79,9 +85,14 @@ export const GoalItem = ({ item, wallets, onDelete }: GoalItemProps) => {
             </View>
           )}
         </View>
-        <TouchableOpacity onPress={() => onDelete(item.id)} className="p-1">
-          <Ionicons name="trash-outline" size={18} color={theme.danger} />
-        </TouchableOpacity>
+        <View className="flex-row gap-2">
+          <TouchableOpacity onPress={() => onEdit?.(item)} className="p-1">
+            <Ionicons name="create-outline" size={18} color={theme.info} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onDelete(item.id)} className="p-1">
+            <Ionicons name="trash-outline" size={18} color={theme.danger} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

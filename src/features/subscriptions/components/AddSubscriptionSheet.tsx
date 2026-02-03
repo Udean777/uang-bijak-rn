@@ -4,6 +4,7 @@ import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { useAddSubscription } from "@/src/features/subscriptions/hooks/useAddSubscription";
 import { useTheme } from "@/src/hooks/useTheme";
+import { Subscription } from "@/src/types/subscription";
 import React, { useEffect } from "react";
 import {
   Keyboard,
@@ -18,11 +19,13 @@ import {
 interface AddSubscriptionSheetProps {
   visible: boolean;
   onClose: () => void;
+  editingSubscription?: Subscription | null;
 }
 
 export const AddSubscriptionSheet = ({
   visible,
   onClose,
+  editingSubscription,
 }: AddSubscriptionSheetProps) => {
   const { colors, isDark } = useTheme();
 
@@ -35,18 +38,18 @@ export const AddSubscriptionSheet = ({
     setDueDate,
     isLoading,
     handleSave,
-  } = useAddSubscription();
+  } = useAddSubscription(editingSubscription);
 
-  // Reset form when visible changes is handled inside the hook or here?
-  // The hook seems to lack a 'reset' or useEffect for visibility.
-  // We can add it here or in the hook. For now, let's keep it clean here.
+  // Sync state when editingSubscription changes or visibility toggles
+  // Implementation moved inside the hook via useEffect on editingSubscription
+  // But we might want to clear form if visible becomes true and editingSubscription is null (Add Mode)
   useEffect(() => {
-    if (visible) {
+    if (visible && !editingSubscription) {
       setName("");
       setCost("");
       setDueDate("");
     }
-  }, [visible, setName, setCost, setDueDate]);
+  }, [visible, editingSubscription, setName, setCost, setDueDate]);
 
   return (
     <Modal
@@ -73,7 +76,9 @@ export const AddSubscriptionSheet = ({
               </View>
 
               <ModalHeader
-                title="Tambah Langganan"
+                title={
+                  editingSubscription ? "Edit Langganan" : "Tambah Langganan"
+                }
                 subtitle="Catat tagihan rutin bulanan"
                 onClose={onClose}
               />
@@ -113,7 +118,11 @@ export const AddSubscriptionSheet = ({
                   style={{ borderTopColor: colors.border }}
                 >
                   <AppButton
-                    title="Simpan Langganan"
+                    title={
+                      editingSubscription
+                        ? "Simpan Perubahan"
+                        : "Simpan Langganan"
+                    }
                     onPress={() => handleSave().then(onClose)}
                     isLoading={isLoading}
                   />
