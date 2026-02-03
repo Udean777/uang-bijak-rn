@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
 import { useWishlistStore } from "../store/useWishlistStore";
@@ -22,7 +23,7 @@ export const useAddWishlist = (onClose: () => void) => {
     try {
       await addWishlist(user!.uid, {
         name,
-        price: parseFloat(price),
+        price: parseCurrency(price),
         durationDays: duration,
       });
       Toast.show({

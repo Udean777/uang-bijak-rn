@@ -1,5 +1,6 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
+import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
 import { useAddSubscription } from "@/src/features/subscriptions/hooks/useAddSubscription";
@@ -38,10 +39,8 @@ export default function AddSubscriptionScreen() {
           value={name}
           onChangeText={setName}
         />
-        <AppInput
-          label="Biaya Bulanan (Rp)"
-          placeholder="0"
-          keyboardType="numeric"
+        <CurrencyInput
+          label="Biaya Bulanan"
           value={cost}
           onChangeText={setCost}
         />

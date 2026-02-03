@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { useAddWishlist } from "@/src/features/wishlist/hooks/useAddWishlist";
 import { useTheme } from "@/src/hooks/useTheme";
@@ -117,10 +118,8 @@ export const AddWishlistSheet = ({
                   value={name}
                   onChangeText={setName}
                 />
-                <AppInput
-                  label="Estimasi Harga (Rp)"
-                  placeholder="0"
-                  keyboardType="numeric"
+                <CurrencyInput
+                  label="Estimasi Harga"
                   value={price}
                   onChangeText={setPrice}
                 />

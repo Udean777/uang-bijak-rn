@@ -8,6 +8,7 @@ import { ClassificationPicker } from "@/src/features/transactions/components/Cla
 import { HorizontalSelector } from "@/src/features/transactions/components/HorizontalSelector";
 import { TransactionTypePicker } from "@/src/features/transactions/components/TransactionTypePicker";
 import { useTransactionForm } from "@/src/features/transactions/hooks/useTransactionForm";
+import { formatCurrency } from "@/src/hooks/useCurrencyFormat";
 import { useTheme } from "@/src/hooks/useTheme";
 import { Wallet } from "@/src/types/wallet";
 import { useLocalSearchParams } from "expo-router";
@@ -75,7 +76,7 @@ export default function AddTransactionScreen() {
             placeholder="0"
             placeholderTextColor={colors.icon}
             value={amount}
-            onChangeText={setAmount}
+            onChangeText={(text) => setAmount(formatCurrency(text))}
             autoFocus={!isEditMode}
           />
         </View>

@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
 import { useAddWallet } from "@/src/features/wallets/hooks/useAddWallet";
@@ -130,10 +131,8 @@ export default function AddWalletScreen() {
               value={name}
               onChangeText={setName}
             />
-            <AppInput
+            <CurrencyInput
               label="Saldo Awal"
-              placeholder="0"
-              keyboardType="numeric"
               value={initialBalance}
               onChangeText={handleBalanceChange}
             />

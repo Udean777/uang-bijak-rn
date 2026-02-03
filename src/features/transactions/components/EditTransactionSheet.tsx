@@ -2,6 +2,7 @@ import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
 import { useWallets } from "@/src/features/wallets/hooks/useWallets";
+import { formatCurrency } from "@/src/hooks/useCurrencyFormat";
 import { useTheme } from "@/src/hooks/useTheme";
 import { Transaction } from "@/src/types/transaction";
 import { Ionicons } from "@expo/vector-icons";
@@ -99,7 +100,7 @@ export const EditTransactionSheet = ({
                       }}
                       keyboardType="numeric"
                       value={amount}
-                      onChangeText={setAmount}
+                      onChangeText={(text) => setAmount(formatCurrency(text))}
                     />
                   </View>
 

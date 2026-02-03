@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { useAddDebt } from "@/src/features/debts/hooks/useAddDebt";
 import { useTheme } from "@/src/hooks/useTheme";
@@ -108,10 +109,8 @@ export const AddDebtSheet = ({ visible, onClose }: AddDebtSheetProps) => {
                   value={personName}
                   onChangeText={setPersonName}
                 />
-                <AppInput
-                  label="Nominal (Rp)"
-                  placeholder="0"
-                  keyboardType="numeric"
+                <CurrencyInput
+                  label="Nominal"
                   value={amount}
                   onChangeText={setAmount}
                 />

@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { useTheme } from "@/src/hooks/useTheme";
 import { Wallet, WalletType } from "@/src/types/wallet";
 import { Ionicons } from "@expo/vector-icons";
@@ -158,12 +159,10 @@ export const EditWalletSheet = ({
                       placeholder="Contoh: Tabungan Nikah"
                     />
 
-                    <AppInput
+                    <CurrencyInput
                       label="Koreksi Saldo (Manual)"
                       value={balance}
                       onChangeText={setBalance}
-                      keyboardType="numeric"
-                      placeholder="0"
                     />
 
                     <View>

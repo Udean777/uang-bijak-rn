@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { GoalItem } from "@/src/features/goals/components/GoalItem";
 import { useGoalsScreen } from "@/src/features/goals/hooks/useGoalsScreen";
@@ -136,13 +137,11 @@ export default function GoalsScreen() {
                     onChangeText={setName}
                     className="mb-4"
                   />
-                  <AppInput
-                    label="Target Nominal (Rp)"
-                    placeholder="0"
-                    keyboardType="numeric"
+                  <CurrencyInput
+                    label="Target Nominal"
                     value={target}
                     onChangeText={setTarget}
-                    className="mb-4"
+                    containerClass="mb-4"
                   />
 
                   <View className="mb-6">

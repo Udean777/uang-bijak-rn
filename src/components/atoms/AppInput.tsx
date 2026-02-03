@@ -45,7 +45,7 @@ export const AppInput: React.FC<AppInputProps> = ({
             : "focus:border-primary",
           className,
         )}
-        style={[inputStyles, style]}
+        style={[inputStyles, { minHeight: 52, lineHeight: 20 }, style]}
         placeholderTextColor={colors.icon}
         {...props}
       />

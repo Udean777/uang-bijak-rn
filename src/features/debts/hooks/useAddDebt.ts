@@ -1,4 +1,5 @@
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { DebtType } from "@/src/types/debt";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
@@ -29,7 +30,7 @@ export const useAddDebt = (onClose: () => void) => {
     try {
       await addDebt(user!.uid, {
         personName,
-        amount: parseFloat(amount),
+        amount: parseCurrency(amount),
         type,
         dueDate: dueDate.getTime(),
         note: "",

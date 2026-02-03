@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
@@ -102,10 +103,8 @@ export default function ManageTemplatesScreen() {
                 value={form.name}
                 onChangeText={(v) => updateForm("name", v)}
               />
-              <AppInput
-                label="Nominal (Rp)"
-                placeholder="0"
-                keyboardType="numeric"
+              <CurrencyInput
+                label="Nominal"
                 value={form.amount}
                 onChangeText={(v) => updateForm("amount", v)}
               />

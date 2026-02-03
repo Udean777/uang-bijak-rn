@@ -1,6 +1,6 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
-import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { CurrencyInput } from "@/src/components/atoms/CurrencyInput";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { BudgetItem } from "@/src/features/budgets/components/BudgetItem";
 import { useBudgetsScreen } from "@/src/features/budgets/hooks/useBudgetsScreen";
@@ -130,13 +130,11 @@ export default function BudgetsScreen() {
                 ))}
               </ScrollView>
 
-              <AppInput
-                label="Limit Bulanan (Rp)"
-                placeholder="0"
-                keyboardType="numeric"
+              <CurrencyInput
+                label="Limit Bulanan"
                 value={limit}
                 onChangeText={setLimit}
-                className="mb-8"
+                containerClass="mb-8"
               />
 
               <AppButton
