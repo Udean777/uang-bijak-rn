@@ -2,12 +2,12 @@ import { useThemeControl } from "@/hooks/use-color-scheme";
 import { Skeleton } from "@/src/components/atoms/Skeleton";
 import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { EmptyState } from "@/src/components/molecules/EmptyState";
-import { SafeToSpendCard } from "@/src/features/auth/components/SafeToSpendCard";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { HomeHeader } from "@/src/features/home/components/HomeHeader";
 import { InsightSection } from "@/src/features/home/components/InsightSection";
 import { QuickAccessSection } from "@/src/features/home/components/QuickAccessSection";
 import { RecentTransactionsSection } from "@/src/features/home/components/RecentTransactionsSection";
+import { SafeToSpendCarousel } from "@/src/features/home/components/SafeToSpendCarousel";
 import { WalletSection } from "@/src/features/home/components/WalletSection";
 import { useHomeData } from "@/src/features/home/hooks/useHomeData";
 import { TransactionHistorySheet } from "@/src/features/transactions/components/TransactionHistorySheet";
@@ -31,6 +31,7 @@ export default function HomeScreen() {
     budgetStatus,
     remainingDays,
     budgetLoading,
+    walletsSafeToSpend,
     allTransactions,
     recentTransactions,
     loadingTransactions,
@@ -101,12 +102,9 @@ export default function HomeScreen() {
         />
 
         <View className="mb-8">
-          <SafeToSpendCard
+          <SafeToSpendCarousel
             isLoading={budgetLoading}
-            status={budgetStatus}
-            safeDaily={safeDaily}
-            totalBalance={totalBalance}
-            remainingDays={remainingDays}
+            wallets={walletsSafeToSpend}
           />
         </View>
 

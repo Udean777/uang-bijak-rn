@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
@@ -384,6 +385,37 @@ export const TransactionService = {
       });
     } catch (error: any) {
       throw new Error("Gagal mengupdate: " + error.message);
+    }
+  },
+
+  getCategorySpending: async (
+    userId: string,
+    categoryName: string,
+    month: number,
+    year: number,
+  ): Promise<number> => {
+    try {
+      const startDate = new Date(year, month, 1).getTime();
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
+
+      const q = query(
+        collection(db, COLLECTION),
+        where("userId", "==", userId),
+        where("type", "==", "expense"),
+        where("category", "==", categoryName),
+        where("date", ">=", startDate),
+        where("date", "<=", endDate),
+      );
+
+      const snapshot = await getDocs(q);
+      let total = 0;
+      snapshot.forEach((doc: any) => {
+        total += doc.data().amount || 0;
+      });
+      return total;
+    } catch (error) {
+      console.error("Error fetching category spending:", error);
+      return 0;
     }
   },
 };

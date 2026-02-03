@@ -6,21 +6,40 @@ import { TemplateService } from "@/src/services/templateService";
 import { TransactionService } from "@/src/services/transactionService";
 import { TransactionTemplate } from "@/src/types/template";
 import { Transaction } from "@/src/types/transaction";
+import { WalletType } from "@/src/types/wallet";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
+
+// Interface for per-wallet safe-to-spend data
+export interface WalletSafeToSpend {
+  walletId: string;
+  walletName: string;
+  walletColor: string;
+  walletType: WalletType;
+  walletIcon?: string;
+  balance: number;
+  safeDaily: number;
+  status: "safe" | "warning" | "danger";
+  remainingDays: number;
+}
 
 export const useHomeData = () => {
   const { user } = useAuth();
   const { wallets, isLoading: walletsLoading } = useWallets();
   const { insights, isLoading: insightsLoading } = useSmartInsights();
 
-  // Budget State
+  // Budget State (legacy - kept for backward compatibility)
   const [safeDaily, setSafeDaily] = useState(0);
   const [budgetStatus, setBudgetStatus] = useState<
     "safe" | "warning" | "danger"
   >("safe");
   const [remainingDays, setRemainingDays] = useState(0);
   const [budgetLoading, setBudgetLoading] = useState(true);
+
+  // Per-wallet safe-to-spend state
+  const [walletsSafeToSpend, setWalletsSafeToSpend] = useState<
+    WalletSafeToSpend[]
+  >([]);
 
   // Transactions State
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
@@ -47,9 +66,16 @@ export const useHomeData = () => {
     return () => unsub();
   }, [user]);
 
-  // Handle Budget Logic
+  // Helper function to determine status based on safe-to-spend amount
+  const getStatusFromSafe = (safe: number): "safe" | "warning" | "danger" => {
+    if (safe < 50000) return "danger";
+    if (safe < 100000) return "warning";
+    return "safe";
+  };
+
+  // Handle Budget Logic - calculates per-wallet safe-to-spend
   useEffect(() => {
-    if (!user) return;
+    if (!user || wallets.length === 0) return;
     const fetchBudget = async () => {
       const now = new Date();
       const daysInMonth = new Date(
@@ -61,18 +87,44 @@ export const useHomeData = () => {
       const left = daysInMonth - today + 1;
       setRemainingDays(left);
 
-      const needs = await BudgetService.calculateMonthlyNeeds(user.uid);
-      const disposable = totalBalance - needs;
-      const safe = disposable > 0 ? disposable / left : 0;
+      const totalNeeds = await BudgetService.calculateMonthlyNeeds(user.uid);
 
+      // Calculate per-wallet safe-to-spend
+      // Distribute needs proportionally based on wallet balance
+      const perWalletData: WalletSafeToSpend[] = wallets
+        .filter((w) => !w.isArchived)
+        .map((wallet) => {
+          // Each wallet's share of needs based on its proportion of total balance
+          const balanceRatio =
+            totalBalance > 0 ? wallet.balance / totalBalance : 0;
+          const walletNeeds = totalNeeds * balanceRatio;
+          const disposable = wallet.balance - walletNeeds;
+          const safe = disposable > 0 ? disposable / left : 0;
+
+          return {
+            walletId: wallet.id,
+            walletName: wallet.name,
+            walletColor: wallet.color,
+            walletType: wallet.type,
+            walletIcon: wallet.icon,
+            balance: wallet.balance,
+            safeDaily: safe,
+            status: getStatusFromSafe(safe),
+            remainingDays: left,
+          };
+        });
+
+      setWalletsSafeToSpend(perWalletData);
+
+      // Also update legacy total values for backward compatibility
+      const disposable = totalBalance - totalNeeds;
+      const safe = disposable > 0 ? disposable / left : 0;
       setSafeDaily(safe);
-      if (safe < 50000) setBudgetStatus("danger");
-      else if (safe < 100000) setBudgetStatus("warning");
-      else setBudgetStatus("safe");
+      setBudgetStatus(getStatusFromSafe(safe));
       setBudgetLoading(false);
     };
     fetchBudget();
-  }, [user, totalBalance]);
+  }, [user, wallets, totalBalance]);
 
   // Subscribe to transactions
   useEffect(() => {
@@ -132,6 +184,7 @@ export const useHomeData = () => {
     budgetStatus,
     remainingDays,
     budgetLoading,
+    walletsSafeToSpend,
 
     // Transactions
     allTransactions,

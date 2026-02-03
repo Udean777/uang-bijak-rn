@@ -15,6 +15,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 import "@/global.css";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BiometricLock } from "../components/organisms/BiometricLock";
 import { useSettingsStore } from "../features/settings/store/useSettingsStore";
 import { useAppStateLock } from "../hooks/useAppStateLock";
@@ -68,17 +69,19 @@ function RootLayout() {
   const { colors, isDark } = useTheme();
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView
-        className="flex-1"
-        style={{ backgroundColor: colors.background }}
-      >
-        <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-          <InitialLayout />
-          <Toast />
-        </ThemeProvider>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <GestureHandlerRootView className="flex-1">
+      <SafeAreaProvider>
+        <SafeAreaView
+          className="flex-1"
+          style={{ backgroundColor: colors.background }}
+        >
+          <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+            <InitialLayout />
+            <Toast />
+          </ThemeProvider>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

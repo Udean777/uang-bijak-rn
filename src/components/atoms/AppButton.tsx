@@ -15,6 +15,7 @@ import {
   BUTTON_VARIANTS,
   ButtonSize,
   ButtonVariant,
+  TextColor,
 } from "./config/variants";
 
 interface AppButtonProps extends TouchableOpacityProps {
@@ -23,6 +24,7 @@ interface AppButtonProps extends TouchableOpacityProps {
   size?: ButtonSize;
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
+  textColor?: TextColor;
 }
 
 export const AppButton: React.FC<AppButtonProps> = ({
@@ -34,6 +36,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
   className,
   leftIcon,
   style,
+  textColor,
   ...props
 }) => {
   const { colors } = useTheme();
@@ -41,6 +44,8 @@ export const AppButton: React.FC<AppButtonProps> = ({
   const isDisabled = disabled || isLoading;
   const variantStyle =
     variant === "outline" ? { borderColor: colors.border } : undefined;
+
+  const resolvedTextColor = textColor ?? BUTTON_TEXT_COLORS[variant];
 
   return (
     <TouchableOpacity
@@ -65,7 +70,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
           {leftIcon && <View className="mr-2">{leftIcon}</View>}
           <AppText
             weight="bold"
-            color={BUTTON_TEXT_COLORS[variant]}
+            color={resolvedTextColor}
             variant="body"
             className="text-center py-2"
           >

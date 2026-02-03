@@ -1,8 +1,11 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { Category, CategoryService } from "@/src/services/categoryService";
+import { TransactionService } from "@/src/services/transactionService";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { Alert } from "react-native";
 import Toast from "react-native-toast-message";
+import { useBudgetStore } from "../../budgets/store/useBudgetStore";
 import { useWalletStore } from "../../wallets/store/useWalletStore";
 import { useTransactionStore } from "../store/useTransactionStore";
 
@@ -21,6 +24,7 @@ export const useTransactionForm = ({
   const { wallets } = useWalletStore();
   const { addTransaction, updateTransaction, addCategory, isLoading } =
     useTransactionStore();
+  const { budgets, initializeBudgets } = useBudgetStore();
 
   // Basic Form State
   const [type, setType] = useState<TransactionType>("expense");
@@ -58,6 +62,17 @@ export const useTransactionForm = ({
 
     return () => unsubscribe();
   }, [user, type]);
+
+  useEffect(() => {
+    if (!user) return;
+    const now = new Date();
+    const unsubscribe = initializeBudgets(
+      user.uid,
+      now.getMonth(),
+      now.getFullYear(),
+    );
+    return () => unsubscribe();
+  }, [user]);
 
   useEffect(() => {
     if (wallets.length > 0 && !selectedWalletId) {
@@ -122,11 +137,59 @@ export const useTransactionForm = ({
     try {
       // Parse amount (remove thousand separators)
       const rawAmount = amount.replace(/\./g, "");
+      const numericAmount = parseFloat(rawAmount);
+
+      // Validate wallet balance for expense and transfer
+      const selectedWallet = wallets.find((w) => w.id === selectedWalletId);
+      if (selectedWallet && (type === "expense" || type === "transfer")) {
+        if (numericAmount > selectedWallet.balance) {
+          Toast.show({
+            type: "error",
+            text1: "Saldo Tidak Cukup",
+            text2: `Saldo ${selectedWallet.name}: Rp${selectedWallet.balance.toLocaleString("id-ID")}`,
+          });
+          return;
+        }
+      }
+
+      if (type === "expense" && category && !isEditMode) {
+        const budget = budgets.find((b) => b.categoryName === category);
+        if (budget) {
+          const now = new Date();
+          const currentSpending = await TransactionService.getCategorySpending(
+            user!.uid,
+            category,
+            now.getMonth(),
+            now.getFullYear(),
+          );
+
+          if (currentSpending + numericAmount > budget.limitAmount) {
+            const result = await new Promise((resolve) => {
+              Alert.alert(
+                "Melebihi Budget",
+                `Total pengeluaran kategori "${category}" akan melebihi budget (Limit: Rp${budget.limitAmount.toLocaleString(
+                  "id-ID",
+                )}). Tetap simpan?`,
+                [
+                  {
+                    text: "Batal",
+                    onPress: () => resolve(false),
+                    style: "cancel",
+                  },
+                  { text: "Tetap Simpan", onPress: () => resolve(true) },
+                ],
+              );
+            });
+
+            if (!result) return;
+          }
+        }
+      }
 
       const payload = {
         walletId: selectedWalletId,
         targetWalletId: type === "transfer" ? targetWalletId : undefined,
-        amount: parseFloat(rawAmount),
+        amount: numericAmount,
         type,
         category: type === "transfer" ? "Transfer" : category,
         classification: type === "expense" ? classification : null,
