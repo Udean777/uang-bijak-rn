@@ -18,23 +18,21 @@ export const useFinancialHealth = () => {
     if (!user) return;
 
     setIsLoading(true);
-    const unsubscribe = TransactionService.subscribeTransactions(
+
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+
+    const unsubscribe = TransactionService.subscribeMonthlyTransactions(
       user.uid,
+      month,
+      year,
       (transactions) => {
         let totalIncome = 0;
         let totalNeeds = 0;
         let totalWants = 0;
 
-        const now = new Date();
-        const thisMonth = transactions.filter((t) => {
-          const tDate = new Date(t.date);
-          return (
-            tDate.getMonth() === now.getMonth() &&
-            tDate.getFullYear() === now.getFullYear()
-          );
-        });
-
-        thisMonth.forEach((t) => {
+        transactions.forEach((t) => {
           if (t.type === "income") {
             totalIncome += t.amount;
           } else if (t.type === "expense") {
@@ -49,8 +47,8 @@ export const useFinancialHealth = () => {
 
         const incomeBar = {
           value: totalIncome,
-          label: "Masuk",
-          frontColor: "#10B981", // Green
+          label: "Pemasukan",
+          frontColor: "#10B981",
           spacing: 20,
           labelTextStyle: { color: "gray", fontSize: 12 },
         };
@@ -58,7 +56,7 @@ export const useFinancialHealth = () => {
         const expenseBar = {
           value: totalExpense,
           label: "Keluar",
-          frontColor: "#EF4444", // Red
+          frontColor: "#EF4444",
           labelTextStyle: { color: "gray", fontSize: 12 },
         };
 
@@ -77,28 +75,29 @@ export const useFinancialHealth = () => {
               value: totalNeeds,
               color: "#3B82F6",
               text: `${Math.round((totalNeeds / totalIncome) * 100)}%`,
-              label: "Needs",
+              label: "Kebutuhan",
             },
             {
               value: totalWants,
               color: "#EF4444",
               text: `${Math.round((totalWants / totalIncome) * 100)}%`,
-              label: "Wants",
+              label: "Keinginan",
             },
             {
               value: displaySavings,
               color: "#10B981",
               text: `${Math.round((displaySavings / totalIncome) * 100)}%`,
-              label: "Savings",
+              label: "Tabungan",
             },
           ];
+
           setData(chartData.filter((d) => d.value > 0));
         } else {
           setData([]);
         }
 
         setIsLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();

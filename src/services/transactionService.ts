@@ -293,86 +293,122 @@ export const TransactionService = {
     try {
       await runTransaction(db, async (transaction) => {
         const txRef = doc(db, COLLECTION, transactionId);
-        const oldWalletRef = doc(db, "wallets", oldData.walletId);
-        const newWalletRef = doc(db, "wallets", newData.walletId);
 
-        // Note: For simplicity, we don't support editing transfers to/from transfers
-        // or changing wallet types mid-edit. This handles basic income/expense edits.
-        if (oldData.walletId === newData.walletId) {
-          const walletDoc = await transaction.get(oldWalletRef);
-          if (!walletDoc.exists()) throw new Error("Dompet tidak ditemukan");
+        const walletsIds = new Set<string>();
+        walletsIds.add(oldData.walletId);
 
-          const walletData = walletDoc.data();
-          let balance = walletData.balance;
-          const walletType = walletData.type as WalletType;
+        if (oldData.targetWalletId) walletsIds.add(oldData.targetWalletId);
+        walletsIds.add(newData.walletId);
 
-          // Reverse old transaction
-          if (oldData.type === "expense" || oldData.type === "income") {
-            balance = reverseBalanceChange(
-              balance,
-              oldData.amount,
-              oldData.type,
-              walletType,
-            );
-          }
-
-          // Apply new transaction
-          if (newData.type === "expense" || newData.type === "income") {
-            balance = calculateBalanceChange(
-              balance,
-              newData.amount,
-              newData.type,
-              walletType,
-            );
-          }
-
-          transaction.update(oldWalletRef, {
-            balance,
-            updatedAt: serverTimestamp(),
-          });
-        } else {
-          const oldWalletDoc = await transaction.get(oldWalletRef);
-          const newWalletDoc = await transaction.get(newWalletRef);
-
-          if (!oldWalletDoc.exists() || !newWalletDoc.exists())
-            throw new Error("Dompet tidak ditemukan");
-
-          const oldWalletData = oldWalletDoc.data();
-          const newWalletData = newWalletDoc.data();
-          const oldWalletType = oldWalletData.type as WalletType;
-          const newWalletType = newWalletData.type as WalletType;
-
-          // Reverse old transaction on old wallet
-          let oldBalance = oldWalletData.balance;
-          if (oldData.type === "expense" || oldData.type === "income") {
-            oldBalance = reverseBalanceChange(
-              oldBalance,
-              oldData.amount,
-              oldData.type,
-              oldWalletType,
-            );
-          }
-
-          // Apply new transaction on new wallet
-          let newBalance = newWalletData.balance;
-          if (newData.type === "expense" || newData.type === "income") {
-            newBalance = calculateBalanceChange(
-              newBalance,
-              newData.amount,
-              newData.type,
-              newWalletType,
-            );
-          }
-
-          transaction.update(oldWalletRef, {
-            balance: oldBalance,
-            updatedAt: serverTimestamp(),
-          });
-          transaction.update(newWalletRef, {
-            balance: newBalance,
-            updatedAt: serverTimestamp(),
-          });
+        if (newData.type === "transfer" && newData.targetWalletId) {
+          walletsIds.add(newData.targetWalletId);
         }
+
+        const walletMap = new Map<string, any>();
+        for (const wId of Array.from(walletsIds)) {
+          if (!wId) continue;
+
+          const wRef = doc(db, "wallets", wId);
+          const wDoc = await transaction.get(wRef);
+
+          if (!wDoc.exists()) throw new Error(`Dompet ${wId} tidak ditemukan`);
+
+          walletMap.set(wId, { ref: wRef, data: wDoc.data() });
+        }
+
+        if (newData.type === "transfer") {
+          if (!newData.targetWalletId) {
+            throw new Error("Dompet tujuan wajib dipilih untuk transfer!");
+          }
+
+          if (newData.walletId === newData.targetWalletId) {
+            throw new Error("Dompet sumber dan tujuan tidak boleh sama!");
+          }
+        }
+
+        const applyBalanceChange = (
+          walletId: string,
+          amount: number,
+          type: "income" | "expense",
+          isReversal: boolean,
+        ) => {
+          const wallet = walletMap.get(walletId);
+          if (!wallet) return;
+
+          const currentBalance = wallet.data.balance;
+          const wType = wallet.data.type as WalletType;
+
+          let newBalance;
+
+          if (isReversal) {
+            newBalance = reverseBalanceChange(
+              currentBalance,
+              amount,
+              type,
+              wType,
+            );
+          } else {
+            newBalance = calculateBalanceChange(
+              currentBalance,
+              amount,
+              type,
+              wType,
+            );
+          }
+
+          wallet.data.balance = newBalance;
+        };
+
+        if (oldData.type === "transfer") {
+          applyBalanceChange(oldData.walletId, oldData.amount, "expense", true);
+
+          if (oldData.targetWalletId) {
+            applyBalanceChange(
+              oldData.targetWalletId,
+              oldData.amount,
+              "income",
+              true,
+            );
+          }
+        } else {
+          applyBalanceChange(
+            oldData.walletId,
+            oldData.amount,
+            oldData.type,
+            true,
+          );
+        }
+
+        if (newData.type === "transfer") {
+          applyBalanceChange(
+            newData.walletId,
+            newData.amount,
+            "expense",
+            false,
+          );
+          if (newData.targetWalletId) {
+            applyBalanceChange(
+              newData.targetWalletId,
+              newData.amount,
+              "income",
+              false,
+            );
+          }
+        } else {
+          applyBalanceChange(
+            newData.walletId,
+            newData.amount,
+            newData.type,
+            false,
+          );
+        }
+
+        walletMap.forEach((val) => {
+          transaction.update(val.ref, {
+            balance: val.data.balance,
+            updatedAt: serverTimestamp(),
+          });
+        });
 
         transaction.update(
           txRef,
@@ -384,7 +420,8 @@ export const TransactionService = {
         );
       });
     } catch (error: any) {
-      throw new Error("Gagal mengupdate: " + error.message);
+      console.error("Update transaction failed:", error);
+      throw new Error(error.message || "Gagal mengupdate transaksi");
     }
   },
 
@@ -413,9 +450,9 @@ export const TransactionService = {
         total += doc.data().amount || 0;
       });
       return total;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching category spending:", error);
-      return 0;
+      throw new Error("Gagal mengecek penggunaan budget: " + error.message);
     }
   },
 };

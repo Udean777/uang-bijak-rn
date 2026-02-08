@@ -35,6 +35,7 @@ export const useTransactionForm = ({
   const [selectedWalletId, setSelectedWalletId] = useState<string>("");
   const [targetWalletId, setTargetWalletId] = useState<string>("");
   const [note, setNote] = useState("");
+  const [date, setDate] = useState(new Date());
 
   // Edit Mode State
   const [isEditMode, setIsEditMode] = useState(false);
@@ -90,6 +91,7 @@ export const useTransactionForm = ({
         setOldTxData(data);
         const formattedAmount = data.amount.toLocaleString("id-ID");
         setAmount(formattedAmount);
+        setDate(new Date(data.date));
         setType(data.type);
         setCategory(data.category);
         setClassification(data.classification || "need");
@@ -193,7 +195,7 @@ export const useTransactionForm = ({
         type,
         category: type === "transfer" ? "Transfer" : category,
         classification: type === "expense" ? classification : null,
-        date: new Date(),
+        date,
         note,
       };
 
@@ -245,6 +247,8 @@ export const useTransactionForm = ({
     newCategoryName,
     setNewCategoryName,
     wallets,
+    date,
+    setDate,
 
     // Actions
     handleSave,

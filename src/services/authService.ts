@@ -111,10 +111,15 @@ export const AuthService = {
 
   getUserProfile: async (uid: string): Promise<UserProfile> => {
     const userDocRef = doc(db, "users", uid);
-    const userDoc = await getDoc(userDocRef);
 
-    if (userDoc.exists()) {
-      return userDoc.data() as UserProfile;
+    for (let i = 0; i < 3; i++) {
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        return userDoc.data() as UserProfile;
+      }
+
+      if (i < 2) await new Promise((resolve) => setTimeout(resolve, 1000));
     }
     throw new Error("Profil akun tidak ditemukan.");
   },

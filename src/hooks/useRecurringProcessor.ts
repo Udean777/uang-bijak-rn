@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { AppState } from "react-native";
+import Toast from "react-native-toast-message";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { RecurringService } from "../services/recurringService";
 
@@ -14,20 +15,24 @@ export const useRecurringProcessor = () => {
     if (!user || isProcessing.current) return;
 
     isProcessing.current = true;
+
     try {
       await RecurringService.processDueTransactions(user.uid);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing recurring transactions:", error);
+
+      Toast.show({
+        type: "error",
+        text1: "Gagal Memproses Transaksi Berulang",
+        text2: "Silakan periksa koneksi internet Anda.",
+      });
     } finally {
       isProcessing.current = false;
     }
   };
-
   useEffect(() => {
-    // Process on login/startup
     process();
 
-    // Process when app comes back to foreground
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       if (nextAppState === "active") {
         process();

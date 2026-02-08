@@ -99,63 +99,76 @@ export const RecurringService = {
         ...docSnapshot.data(),
       } as RecurringTransaction;
 
-      try {
-        // 1. Create the actual transaction
-        await TransactionService.addTransaction(userId, {
-          walletId: recurring.walletId,
-          amount: recurring.amount,
-          type: recurring.type,
-          category: recurring.category,
-          classification: recurring.type === "expense" ? "need" : null,
-          date: new Date(recurring.nextExecutionDate),
-          note: recurring.note
-            ? `${recurring.note} (Berulang)`
-            : "Transaksi Berulang",
-        });
+      let nextExec = recurring.nextExecutionDate;
+      let processedCount = 0;
+      const MAX_CATCHUP_LIMIT = 12;
 
-        // 2. Update next execution date
-        const nextDate = calculateNextDate(
-          recurring.nextExecutionDate,
-          recurring.frequency,
-        );
-        await updateDoc(doc(db, COLLECTION, recurring.id), {
-          nextExecutionDate: nextDate,
-          updatedAt: Date.now(),
-        });
-      } catch (error) {
-        console.error(
-          `Failed to process recurring transaction ${recurring.id}:`,
-          error,
-        );
+      while (nextExec <= now && processedCount < MAX_CATCHUP_LIMIT) {
+        try {
+          await TransactionService.addTransaction(userId, {
+            walletId: recurring.walletId,
+            amount: recurring.amount,
+            type: recurring.type,
+            category: recurring.category,
+            classification: recurring.type === "expense" ? "need" : null,
+            date: new Date(nextExec),
+            note: recurring.note
+              ? `${recurring.note} (Otomatis)`
+              : "Transaksi Otomatis",
+          });
+
+          nextExec = calculateNextDate(nextExec, recurring.frequency);
+          processedCount++;
+
+          await updateDoc(doc(db, COLLECTION, recurring.id), {
+            nextExecutionDate: nextExec,
+            updatedAt: Date.now(),
+          });
+        } catch (error) {
+          console.error(
+            `Failed to process recurring transaction ${recurring.id}`,
+            error,
+          );
+          break;
+        }
       }
     }
   },
 
   deleteRecurring: async (id: string) => {
-    await deleteDoc(doc(db, COLLECTION, id));
+    try {
+      await deleteDoc(doc(db, COLLECTION, id));
+    } catch (error: any) {
+      throw new Error("Gagal menghapus: " + error.message);
+    }
   },
 
   toggleActive: async (id: string, isActive: boolean) => {
-    await updateDoc(doc(db, COLLECTION, id), {
-      isActive,
-      updatedAt: Date.now(),
-    });
+    try {
+      await updateDoc(doc(db, COLLECTION, id), {
+        isActive,
+        updatedAt: Date.now(),
+      });
+    } catch (error: any) {
+      throw new Error("Gagal update status: " + error.message);
+    }
   },
 
   updateRecurring: async (
     id: string,
     data: Partial<CreateRecurringPayload>,
   ) => {
-    const updateData: any = { ...data, updatedAt: Date.now() };
-    if (data.startDate) {
-      updateData.startDate = data.startDate.getTime();
-      // If start date changed, re-calculate next execution date based on frequency
-      // This logic can be complex depending on if we want to reset or keep schedule.
-      // For now, let's assume editing doesn't reset "nextExecutionDate" unless explicitly handled,
-      // or we can re-set nextExecutionDate to startDate if it's in the future.
-      // SImple approach: Update nextExecutionDate to new startDate
-      updateData.nextExecutionDate = data.startDate.getTime();
+    try {
+      const updateData: any = { ...data, updatedAt: Date.now() };
+      if (data.startDate) {
+        updateData.startDate = data.startDate.getTime();
+        // Reset next execution to new start date logic can be added here if needed
+        // For simplicity, we assume editing start date resets the schedule:
+        updateData.nextExecutionDate = data.startDate.getTime();
+      }
+      await updateDoc(doc(db, COLLECTION, id), updateData);
+    } catch (error: any) {
+      throw new Error("Gagal update transaksi: " + error.message);
     }
-    await updateDoc(doc(db, COLLECTION, id), updateData);
   },
 };

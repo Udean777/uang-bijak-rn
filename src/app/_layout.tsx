@@ -4,7 +4,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import * as Sentry from "@sentry/react-native";
-import { Stack } from "expo-router";
+import { Stack, useSegments } from "expo-router";
 import React from "react";
 import { View } from "react-native";
 import {
@@ -17,6 +17,7 @@ import Toast from "react-native-toast-message";
 import "@/global.css";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BiometricLock } from "../components/organisms/BiometricLock";
+import { useAuthStore } from "../features/auth/store/useAuthStore";
 import { useSettingsStore } from "../features/settings/store/useSettingsStore";
 import { useAppStateLock } from "../hooks/useAppStateLock";
 import { useInitializeApp } from "../hooks/useInitializeApp";
@@ -32,10 +33,19 @@ function InitialLayout() {
   const { isReady, isMounted, fontsLoaded } = useInitializeApp();
   const { isCheckingPin } = useNavigationCheck(isMounted, fontsLoaded);
   const { isLocked, setIsLocked } = useSettingsStore();
+  const { user } = useAuthStore();
+  const segments = useSegments();
 
   useAppStateLock();
 
   if (!isReady || isCheckingPin) return null;
+
+  const inAuthGroup = segments[0] === "(auth)";
+  const inOnboardingGroup = segments[0] === "onboarding";
+
+  if (!user && !inAuthGroup && !inOnboardingGroup) {
+    return null;
+  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -47,7 +57,7 @@ function InitialLayout() {
         <Stack.Screen name="(sub)" />
       </Stack>
 
-      {isLocked && (
+      {isLocked && user && (
         <View
           style={{
             position: "absolute",

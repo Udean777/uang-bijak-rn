@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
 import { useRegister } from "@/src/features/auth/hooks/useRegister";
 import { useTheme } from "@/src/hooks/useTheme";
 import { Link } from "expo-router";
@@ -33,6 +34,12 @@ export default function RegisterScreen() {
       className="flex-1"
       style={{ backgroundColor: colors.background }}
     >
+      <ScreenLoader
+        visible={isLoading}
+        variant="fullscreen"
+        text="Sedang menyiapkan dompet digital Anda..."
+      />
+
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,

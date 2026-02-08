@@ -12,6 +12,7 @@ interface AuthState {
   user: User | null;
   userProfile: UserProfile | null;
   isLoading: boolean;
+  isInitialized: boolean;
   hasSeenOnboarding: boolean | null;
 
   // Actions
@@ -31,8 +32,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   userProfile: null,
   isLoading: true,
+  isInitialized: false,
   hasSeenOnboarding: null,
-
   setUser: (user) => {
     if (user) {
       setSentryUser(user.uid, user.email || undefined);
@@ -41,11 +42,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     set({ user });
   },
-
   setUserProfile: (userProfile) => set({ userProfile }),
-
   setIsLoading: (isLoading) => set({ isLoading }),
-
   setHasSeenOnboarding: async (seen: boolean) => {
     try {
       await AsyncStorage.setItem("hasSeenOnboarding", seen.toString());
@@ -58,12 +56,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initializeAuth: () => {
     const { setUser, setUserProfile, setIsLoading } = get();
 
-    // 1. Load Onboarding status
     AsyncStorage.getItem("hasSeenOnboarding").then((value) => {
       set({ hasSeenOnboarding: value === "true" });
     });
 
-    // 2. Listen to Auth State
     const { auth } = require("@/src/config/firebase");
     const { onAuthStateChanged } = require("firebase/auth");
 
@@ -76,11 +72,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (currentUser) {
           try {
             const profile = await AuthService.getUserProfile(currentUser.uid);
-            // Auto-verify existing users if they were registered before OTP removal
+
             if (profile && profile.emailVerified === false) {
               await AuthService.ensureEmailVerified(currentUser.uid);
               profile.emailVerified = true;
             }
+
             setUserProfile(profile);
           } catch (error: any) {
             console.error("[useAuthStore] Failed to fetch profile", error);
@@ -88,29 +85,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } else {
           setUserProfile(null);
         }
-        setIsLoading(false);
+
+        set({ isLoading: false, isInitialized: true });
       },
     );
 
     return unsubscribe;
   },
-
   refreshProfile: async () => {
     const { user } = get();
+
     if (user) {
       try {
         const profile = await AuthService.getUserProfile(user.uid);
+
         set({ userProfile: profile });
       } catch (error) {
         console.error("Failed to refresh profile", error);
       }
     }
   },
-
   login: async (email, password) => {
     set({ isLoading: true });
+
     try {
       const user = await AuthService.login(email, password);
+
       return user;
     } catch (error) {
       throw error;
@@ -118,11 +118,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false });
     }
   },
-
   loginWithGoogle: async (idToken) => {
     set({ isLoading: true });
+
     try {
       const user = await AuthService.loginWithGoogle(idToken);
+
       return user;
     } catch (error) {
       throw error;
@@ -130,9 +131,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false });
     }
   },
-
   register: async (payload) => {
     set({ isLoading: true });
+
     try {
       await AuthService.register(payload);
     } catch (error) {
@@ -141,7 +142,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false });
     }
   },
-
   logout: () => {
     clearSentryUser();
     set({ user: null, userProfile: null });

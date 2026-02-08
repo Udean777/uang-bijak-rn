@@ -10,6 +10,8 @@ export const useRegister = () => {
   const [password, setPassword] = useState("");
   const { register, isLoading } = useAuthStore();
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleRegister = async () => {
     if (!fullName || !email || !password) {
       Toast.show({
@@ -29,6 +31,8 @@ export const useRegister = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       await register({
         email,
@@ -45,6 +49,8 @@ export const useRegister = () => {
       // Redirect ke main tabs (layout will redirect to PIN setup if needed)
       router.replace("/(tabs)");
     } catch (error: any) {
+      setIsSubmitting(false);
+
       Toast.show({
         type: "error",
         text1: "Gagal!",
@@ -60,7 +66,7 @@ export const useRegister = () => {
     setEmail,
     password,
     setPassword,
-    isLoading,
+    isLoading: isSubmitting,
     handleRegister,
   };
 };

@@ -8,15 +8,11 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 
 export const useInitializeApp = () => {
-  const {
-    initializeAuth,
-    isLoading: isAuthLoading,
-    hasSeenOnboarding,
-  } = useAuthStore();
+  const { initializeAuth, isInitialized, hasSeenOnboarding } = useAuthStore();
+
   const { initializeSettings } = useSettingsStore();
   const [isMounted, setIsMounted] = useState(false);
 
-  // Load Fonts
   const [fontsLoaded] = useFonts({
     JakartaSans: require("@/assets/fonts/PlusJakartaSans-Regular.ttf"),
     JakartaSansBold: require("@/assets/fonts/PlusJakartaSans-Bold.ttf"),
@@ -26,7 +22,6 @@ export const useInitializeApp = () => {
     JakartaSansLight: require("@/assets/fonts/PlusJakartaSans-Light.ttf"),
   });
 
-  // Global Subscriptions
   useNotifications();
   useRecurringProcessor();
 
@@ -35,7 +30,6 @@ export const useInitializeApp = () => {
     const unsubAuth = initializeAuth();
     initializeSettings();
 
-    // Sentry Initialization
     Sentry.init({
       dsn: "https://be0a4cd2c651724af1ff0cd9de9237c9@o4510798962491392.ingest.us.sentry.io/4510798965506048",
       sendDefaultPii: true,
@@ -53,13 +47,12 @@ export const useInitializeApp = () => {
     };
   }, [initializeAuth, initializeSettings]);
 
-  // Hide Splash Screen when everything is ready
   useEffect(() => {
     const hideSplash = async () => {
       if (
         isMounted &&
         fontsLoaded &&
-        !isAuthLoading &&
+        isInitialized &&
         hasSeenOnboarding !== null
       ) {
         try {
@@ -69,13 +62,14 @@ export const useInitializeApp = () => {
         }
       }
     };
+
     hideSplash();
-  }, [isMounted, fontsLoaded, isAuthLoading, hasSeenOnboarding]);
+  }, [isMounted, fontsLoaded, isInitialized, hasSeenOnboarding]);
 
   return {
     isMounted,
     fontsLoaded,
     isReady:
-      isMounted && fontsLoaded && !isAuthLoading && hasSeenOnboarding !== null,
+      isMounted && fontsLoaded && isInitialized && hasSeenOnboarding !== null,
   };
 };
