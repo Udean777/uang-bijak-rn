@@ -7,6 +7,16 @@ interface UseBiometricLockProps {
   onUnlock: () => void;
 }
 
+interface DialogConfig {
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  showCancel?: boolean;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
 export const useBiometricLock = ({ onUnlock }: UseBiometricLockProps) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState("");
@@ -15,7 +25,10 @@ export const useBiometricLock = ({ onUnlock }: UseBiometricLockProps) => {
     useSettingsStore();
 
   const handleBiometricAuthenticate = useCallback(
-    async (showDialog: (config: any) => void, hideDialog: () => void) => {
+    async (
+      showDialog: (config: DialogConfig) => void,
+      hideDialog: () => void,
+    ) => {
       setIsAuthenticating(true);
       setError("");
 

@@ -1,9 +1,10 @@
 import { auth } from "@/src/config/firebase";
 import * as Sentry from "@sentry/react-native";
+import { getErrorMessage } from "../utils/errorUtils";
 
 /**
  * Analytics Service for tracking user behavior.
- * Currently integrated with Sentry (for breadcrumbs/context) 
+ * Currently integrated with Sentry (for breadcrumbs/context)
  * and can be extended to Firebase Analytics or Mixpanel.
  */
 export const AnalyticsService = {
@@ -13,7 +14,7 @@ export const AnalyticsService = {
   logEvent: async (eventName: string, params?: Record<string, any>) => {
     try {
       const user = auth.currentUser;
-      
+
       // 1. Log to Sentry as breadcrumb (very useful for debugging)
       Sentry.addBreadcrumb({
         category: "analytics",
@@ -34,8 +35,8 @@ export const AnalyticsService = {
       // if (analytics) logEvent(analytics, eventName, params);
 
       console.log(`[Analytics] Event: ${eventName}`, params);
-    } catch (error) {
-      console.error("Failed to log analytics event:", error);
+    } catch (error: unknown) {
+      console.error("Failed to log analytics event:", getErrorMessage(error));
     }
   },
 

@@ -5,6 +5,7 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { Debt } from "../types/debt";
 import { Subscription } from "../types/subscription";
+import { getErrorMessage } from "../utils/errorUtils";
 
 // Configure how notifications are handled when app is in foreground
 Notifications.setNotificationHandler({
@@ -109,8 +110,8 @@ export const NotificationService = {
       });
 
       return token.data;
-    } catch (error) {
-      console.error("Error getting push token:", error);
+    } catch (error: unknown) {
+      console.error("Error getting push token:", getErrorMessage(error));
       return null;
     }
   },
@@ -162,8 +163,11 @@ export const NotificationService = {
       }
 
       return identifiers.length > 0 ? identifiers : null;
-    } catch (error) {
-      console.error("Failed to schedule bill reminder:", error);
+    } catch (error: unknown) {
+      console.error(
+        "Failed to schedule bill reminder:",
+        getErrorMessage(error),
+      );
       return null;
     }
   },
@@ -210,8 +214,11 @@ export const NotificationService = {
       });
 
       return identifier;
-    } catch (error) {
-      console.error("Failed to schedule debt reminder:", error);
+    } catch (error: unknown) {
+      console.error(
+        "Failed to schedule debt reminder:",
+        getErrorMessage(error),
+      );
       return null;
     }
   },
@@ -250,8 +257,11 @@ export const NotificationService = {
       });
 
       return identifier;
-    } catch (error) {
-      console.error("Failed to schedule wishlist notification:", error);
+    } catch (error: unknown) {
+      console.error(
+        "Failed to schedule wishlist notification:",
+        getErrorMessage(error),
+      );
       return null;
     }
   },
@@ -262,7 +272,7 @@ export const NotificationService = {
   cancelNotification: async (identifier: string): Promise<void> => {
     try {
       await Notifications.cancelScheduledNotificationAsync(identifier);
-    } catch (error) {
+    } catch (error: unknown) {
       // Ignore errors if notification doesn't exist
     }
   },

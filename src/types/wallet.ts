@@ -26,3 +26,12 @@ export interface CreateWalletPayload {
   initialBalance: number;
   color: string;
 }
+
+export interface UpdateWalletPayload {
+  name?: string;
+  type?: WalletType;
+  balance?: number;
+  color?: string;
+  icon?: string;
+  isArchived?: boolean;
+}

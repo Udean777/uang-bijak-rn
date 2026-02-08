@@ -8,6 +8,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { COLLECTIONS } from "../constants/firebaseCollections";
 
 export interface Category {
   id: string;
@@ -29,7 +30,7 @@ export const CategoryService = {
     name: string,
     type: "income" | "expense",
   ) => {
-    await addDoc(collection(db, "categories"), {
+    await addDoc(collection(db, COLLECTIONS.CATEGORIES), {
       userId,
       name,
       type,
@@ -43,7 +44,7 @@ export const CategoryService = {
     callback: (cats: Category[]) => void,
   ) => {
     const q = query(
-      collection(db, "categories"),
+      collection(db, COLLECTIONS.CATEGORIES),
       where("userId", "==", userId),
     );
     return onSnapshot(
@@ -61,6 +62,6 @@ export const CategoryService = {
   },
 
   deleteCategory: async (id: string) => {
-    await deleteDoc(doc(db, "categories", id));
+    await deleteDoc(doc(db, COLLECTIONS.CATEGORIES, id));
   },
 };

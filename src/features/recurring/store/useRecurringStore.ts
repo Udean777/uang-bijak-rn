@@ -47,7 +47,7 @@ export const useRecurringStore = create<RecurringState>((set) => ({
   deleteRecurring: async (id) => {
     try {
       await RecurringService.deleteRecurring(id);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },
@@ -55,7 +55,7 @@ export const useRecurringStore = create<RecurringState>((set) => ({
   toggleActive: async (id, isActive) => {
     try {
       await RecurringService.toggleActive(id, isActive);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },

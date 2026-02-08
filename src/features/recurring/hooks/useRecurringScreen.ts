@@ -3,7 +3,11 @@ import { useRecurringStore } from "@/src/features/recurring/store/useRecurringSt
 import { useTransactionStore } from "@/src/features/transactions/store/useTransactionStore";
 import { useWalletStore } from "@/src/features/wallets/store/useWalletStore";
 import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
-import { RecurringFrequency } from "@/src/types/recurring";
+import {
+  RecurringFrequency,
+  RecurringTransaction,
+} from "@/src/types/recurring";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -35,7 +39,8 @@ export const useRecurringScreen = () => {
   );
 
   // Edit State
-  const [editingRecurring, setEditingRecurring] = useState<any | null>(null);
+  const [editingRecurring, setEditingRecurring] =
+    useState<RecurringTransaction | null>(null);
 
   // Form State
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -80,7 +85,7 @@ export const useRecurringScreen = () => {
     setAddModalVisible(true);
   };
 
-  const handleEditRecurring = (item: any) => {
+  const handleEditRecurring = (item: RecurringTransaction) => {
     setEditingRecurring(item);
     setAmount(item.amount.toLocaleString("id-ID"));
     setType(item.type);
@@ -132,8 +137,8 @@ export const useRecurringScreen = () => {
       }
       setAddModalVisible(false);
       resetForm();
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
+    } catch (error: unknown) {
+      Toast.show({ type: "error", text1: getErrorMessage(error) });
     }
   };
 
@@ -147,8 +152,8 @@ export const useRecurringScreen = () => {
     try {
       await deleteRecurring(recurringToDelete);
       Toast.show({ type: "success", text1: "Transaksi dihapus" });
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
+    } catch (error: unknown) {
+      Toast.show({ type: "error", text1: getErrorMessage(error) });
     } finally {
       setConfirmDeleteVisible(false);
       setRecurringToDelete(null);
@@ -158,8 +163,8 @@ export const useRecurringScreen = () => {
   const handleToggleActive = async (id: string, isActive: boolean) => {
     try {
       await toggleActive(id, isActive);
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
+    } catch (error: unknown) {
+      Toast.show({ type: "error", text1: getErrorMessage(error) });
     }
   };
 

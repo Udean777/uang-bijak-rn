@@ -39,7 +39,11 @@ export const GoalItem = ({
             className="w-12 h-12 rounded-2xl items-center justify-center"
             style={{ backgroundColor: item.color + "20" }}
           >
-            <Ionicons name={item.icon as any} size={24} color={item.color} />
+            <Ionicons
+              name={item.icon as keyof typeof Ionicons.glyphMap}
+              size={24}
+              color={item.color}
+            />
           </View>
           <View>
             <AppText weight="bold" variant="h3">

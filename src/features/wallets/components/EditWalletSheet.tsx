@@ -44,7 +44,7 @@ export const EditWalletSheet = ({
   }: {
     type: WalletType;
     label: string;
-    icon: any;
+    icon: keyof typeof Ionicons.glyphMap;
   }) => (
     <TouchableOpacity
       onPress={() => setSelectedType(type)}

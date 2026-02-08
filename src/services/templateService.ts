@@ -9,21 +9,25 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { COLLECTIONS } from "../constants/firebaseCollections";
 
 export const TemplateService = {
   addTemplate: async (data: Omit<TransactionTemplate, "id">) => {
-    await addDoc(collection(db, "templates"), data);
+    await addDoc(collection(db, COLLECTIONS.TEMPLATES), data);
   },
 
   deleteTemplate: async (id: string) => {
-    await deleteDoc(doc(db, "templates", id));
+    await deleteDoc(doc(db, COLLECTIONS.TEMPLATES, id));
   },
 
   subscribeTemplates: (
     userId: string,
     callback: (list: TransactionTemplate[]) => void,
   ) => {
-    const q = query(collection(db, "templates"), where("userId", "==", userId));
+    const q = query(
+      collection(db, COLLECTIONS.TEMPLATES),
+      where("userId", "==", userId),
+    );
     return onSnapshot(
       q,
       (snapshot) => {

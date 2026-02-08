@@ -13,7 +13,6 @@ interface TransactionState {
   initializeCategories: (userId: string) => () => void;
   setTransactions: (transactions: Transaction[]) => void;
   setCategories: (categories: Category[]) => void;
-
   addTransaction: (
     userId: string,
     data: CreateTransactionPayload,
@@ -31,7 +30,7 @@ interface TransactionState {
   ) => Promise<void>;
 }
 
-export const useTransactionStore = create<TransactionState>((set) => ({
+export const useTransactionStore = create<TransactionState>((set, get) => ({
   transactions: [],
   categories: [],
   isLoading: false,
@@ -53,41 +52,72 @@ export const useTransactionStore = create<TransactionState>((set) => ({
     });
     return unsubscribe;
   },
-
   setTransactions: (transactions) => set({ transactions }),
   setCategories: (categories) => set({ categories }),
 
   addTransaction: async (userId, data) => {
-    set({ isLoading: true });
+    const tempId = `temp-${Date.now()}`;
+    const newTransaction: Transaction = {
+      id: tempId,
+      userId,
+      ...data,
+      date: data.date.getTime(),
+      createdAt: Date.now(),
+    };
+
+    set((state) => ({
+      transactions: [newTransaction, ...state.transactions],
+    }));
+
     try {
       await TransactionService.addTransaction(userId, data);
-    } finally {
-      set({ isLoading: false });
+    } catch (error: unknown) {
+      set((state) => ({
+        transactions: state.transactions.filter((t) => t.id !== tempId),
+      }));
+      throw error;
     }
   },
 
   updateTransaction: async (id, oldData, newData) => {
-    set({ isLoading: true });
+    const previousTransactions = get().transactions;
+    set((state) => ({
+      transactions: state.transactions.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              ...newData,
+              date: newData.date.getTime(),
+              updatedAt: Date.now(),
+            }
+          : t,
+      ),
+    }));
     try {
       await TransactionService.updateTransaction(id, oldData, newData);
-    } finally {
-      set({ isLoading: false });
+    } catch (error: unknown) {
+      set({ transactions: previousTransactions });
+      throw error;
     }
   },
 
   deleteTransaction: async (id, oldData) => {
-    set({ isLoading: true });
+    const previousTransactions = get().transactions;
+    set((state) => ({
+      transactions: state.transactions.filter((t) => t.id !== id),
+    }));
     try {
       await TransactionService.deleteTransaction(id, oldData);
-    } finally {
-      set({ isLoading: false });
+    } catch (error: unknown) {
+      set({ transactions: previousTransactions });
+      throw error;
     }
   },
 
   addCategory: async (userId, name, type) => {
     try {
       await CategoryService.addCategory(userId, name, type);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },

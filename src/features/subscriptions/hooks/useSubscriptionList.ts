@@ -2,6 +2,7 @@ import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useTransactionStore } from "@/src/features/transactions/store/useTransactionStore";
 import { useWalletStore } from "@/src/features/wallets/store/useWalletStore";
 import { Subscription } from "@/src/types/subscription";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import { useSubscriptionStore } from "../store/useSubscriptionStore";
@@ -70,8 +71,12 @@ export const useSubscriptionList = () => {
         text2: "Jadwal diperbarui ke bulan depan.",
       });
       setPayModalVisible(false);
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal",
+        text2: getErrorMessage(error),
+      });
     }
   };
 
@@ -92,8 +97,12 @@ export const useSubscriptionList = () => {
       await deleteSubscription(subToDelete.id);
       Toast.show({ type: "success", text1: "Berhasil Dihapus" });
       setShowDeleteDialog(false);
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal",
+        text2: getErrorMessage(error),
+      });
     } finally {
       setIsProcessing(false);
     }

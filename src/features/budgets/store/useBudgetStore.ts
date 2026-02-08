@@ -48,7 +48,7 @@ export const useBudgetStore = create<BudgetState>((set) => ({
   deleteBudget: async (id) => {
     try {
       await BudgetService.deleteBudget(id);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },

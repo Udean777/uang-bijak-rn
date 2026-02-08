@@ -3,6 +3,7 @@ import { useTransactionStore } from "@/src/features/transactions/store/useTransa
 import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { Category, CategoryService } from "@/src/services/categoryService";
 import { Transaction } from "@/src/types/transaction";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useCallback, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 
@@ -34,7 +35,7 @@ export const useEditTransactionSheet = ({
       // Display absolute value to avoid double negatives or formatting issues
       setAmount(Math.abs(transaction.amount).toLocaleString("id-ID"));
       setNote(transaction.note || "");
-      setCategory(transaction.category);
+      setCategory(transaction.category || "");
       setSelectedWalletId(transaction.walletId);
     }
   }, [transaction, visible]);
@@ -71,15 +72,15 @@ export const useEditTransactionSheet = ({
         type: transaction.type,
         classification: transaction.classification,
         date: new Date(transaction.date),
-      } as any);
+      });
 
       Toast.show({ type: "success", text1: "Transaksi Diperbarui" });
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
         text1: "Gagal Update",
-        text2: error.message,
+        text2: getErrorMessage(error),
       });
     } finally {
       setIsLoading(false);

@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { WalletType } from "@/src/types/wallet";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
@@ -68,8 +69,12 @@ export const useAddWallet = () => {
       });
 
       router.back();
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal",
+        text2: getErrorMessage(error),
+      });
     }
   };
 

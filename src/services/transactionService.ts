@@ -1,6 +1,9 @@
 import {
   collection,
   doc,
+  DocumentData,
+  DocumentReference,
+  FirestoreError,
   getDocs,
   limit,
   onSnapshot,
@@ -12,13 +15,13 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { COLLECTIONS } from "../constants/firebaseCollections";
+import { MESSAGES } from "../constants/messages";
 import { CreateTransactionPayload, Transaction } from "../types/transaction";
 import { WalletType } from "../types/wallet";
+import { getErrorMessage } from "../utils/errorUtils";
 import { stripUndefined } from "../utils/firestoreUtils";
 import { AnalyticsService } from "./AnalyticsService";
-
-const COLLECTION = "transactions";
-const WALLET_COLLECTION = "wallets";
 
 /**
  * Calculate balance change based on transaction type and wallet type.
@@ -67,13 +70,13 @@ export const TransactionService = {
   addTransaction: async (userId: string, data: CreateTransactionPayload) => {
     try {
       await runTransaction(db, async (transaction) => {
-        const newtxRef = doc(collection(db, COLLECTION));
-        const walletRef = doc(db, WALLET_COLLECTION, data.walletId);
+        const newtxRef = doc(collection(db, COLLECTIONS.TRANSACTIONS));
+        const walletRef = doc(db, COLLECTIONS.WALLETS, data.walletId);
 
         const walletDoc = await transaction.get(walletRef);
 
         if (!walletDoc.exists()) {
-          throw new Error("Dompet tidak ditemukan!");
+          throw new Error(MESSAGES.TRANSACTION.WALLET_NOT_FOUND);
         }
 
         const walletData = walletDoc.data();
@@ -91,21 +94,21 @@ export const TransactionService = {
         } else if (data.type === "transfer") {
           // For transfers: deduct from source wallet
           if (!data.targetWalletId) {
-            throw new Error("Dompet tujuan harus dipilih untuk transfer!");
+            throw new Error(MESSAGES.TRANSACTION.TARGET_WALLET_REQUIRED);
           }
           if (data.walletId === data.targetWalletId) {
-            throw new Error("Dompet sumber dan tujuan tidak boleh sama!");
+            throw new Error(MESSAGES.TRANSACTION.SAME_WALLET_ERROR);
           }
 
           const targetWalletRef = doc(
             db,
-            WALLET_COLLECTION,
+            COLLECTIONS.WALLETS,
             data.targetWalletId,
           );
           const targetWalletDoc = await transaction.get(targetWalletRef);
 
           if (!targetWalletDoc.exists()) {
-            throw new Error("Dompet tujuan tidak ditemukan!");
+            throw new Error(MESSAGES.TRANSACTION.TARGET_WALLET_NOT_FOUND);
           }
 
           const targetWalletData = targetWalletDoc.data();
@@ -157,9 +160,9 @@ export const TransactionService = {
         walletType: data.walletId, // Optional: log wallet ID or look up name
       });
       console.log("Transaksi Berhasil & Saldo Updated!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Transaction Failed: ", error);
-      throw new Error(error.message || "Gagal menyimpan transaksi");
+      throw new Error(getErrorMessage(error, MESSAGES.TRANSACTION.SAVE_FAILED));
     }
   },
 
@@ -169,7 +172,7 @@ export const TransactionService = {
     limitCount: number = 50,
   ) => {
     const q = query(
-      collection(db, COLLECTION),
+      collection(db, COLLECTIONS.TRANSACTIONS),
       where("userId", "==", userId),
       orderBy("date", "desc"),
       limit(limitCount),
@@ -187,7 +190,7 @@ export const TransactionService = {
         );
         callback(transactions);
       },
-      (error) => {
+      (error: FirestoreError) => {
         console.error("[TransactionService] Snapshot error:", error);
       },
     );
@@ -203,7 +206,7 @@ export const TransactionService = {
     const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
 
     const q = query(
-      collection(db, COLLECTION),
+      collection(db, COLLECTIONS.TRANSACTIONS),
       where("userId", "==", userId),
       orderBy("date", "desc"),
     );
@@ -216,7 +219,7 @@ export const TransactionService = {
           .filter((t) => t.date >= startDate && t.date <= endDate);
         callback(transactions);
       },
-      (error) => {
+      (error: FirestoreError) => {
         console.error("[TransactionService] Monthly Snapshot error:", error);
       },
     );
@@ -225,11 +228,12 @@ export const TransactionService = {
   deleteTransaction: async (transactionId: string, oldData: Transaction) => {
     try {
       await runTransaction(db, async (transaction) => {
-        const txRef = doc(db, COLLECTION, transactionId);
-        const walletRef = doc(db, "wallets", oldData.walletId);
+        const txRef = doc(db, COLLECTIONS.TRANSACTIONS, transactionId);
+        const walletRef = doc(db, COLLECTIONS.WALLETS, oldData.walletId);
 
         const walletDoc = await transaction.get(walletRef);
-        if (!walletDoc.exists()) throw new Error("Dompet tidak ditemukan");
+        if (!walletDoc.exists())
+          throw new Error(MESSAGES.TRANSACTION.WALLET_NOT_FOUND);
 
         const walletData = walletDoc.data();
         const currentBalance = walletData.balance;
@@ -252,7 +256,11 @@ export const TransactionService = {
             walletType,
           );
 
-          const targetWalletRef = doc(db, "wallets", oldData.targetWalletId);
+          const targetWalletRef = doc(
+            db,
+            COLLECTIONS.WALLETS,
+            oldData.targetWalletId,
+          );
           const targetWalletDoc = await transaction.get(targetWalletRef);
 
           if (targetWalletDoc.exists()) {
@@ -280,8 +288,10 @@ export const TransactionService = {
         });
         transaction.delete(txRef);
       });
-    } catch (error: any) {
-      throw new Error("Gagal menghapus: " + error.message);
+    } catch (error: unknown) {
+      throw new Error(
+        MESSAGES.TRANSACTION.DELETE_FAILED + getErrorMessage(error),
+      );
     }
   },
 
@@ -292,7 +302,7 @@ export const TransactionService = {
   ) => {
     try {
       await runTransaction(db, async (transaction) => {
-        const txRef = doc(db, COLLECTION, transactionId);
+        const txRef = doc(db, COLLECTIONS.TRANSACTIONS, transactionId);
 
         const walletsIds = new Set<string>();
         walletsIds.add(oldData.walletId);
@@ -304,11 +314,14 @@ export const TransactionService = {
           walletsIds.add(newData.targetWalletId);
         }
 
-        const walletMap = new Map<string, any>();
+        const walletMap = new Map<
+          string,
+          { ref: DocumentReference; data: DocumentData }
+        >();
         for (const wId of Array.from(walletsIds)) {
           if (!wId) continue;
 
-          const wRef = doc(db, "wallets", wId);
+          const wRef = doc(db, COLLECTIONS.WALLETS, wId);
           const wDoc = await transaction.get(wRef);
 
           if (!wDoc.exists()) throw new Error(`Dompet ${wId} tidak ditemukan`);
@@ -318,11 +331,11 @@ export const TransactionService = {
 
         if (newData.type === "transfer") {
           if (!newData.targetWalletId) {
-            throw new Error("Dompet tujuan wajib dipilih untuk transfer!");
+            throw new Error(MESSAGES.TRANSACTION.TARGET_WALLET_REQUIRED);
           }
 
           if (newData.walletId === newData.targetWalletId) {
-            throw new Error("Dompet sumber dan tujuan tidak boleh sama!");
+            throw new Error(MESSAGES.TRANSACTION.SAME_WALLET_ERROR);
           }
         }
 
@@ -419,9 +432,11 @@ export const TransactionService = {
           }),
         );
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Update transaction failed:", error);
-      throw new Error(error.message || "Gagal mengupdate transaksi");
+      throw new Error(
+        getErrorMessage(error, MESSAGES.TRANSACTION.UPDATE_FAILED),
+      );
     }
   },
 
@@ -436,7 +451,7 @@ export const TransactionService = {
       const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
 
       const q = query(
-        collection(db, COLLECTION),
+        collection(db, COLLECTIONS.TRANSACTIONS),
         where("userId", "==", userId),
         where("type", "==", "expense"),
         where("category", "==", categoryName),
@@ -446,13 +461,15 @@ export const TransactionService = {
 
       const snapshot = await getDocs(q);
       let total = 0;
-      snapshot.forEach((doc: any) => {
+      snapshot.forEach((doc) => {
         total += doc.data().amount || 0;
       });
       return total;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching category spending:", error);
-      throw new Error("Gagal mengecek penggunaan budget: " + error.message);
+      throw new Error(
+        MESSAGES.TRANSACTION.CHECK_BUDGET_FAILED + getErrorMessage(error),
+      );
     }
   },
 };

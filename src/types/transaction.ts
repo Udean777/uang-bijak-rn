@@ -8,7 +8,7 @@ export interface Transaction {
   targetWalletId?: string; // For transfer transactions
   amount: number;
   type: TransactionType;
-  category: string;
+  category?: string;
   classification: TransactionCategory;
   date: number;
   note?: string;
@@ -21,8 +21,19 @@ export interface CreateTransactionPayload {
   targetWalletId?: string; // For transfer transactions
   amount: number;
   type: TransactionType;
-  category: string;
+  category?: string;
   classification: TransactionCategory;
   date: Date;
   note?: string;
+}
+
+export interface UpdateTransactionPayload {
+  amount?: number;
+  walletId?: string;
+  category?: string;
+  classification?: TransactionCategory;
+  note?: string;
+  date?: Date;
+  targetWalletId?: string;
+  type?: TransactionType;
 }

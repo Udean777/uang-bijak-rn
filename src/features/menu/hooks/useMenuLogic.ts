@@ -3,6 +3,8 @@ import { AuthService } from "@/src/services/authService";
 import { ExportService } from "@/src/services/ExportService";
 import { NotificationService } from "@/src/services/NotificationService";
 import { SecurityService } from "@/src/services/SecurityService";
+import { Subscription } from "@/src/types/subscription";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 
@@ -15,9 +17,8 @@ export const useMenuLogic = () => {
   const [showAddSheet, setShowAddSheet] = useState(false);
 
   // Edit States
-  const [editingSubscription, setEditingSubscription] = useState<any | null>(
-    null,
-  );
+  const [editingSubscription, setEditingSubscription] =
+    useState<Subscription | null>(null);
 
   // Loading States
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +49,7 @@ export const useMenuLogic = () => {
     setShowAddSheet(true);
   };
 
-  const handleEditSubscription = (sub: any) => {
+  const handleEditSubscription = (sub: Subscription) => {
     setEditingSubscription(sub);
     setShowAddSheet(true);
   };
@@ -58,11 +59,11 @@ export const useMenuLogic = () => {
     setShowLogoutDialog(false);
     try {
       await AuthService.logout();
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
         text1: "Gagal Keluar",
-        text2: error.message,
+        text2: getErrorMessage(error),
       });
     } finally {
       setIsLoading(false);
@@ -79,11 +80,11 @@ export const useMenuLogic = () => {
         text1: "Akun Dihapus",
         text2: "Semua data Anda telah dihapus.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
         text1: "Gagal Menghapus Akun",
-        text2: error.message,
+        text2: getErrorMessage(error),
       });
     } finally {
       setIsDeleting(false);
@@ -142,11 +143,11 @@ export const useMenuLogic = () => {
         text1: "Export Berhasil",
         text2: "File CSV siap dibagikan.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
         text1: "Export Gagal",
-        text2: error.message,
+        text2: getErrorMessage(error),
       });
     } finally {
       setIsExporting(false);
@@ -159,11 +160,11 @@ export const useMenuLogic = () => {
         "Tes Notifikasi Berhasil! ✅",
         "Jika Anda melihat ini, berarti sistem notifikasi sudah aktif dan berjalan lancar.",
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
         text1: "Gagal Mengirim Tes",
-        text2: error.message,
+        text2: getErrorMessage(error),
       });
     }
   };

@@ -43,15 +43,15 @@ export const useHistoryScreen = () => {
       const query = searchQuery.toLowerCase();
       const amountStr = t.amount.toLocaleString("id-ID");
 
-      const matchSearch =
-        t.category.toLowerCase().includes(query) ||
+      const matchesQuery =
+        (t.category?.toLowerCase() || "").includes(query) ||
         (t.note && t.note.toLowerCase().includes(query)) ||
         amountStr.includes(query) ||
         t.type.toLowerCase().includes(query);
 
       const matchType = filterType === "all" || t.type === filterType;
 
-      if (rangeMode === "all") return matchSearch && matchType;
+      if (rangeMode === "all") return matchesQuery && matchType;
 
       const tDate = new Date(t.date);
       const matchDate =
@@ -59,7 +59,7 @@ export const useHistoryScreen = () => {
         tDate.getMonth() === selectedDate.getMonth() &&
         tDate.getFullYear() === selectedDate.getFullYear();
 
-      return matchSearch && matchType && matchDate;
+      return matchesQuery && matchType && matchDate;
     });
   }, [transactions, searchQuery, filterType, selectedDate, rangeMode]);
 

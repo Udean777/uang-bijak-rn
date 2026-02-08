@@ -20,7 +20,7 @@ const ToastLayout = ({
       className={`w-[90%] flex-row items-center p-4 rounded-2xl border-l-4 shadow-sm ${styles.bg} ${styles.border}`}
     >
       <Ionicons
-        name={styles.icon as any}
+        name={styles.icon as keyof typeof Ionicons.glyphMap}
         size={28}
         className={styles.color}
         color={styles.iconColor}

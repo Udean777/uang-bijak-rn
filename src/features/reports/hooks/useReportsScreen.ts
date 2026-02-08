@@ -2,6 +2,7 @@ import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { ExportService } from "@/src/services/ExportService";
 import { TransactionService } from "@/src/services/transactionService";
 import { Transaction } from "@/src/types/transaction";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -75,7 +76,8 @@ export const useReportsScreen = () => {
   transactions
     .filter((t) => t.type === "expense")
     .forEach((t) => {
-      categoryMap[t.category] = (categoryMap[t.category] || 0) + t.amount;
+      const cat = t.category || "Uncategorized";
+      categoryMap[cat] = (categoryMap[cat] || 0) + t.amount;
     });
 
   Object.entries(categoryMap)
@@ -129,11 +131,11 @@ export const useReportsScreen = () => {
         selectedYear,
         selectedMonth + 1,
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
         text1: "Export Gagal",
-        text2: error.message,
+        text2: getErrorMessage(error),
       });
     } finally {
       setIsExporting(false);

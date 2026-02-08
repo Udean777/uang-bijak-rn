@@ -1,9 +1,11 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
+import { transactionSchema } from "@/src/schemas/transactionSchema";
 import { Category, CategoryService } from "@/src/services/categoryService";
 import { TransactionService } from "@/src/services/transactionService";
+import { CreateTransactionPayload, Transaction } from "@/src/types/transaction";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert } from "react-native";
 import Toast from "react-native-toast-message";
 import { useBudgetStore } from "../../budgets/store/useBudgetStore";
 import { useWalletStore } from "../../wallets/store/useWalletStore";
@@ -22,34 +24,39 @@ export const useTransactionForm = ({
   const router = useRouter();
   const { user } = useAuthStore();
   const { wallets } = useWalletStore();
-  const { addTransaction, updateTransaction, addCategory, isLoading } =
+  const { addTransaction, updateTransaction, addCategory } =
     useTransactionStore();
   const { budgets, initializeBudgets } = useBudgetStore();
 
-  // Basic Form State
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
   const [classification, setClassification] = useState<Classification>("need");
   const [selectedWalletId, setSelectedWalletId] = useState<string>("");
   const [targetWalletId, setTargetWalletId] = useState<string>("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(new Date());
 
-  // Edit Mode State
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [editTxId, setEditTxId] = useState<string | null>(null);
-  const [oldTxData, setOldTxData] = useState<any>(null);
+  const [oldTxData, setOldTxData] = useState<Transaction | null>(null);
 
-  // Category Modal State
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  // Subscriptions
+  const [isBudgetWarningVisible, setBudgetWarningVisible] = useState(false);
+  const [budgetWarningData, setBudgetWarningData] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+  const [pendingTxPayload, setPendingTxPayload] =
+    useState<CreateTransactionPayload | null>(null);
+
   useEffect(() => {
     if (!user) return;
-
     const unsubscribe = CategoryService.subscribeCategories(
       user.uid,
       (data) => {
@@ -60,7 +67,6 @@ export const useTransactionForm = ({
         }
       },
     );
-
     return () => unsubscribe();
   }, [user, type]);
 
@@ -81,7 +87,6 @@ export const useTransactionForm = ({
     }
   }, [wallets]);
 
-  // Handle Edit Mode Initialization
   useEffect(() => {
     if (editDataParam) {
       try {
@@ -89,146 +94,151 @@ export const useTransactionForm = ({
         setIsEditMode(true);
         setEditTxId(data.id);
         setOldTxData(data);
-        const formattedAmount = data.amount.toLocaleString("id-ID");
-        setAmount(formattedAmount);
+
+        setAmount(data.amount.toLocaleString("id-ID"));
         setDate(new Date(data.date));
         setType(data.type);
         setCategory(data.category);
         setClassification(data.classification || "need");
         setSelectedWalletId(data.walletId);
         setNote(data.note || "");
-      } catch (e) {
-        console.error("Gagal parse editData", e);
+        if (data.type === "transfer") {
+          setTargetWalletId(data.targetWalletId);
+        }
+      } catch (error: unknown) {
+        console.error("Failed to parse editData", getErrorMessage(error));
       }
     }
   }, [editDataParam]);
 
+  const setFormattedAmount = (val: string) => {
+    const numericValue = val.replace(/\D/g, "");
+    if (!numericValue) {
+      setAmount("");
+      return;
+    }
+    setAmount(parseInt(numericValue).toLocaleString("id-ID"));
+  };
+
   const saveNewCategory = async () => {
     if (!newCategoryName.trim() || !user || type === "transfer") return;
-
     try {
       await addCategory(user.uid, newCategoryName, type);
       setCategory(newCategoryName);
       setCategoryModalVisible(false);
       setNewCategoryName("");
       Toast.show({ type: "success", text1: "Kategori ditambahkan" });
-    } catch (error) {
-      Toast.show({ type: "error", text1: "Gagal menambah kategori" });
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal",
+        text2: getErrorMessage(error),
+      });
+    }
+  };
+
+  const executeSave = async (payload: CreateTransactionPayload) => {
+    setIsSubmitting(true);
+    try {
+      if (isEditMode && editTxId && oldTxData) {
+        await updateTransaction(editTxId, oldTxData, payload);
+        Toast.show({ type: "success", text1: "Transaksi Diperbarui" });
+        router.dismissAll();
+      } else {
+        await addTransaction(user!.uid, payload);
+        Toast.show({ type: "success", text1: "Transaksi Disimpan" });
+        router.back();
+      }
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal",
+        text2: getErrorMessage(error),
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSave = async () => {
-    if (!amount || !selectedWalletId) {
+    const numericAmount = parseFloat(amount.replace(/\./g, ""));
+    const payload = {
+      amount: numericAmount,
+      walletId: selectedWalletId,
+      type,
+      category: type === "transfer" ? undefined : category,
+      targetWalletId: type === "transfer" ? targetWalletId : undefined,
+      classification: type === "expense" ? classification : null,
+      date,
+      note,
+    };
+
+    const validation = transactionSchema.safeParse(payload);
+    if (!validation.success) {
       Toast.show({
         type: "error",
         text1: "Data Belum Lengkap",
-        text2: "Mohon isi nominal dan pilih dompet.",
+        text2: validation.error.issues[0].message,
       });
       return;
     }
 
-    if (type === "transfer" && !targetWalletId) {
-      Toast.show({
-        type: "error",
-        text1: "Data Belum Lengkap",
-        text2: "Mohon pilih dompet tujuan.",
-      });
-      return;
+    const selectedWallet = wallets.find((w) => w.id === selectedWalletId);
+    if (selectedWallet && (type === "expense" || type === "transfer")) {
+      if (numericAmount > selectedWallet.balance) {
+        Toast.show({
+          type: "error",
+          text1: "Saldo Tidak Cukup",
+          text2: `Saldo ${selectedWallet.name}: Rp${selectedWallet.balance.toLocaleString("id-ID")}`,
+        });
+        return;
+      }
     }
 
-    try {
-      // Parse amount (remove thousand separators)
-      const rawAmount = amount.replace(/\./g, "");
-      const numericAmount = parseFloat(rawAmount);
+    if (type === "expense" && category && !isEditMode) {
+      const budget = budgets.find((b) => b.categoryName === category);
+      if (budget) {
+        const now = new Date();
+        const currentSpending = await TransactionService.getCategorySpending(
+          user!.uid,
+          category,
+          now.getMonth(),
+          now.getFullYear(),
+        );
 
-      // Validate wallet balance for expense and transfer
-      const selectedWallet = wallets.find((w) => w.id === selectedWalletId);
-      if (selectedWallet && (type === "expense" || type === "transfer")) {
-        if (numericAmount > selectedWallet.balance) {
-          Toast.show({
-            type: "error",
-            text1: "Saldo Tidak Cukup",
-            text2: `Saldo ${selectedWallet.name}: Rp${selectedWallet.balance.toLocaleString("id-ID")}`,
+        if (currentSpending + numericAmount > budget.limitAmount) {
+          setPendingTxPayload(payload);
+          setBudgetWarningData({
+            title: "Melebihi Budget",
+            message: `Total pengeluaran kategori "${category}" akan melebihi budget (Limit: Rp${budget.limitAmount.toLocaleString("id-ID")}). Tetap simpan?`,
           });
+          setBudgetWarningVisible(true);
           return;
         }
       }
+    }
 
-      if (type === "expense" && category && !isEditMode) {
-        const budget = budgets.find((b) => b.categoryName === category);
-        if (budget) {
-          const now = new Date();
-          const currentSpending = await TransactionService.getCategorySpending(
-            user!.uid,
-            category,
-            now.getMonth(),
-            now.getFullYear(),
-          );
+    await executeSave(payload);
+  };
 
-          if (currentSpending + numericAmount > budget.limitAmount) {
-            const result = await new Promise((resolve) => {
-              Alert.alert(
-                "Melebihi Budget",
-                `Total pengeluaran kategori "${category}" akan melebihi budget (Limit: Rp${budget.limitAmount.toLocaleString(
-                  "id-ID",
-                )}). Tetap simpan?`,
-                [
-                  {
-                    text: "Batal",
-                    onPress: () => resolve(false),
-                    style: "cancel",
-                  },
-                  { text: "Tetap Simpan", onPress: () => resolve(true) },
-                ],
-              );
-            });
-
-            if (!result) return;
-          }
-        }
-      }
-
-      const payload = {
-        walletId: selectedWalletId,
-        targetWalletId: type === "transfer" ? targetWalletId : undefined,
-        amount: numericAmount,
-        type,
-        category: type === "transfer" ? "Transfer" : category,
-        classification: type === "expense" ? classification : null,
-        date,
-        note,
-      };
-
-      if (isEditMode && editTxId && oldTxData) {
-        await updateTransaction(editTxId, oldTxData, payload as any);
-        Toast.show({ type: "success", text1: "Transaksi Diperbarui" });
-        router.dismissAll();
-      } else {
-        await addTransaction(user!.uid, payload as any);
-        Toast.show({ type: "success", text1: "Transaksi Disimpan" });
-        router.back();
-      }
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
+  const onConfirmBudgetWarning = () => {
+    setBudgetWarningVisible(false);
+    if (pendingTxPayload) {
+      executeSave(pendingTxPayload);
+      setPendingTxPayload(null);
     }
   };
 
+  const onCancelBudgetWarning = () => {
+    setBudgetWarningVisible(false);
+    setPendingTxPayload(null);
+  };
+
   return {
-    // States
     type,
     setType,
     amount,
-    setAmount: (val: string) => {
-      // Strip non-numeric
-      const numericValue = val.replace(/\D/g, "");
-      if (!numericValue) {
-        setAmount("");
-        return;
-      }
-      // Format with dots
-      const formatted = parseInt(numericValue).toLocaleString("id-ID");
-      setAmount(formatted);
-    },
+    setAmount: setFormattedAmount,
     category,
     setCategory,
     categories,
@@ -240,19 +250,24 @@ export const useTransactionForm = ({
     setTargetWalletId,
     note,
     setNote,
-    isLoading,
+    date,
+    setDate,
+
+    isLoading: isSubmitting,
     isEditMode,
     isCategoryModalVisible,
     setCategoryModalVisible,
     newCategoryName,
     setNewCategoryName,
     wallets,
-    date,
-    setDate,
 
-    // Actions
+    isBudgetWarningVisible,
+    budgetWarningData,
+
     handleSave,
     saveNewCategory,
     handleClose: () => router.back(),
+    onConfirmBudgetWarning,
+    onCancelBudgetWarning,
   };
 };

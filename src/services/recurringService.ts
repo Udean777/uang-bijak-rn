@@ -15,9 +15,10 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import { COLLECTIONS } from "../constants/firebaseCollections";
+import { MESSAGES } from "../constants/messages";
+import { getErrorMessage } from "../utils/errorUtils";
 import { TransactionService } from "./transactionService";
-
-const COLLECTION = "recurring_transactions";
 
 const calculateNextDate = (
   currentDate: number,
@@ -44,7 +45,7 @@ const calculateNextDate = (
 export const RecurringService = {
   addRecurring: async (userId: string, data: CreateRecurringPayload) => {
     try {
-      await addDoc(collection(db, COLLECTION), {
+      await addDoc(collection(db, COLLECTIONS.RECURRING), {
         userId,
         ...data,
         startDate: data.startDate.getTime(),
@@ -53,8 +54,10 @@ export const RecurringService = {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-    } catch (error: any) {
-      throw new Error("Gagal membuat transaksi berulang: " + error.message);
+    } catch (error: unknown) {
+      throw new Error(
+        MESSAGES.RECURRING.CREATE_FAILED + getErrorMessage(error),
+      );
     }
   },
 
@@ -62,7 +65,10 @@ export const RecurringService = {
     userId: string,
     onUpdate: (data: RecurringTransaction[]) => void,
   ) => {
-    const q = query(collection(db, COLLECTION), where("userId", "==", userId));
+    const q = query(
+      collection(db, COLLECTIONS.RECURRING),
+      where("userId", "==", userId),
+    );
 
     return onSnapshot(
       q,
@@ -85,7 +91,7 @@ export const RecurringService = {
   processDueTransactions: async (userId: string) => {
     const now = Date.now();
     const q = query(
-      collection(db, COLLECTION),
+      collection(db, COLLECTIONS.RECURRING),
       where("userId", "==", userId),
       where("isActive", "==", true),
       where("nextExecutionDate", "<=", now),
@@ -120,14 +126,14 @@ export const RecurringService = {
           nextExec = calculateNextDate(nextExec, recurring.frequency);
           processedCount++;
 
-          await updateDoc(doc(db, COLLECTION, recurring.id), {
+          await updateDoc(doc(db, COLLECTIONS.RECURRING, recurring.id), {
             nextExecutionDate: nextExec,
             updatedAt: Date.now(),
           });
-        } catch (error) {
+        } catch (error: unknown) {
           console.error(
-            `Failed to process recurring transaction ${recurring.id}`,
-            error,
+            `[RecurringService] Failed to process transaction ${recurring.id}:`,
+            getErrorMessage(error),
           );
           break;
         }
@@ -137,20 +143,24 @@ export const RecurringService = {
 
   deleteRecurring: async (id: string) => {
     try {
-      await deleteDoc(doc(db, COLLECTION, id));
-    } catch (error: any) {
-      throw new Error("Gagal menghapus: " + error.message);
+      await deleteDoc(doc(db, COLLECTIONS.RECURRING, id));
+    } catch (error: unknown) {
+      throw new Error(
+        MESSAGES.RECURRING.DELETE_FAILED + getErrorMessage(error),
+      );
     }
   },
 
   toggleActive: async (id: string, isActive: boolean) => {
     try {
-      await updateDoc(doc(db, COLLECTION, id), {
+      await updateDoc(doc(db, COLLECTIONS.RECURRING, id), {
         isActive,
         updatedAt: Date.now(),
       });
-    } catch (error: any) {
-      throw new Error("Gagal update status: " + error.message);
+    } catch (error: unknown) {
+      throw new Error(
+        MESSAGES.RECURRING.UPDATE_STATUS_FAILED + getErrorMessage(error),
+      );
     }
   },
 
@@ -159,16 +169,21 @@ export const RecurringService = {
     data: Partial<CreateRecurringPayload>,
   ) => {
     try {
-      const updateData: any = { ...data, updatedAt: Date.now() };
+      const updateData: Record<string, unknown> = {
+        ...data,
+        updatedAt: Date.now(),
+      };
       if (data.startDate) {
         updateData.startDate = data.startDate.getTime();
         // Reset next execution to new start date logic can be added here if needed
         // For simplicity, we assume editing start date resets the schedule:
         updateData.nextExecutionDate = data.startDate.getTime();
       }
-      await updateDoc(doc(db, COLLECTION, id), updateData);
-    } catch (error: any) {
-      throw new Error("Gagal update transaksi: " + error.message);
+      await updateDoc(doc(db, COLLECTIONS.RECURRING, id), updateData);
+    } catch (error: unknown) {
+      throw new Error(
+        MESSAGES.RECURRING.UPDATE_FAILED + getErrorMessage(error),
+      );
     }
   },
 };

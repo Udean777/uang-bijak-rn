@@ -10,6 +10,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { COLLECTIONS } from "../constants/firebaseCollections";
 import { Debt, DebtStatus } from "../types/debt";
 
 export const DebtService = {
@@ -17,7 +18,7 @@ export const DebtService = {
     userId: string,
     data: Omit<Debt, "id" | "createdAt" | "status" | "userId">,
   ) => {
-    await addDoc(collection(db, "debts"), {
+    await addDoc(collection(db, COLLECTIONS.DEBTS), {
       userId,
       ...data,
       status: "unpaid",
@@ -26,16 +27,16 @@ export const DebtService = {
   },
 
   updateStatus: async (id: string, status: DebtStatus) => {
-    await updateDoc(doc(db, "debts", id), { status });
+    await updateDoc(doc(db, COLLECTIONS.DEBTS, id), { status });
   },
 
   deleteDebt: async (id: string) => {
-    await deleteDoc(doc(db, "debts", id));
+    await deleteDoc(doc(db, COLLECTIONS.DEBTS, id));
   },
 
   subscribeDebts: (userId: string, callback: (list: Debt[]) => void) => {
     const q = query(
-      collection(db, "debts"),
+      collection(db, COLLECTIONS.DEBTS),
       where("userId", "==", userId),
       orderBy("createdAt", "desc"),
     );

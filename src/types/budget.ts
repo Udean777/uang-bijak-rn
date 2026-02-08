@@ -6,6 +6,7 @@ export interface CategoryBudget {
   month: number; // 0-11
   year: number;
   createdAt: number;
+  updatedAt: number;
 }
 
 export interface CreateBudgetPayload {
@@ -13,4 +14,10 @@ export interface CreateBudgetPayload {
   limitAmount: number;
   month: number;
   year: number;
+}
+
+export interface BudgetWithSpending extends CategoryBudget {
+  currentSpending: number;
+  remaining: number;
+  percentage: number;
 }

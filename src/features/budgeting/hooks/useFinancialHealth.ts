@@ -2,9 +2,24 @@ import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { TransactionService } from "@/src/services/transactionService";
 import { useEffect, useState } from "react";
 
+interface ChartItem {
+  value: number;
+  color: string;
+  text: string;
+  label: string;
+}
+
+interface BarItem {
+  value: number;
+  label: string;
+  frontColor: string;
+  spacing?: number;
+  labelTextStyle: { color: string; fontSize: number };
+}
+
 export const useFinancialHealth = () => {
   const { user } = useAuth();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ChartItem[]>([]);
   const [summary, setSummary] = useState({
     income: 0,
     needs: 0,
@@ -12,7 +27,7 @@ export const useFinancialHealth = () => {
     savings: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [barData, setBarData] = useState<any[]>([]);
+  const [barData, setBarData] = useState<BarItem[]>([]);
 
   useEffect(() => {
     if (!user) return;

@@ -1,5 +1,10 @@
 import { db } from "@/src/config/firebase";
-import { CreateWalletPayload, Wallet } from "@/src/types/wallet";
+import {
+  CreateWalletPayload,
+  UpdateWalletPayload,
+  Wallet,
+} from "@/src/types/wallet";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import {
   addDoc,
   collection,
@@ -11,14 +16,14 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import { COLLECTIONS } from "../constants/firebaseCollections";
+import { MESSAGES } from "../constants/messages";
 import { stripUndefined } from "../utils/firestoreUtils";
-
-const COLLECTION = "wallets";
 
 export const WalletService = {
   createWallet: async (userId: string, data: CreateWalletPayload) => {
     try {
-      await addDoc(collection(db, COLLECTION), {
+      await addDoc(collection(db, COLLECTIONS.WALLETS), {
         userId,
         ...data,
         balance: data.initialBalance,
@@ -27,14 +32,14 @@ export const WalletService = {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-    } catch (error: any) {
-      throw new Error("Gagal membuat dompet: " + error.message);
+    } catch (error: unknown) {
+      throw new Error(MESSAGES.WALLET.CREATE_FAILED + getErrorMessage(error));
     }
   },
 
   subscribeWallets: (userId: string, onUpdate: (data: Wallet[]) => void) => {
     const q = query(
-      collection(db, COLLECTION),
+      collection(db, COLLECTIONS.WALLETS),
       where("userId", "==", userId),
       where("isArchived", "==", false),
       orderBy("createdAt", "asc"),
@@ -60,12 +65,9 @@ export const WalletService = {
     return unsubscribe;
   },
 
-  updateWallet: async (
-    walletId: string,
-    data: Partial<CreateWalletPayload>,
-  ) => {
+  updateWallet: async (walletId: string, data: UpdateWalletPayload) => {
     try {
-      const walletRef = doc(db, COLLECTION, walletId);
+      const walletRef = doc(db, COLLECTIONS.WALLETS, walletId);
 
       await updateDoc(
         walletRef,
@@ -74,16 +76,16 @@ export const WalletService = {
           updatedAt: Date.now(),
         }),
       );
-    } catch (error: any) {
-      throw new Error("Gagal update dompet: " + error.message);
+    } catch (error: unknown) {
+      throw new Error(MESSAGES.WALLET.UPDATE_FAILED + getErrorMessage(error));
     }
   },
 
   deleteWallet: async (walletId: string) => {
     try {
-      await deleteDoc(doc(db, COLLECTION, walletId));
-    } catch (error: any) {
-      throw new Error("Gagal hapus dompet: " + error.message);
+      await deleteDoc(doc(db, COLLECTIONS.WALLETS, walletId));
+    } catch (error: unknown) {
+      throw new Error(MESSAGES.WALLET.DELETE_FAILED + getErrorMessage(error));
     }
   },
 };

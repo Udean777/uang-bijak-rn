@@ -65,8 +65,9 @@ export const useAnalysisScreen = () => {
     const grouped: Record<string, number> = {};
 
     expenses.forEach((t) => {
-      if (!grouped[t.category]) grouped[t.category] = 0;
-      grouped[t.category] += t.amount;
+      const cat = t.category || "Uncategorized";
+      if (!grouped[cat]) grouped[cat] = 0;
+      grouped[cat] += t.amount;
     });
 
     const result = Object.keys(grouped).map((cat, index) => ({

@@ -26,7 +26,7 @@ const TypeOption = ({
 }: {
   type: WalletType;
   label: string;
-  icon: React.ReactElement;
+  icon: React.ReactElement<{ color?: string; size?: number }>;
   selectedType: WalletType;
   onSelect: (type: WalletType) => void;
 }) => {
@@ -48,7 +48,7 @@ const TypeOption = ({
     >
       {React.cloneElement(icon, {
         color: isActive ? colors.primary : colors.icon,
-      } as any)}
+      })}
       <AppText
         variant="caption"
         className="mt-2"

@@ -6,14 +6,16 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 
+interface SlideItem {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
 interface SlideItemProps {
-  item: {
-    id: string;
-    title: string;
-    description: string;
-    icon: string;
-    color: string;
-  };
+  item: SlideItem;
   width: number;
 }
 
@@ -30,7 +32,11 @@ const OnboardingSlide = ({ item, width }: SlideItemProps) => {
           shadowOpacity: 0.3,
         }}
       >
-        <Ionicons name={item.icon as any} size={120} color={item.color} />
+        <Ionicons
+          name={item.icon as keyof typeof Ionicons.glyphMap}
+          size={120}
+          color={item.color}
+        />
       </View>
 
       <AppText variant="h1" weight="bold" className="text-center mb-4">
@@ -45,7 +51,7 @@ const OnboardingSlide = ({ item, width }: SlideItemProps) => {
 };
 
 interface PaginationProps {
-  slides: any[];
+  slides: SlideItem[];
   currentIndex: number;
 }
 

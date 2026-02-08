@@ -1,13 +1,14 @@
 import { AppText } from "@/src/components/atoms/AppText";
 import { useTheme } from "@/src/hooks/useTheme";
+import { BudgetWithSpending } from "@/src/types/budget";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
 interface BudgetItemProps {
-  item: any;
+  item: BudgetWithSpending;
   onDelete: (id: string) => void;
-  onEdit?: (item: any) => void;
+  onEdit?: (item: BudgetWithSpending) => void;
 }
 
 export const BudgetItem = ({ item, onDelete, onEdit }: BudgetItemProps) => {

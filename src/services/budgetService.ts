@@ -1,25 +1,27 @@
 import { db } from "@/src/config/firebase";
 import { CategoryBudget, CreateBudgetPayload } from "@/src/types/budget";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import {
   addDoc,
   collection,
   deleteDoc,
   doc,
+  FirestoreError,
   getDocs,
   onSnapshot,
   query,
   updateDoc,
   where,
 } from "firebase/firestore";
+import { COLLECTIONS } from "../constants/firebaseCollections";
+import { MESSAGES } from "../constants/messages";
 import { AnalyticsService } from "./AnalyticsService";
-
-const COLLECTION = "budgets";
 
 export const BudgetService = {
   calculateMonthlyNeeds: async (userId: string): Promise<number> => {
     try {
       const q = query(
-        collection(db, "subscriptions"),
+        collection(db, COLLECTIONS.SUBSCRIPTIONS),
         where("userId", "==", userId),
       );
       const snapshot = await getDocs(q);
@@ -31,8 +33,7 @@ export const BudgetService = {
       });
 
       return totalNeeds;
-    } catch (error) {
-      console.error("Error calculating budget:", error);
+    } catch (error: unknown) {
       return 0;
     }
   },
@@ -41,7 +42,7 @@ export const BudgetService = {
     try {
       // Check if budget already exists for this category/month/year
       const q = query(
-        collection(db, COLLECTION),
+        collection(db, COLLECTIONS.BUDGETS),
         where("userId", "==", userId),
         where("categoryName", "==", data.categoryName),
         where("month", "==", data.month),
@@ -50,7 +51,7 @@ export const BudgetService = {
       const existing = await getDocs(q);
 
       if (!existing.empty) {
-        const docRef = doc(db, COLLECTION, existing.docs[0].id);
+        const docRef = doc(db, COLLECTIONS.BUDGETS, existing.docs[0].id);
         await updateDoc(docRef, {
           limitAmount: data.limitAmount,
           updatedAt: Date.now(),
@@ -59,7 +60,7 @@ export const BudgetService = {
           category: data.categoryName,
         });
       } else {
-        await addDoc(collection(db, COLLECTION), {
+        await addDoc(collection(db, COLLECTIONS.BUDGETS), {
           userId,
           ...data,
           createdAt: Date.now(),
@@ -69,8 +70,8 @@ export const BudgetService = {
           category: data.categoryName,
         });
       }
-    } catch (error: any) {
-      throw new Error("Gagal menyimpan budget: " + error.message);
+    } catch (error: unknown) {
+      throw new Error(MESSAGES.BUDGET.SAVE_FAILED + getErrorMessage(error));
     }
   },
 
@@ -81,7 +82,7 @@ export const BudgetService = {
     onUpdate: (data: CategoryBudget[]) => void,
   ) => {
     const q = query(
-      collection(db, COLLECTION),
+      collection(db, COLLECTIONS.BUDGETS),
       where("userId", "==", userId),
       where("month", "==", month),
       where("year", "==", year),
@@ -99,13 +100,17 @@ export const BudgetService = {
         );
         onUpdate(budgets);
       },
-      (error) => {
+      (error: FirestoreError) => {
         console.error("[BudgetService] Snapshot error:", error);
       },
     );
   },
 
   deleteBudget: async (id: string) => {
-    await deleteDoc(doc(db, COLLECTION, id));
+    try {
+      await deleteDoc(doc(db, COLLECTIONS.BUDGETS, id));
+    } catch (error: unknown) {
+      throw new Error(MESSAGES.BUDGET.DELETE_FAILED + getErrorMessage(error));
+    }
   },
 };

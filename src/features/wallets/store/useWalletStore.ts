@@ -1,5 +1,9 @@
 import { WalletService } from "@/src/services/walletService";
-import { CreateWalletPayload, Wallet } from "@/src/types/wallet";
+import {
+  CreateWalletPayload,
+  UpdateWalletPayload,
+  Wallet,
+} from "@/src/types/wallet";
 import { create } from "zustand";
 
 interface WalletState {
@@ -14,10 +18,7 @@ interface WalletState {
   calculateTotals: (data: Wallet[]) => void;
   initializeWallets: (userId: string) => () => void;
   createWallet: (userId: string, data: CreateWalletPayload) => Promise<void>;
-  updateWallet: (
-    walletId: string,
-    data: Partial<CreateWalletPayload>,
-  ) => Promise<void>;
+  updateWallet: (walletId: string, data: UpdateWalletPayload) => Promise<void>;
   deleteWallet: (walletId: string) => Promise<void>;
 }
 

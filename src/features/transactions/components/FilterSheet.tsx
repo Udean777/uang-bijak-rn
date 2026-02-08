@@ -44,16 +44,16 @@ export const FilterSheet = ({
     setDatePickerVisibility(false);
   };
 
-  const FilterOption = ({
+  const FilterOption = <T,>({
     label,
     value,
     active,
     onPress,
   }: {
     label: string;
-    value: any;
+    value: T;
     active: boolean;
-    onPress: (val: any) => void;
+    onPress: (val: T) => void;
   }) => (
     <TouchableOpacity
       onPress={() => onPress(value)}

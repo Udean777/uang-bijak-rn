@@ -1,6 +1,7 @@
 import { AppButton } from "@/src/components/atoms/AppButton";
 import { AppInput } from "@/src/components/atoms/AppInput";
 import { AppText } from "@/src/components/atoms/AppText";
+import { ConfirmDialog } from "@/src/components/molecules/ConfirmDialog";
 import { ModalHeader } from "@/src/components/molecules/ModalHeader";
 import { ScreenLoader } from "@/src/components/molecules/ScreenLoader";
 import { AddCategoryModal } from "@/src/features/transactions/components/AddCategoryModal";
@@ -45,6 +46,10 @@ export default function AddTransactionScreen() {
     handleSave,
     saveNewCategory,
     handleClose,
+    isBudgetWarningVisible,
+    budgetWarningData,
+    onConfirmBudgetWarning,
+    onCancelBudgetWarning,
   } = useTransactionForm({ editDataParam: params.editData as string });
 
   return (
@@ -178,6 +183,16 @@ export default function AddTransactionScreen() {
         categoryName={newCategoryName}
         setCategoryName={setNewCategoryName}
         type={type}
+      />
+
+      <ConfirmDialog
+        visible={isBudgetWarningVisible}
+        title={budgetWarningData?.title || ""}
+        message={budgetWarningData?.message || ""}
+        onConfirm={onConfirmBudgetWarning}
+        onCancel={onCancelBudgetWarning}
+        confirmText="Tetap Simpan"
+        variant="danger"
       />
     </View>
   );

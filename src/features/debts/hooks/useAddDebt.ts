@@ -1,6 +1,7 @@
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { DebtType } from "@/src/types/debt";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
 import { useDebtStore } from "../store/useDebtStore";
@@ -42,8 +43,12 @@ export const useAddDebt = (onClose: () => void) => {
       setType("receivable");
       setDueDate(new Date());
       onClose();
-    } catch (e) {
-      Toast.show({ type: "error", text1: "Gagal menyimpan" });
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal Menyimpan",
+        text2: getErrorMessage(error),
+      });
     } finally {
       setIsLoading(false);
     }

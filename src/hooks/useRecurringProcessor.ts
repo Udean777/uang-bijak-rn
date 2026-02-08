@@ -18,7 +18,7 @@ export const useRecurringProcessor = () => {
 
     try {
       await RecurringService.processDueTransactions(user.uid);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error processing recurring transactions:", error);
 
       Toast.show({

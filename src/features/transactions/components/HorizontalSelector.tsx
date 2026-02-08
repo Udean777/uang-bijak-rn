@@ -2,6 +2,7 @@ import { AppText } from "@/src/components/atoms/AppText";
 import { useTheme } from "@/src/hooks/useTheme";
 import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
+import { TextColor } from "../../../components/atoms/config/variants";
 
 interface HorizontalSelectorProps<T> {
   data: T[];
@@ -45,7 +46,7 @@ export const HorizontalSelector = <T,>({
           let borderColor = isActive
             ? activeBgColor || colors.primary
             : colors.border;
-          let textColor = isActive ? "white" : "default";
+          let textColor: TextColor = isActive ? "white" : "default";
 
           // Special case for dark mode with default grey-ish selections
           if (isActive && isDark && !activeBgColor) {
@@ -66,7 +67,7 @@ export const HorizontalSelector = <T,>({
             >
               <AppText
                 weight="bold"
-                color={textColor as any}
+                color={textColor}
                 style={
                   isActive && isDark && !activeBgColor
                     ? { color: colors.background }

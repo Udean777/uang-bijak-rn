@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  User,
 } from "firebase/auth";
 import {
   collection,
@@ -20,7 +21,10 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
+import { COLLECTIONS } from "../constants/firebaseCollections";
+import { MESSAGES } from "../constants/messages";
 import { RegisterPayload, UserProfile } from "../types/user";
+import { getErrorMessage } from "../utils/errorUtils";
 import { AnalyticsService } from "./AnalyticsService";
 import { SecurityService } from "./SecurityService";
 
@@ -31,8 +35,8 @@ export const AuthService = {
       await AuthService._updateLastLogin(cred.user.uid);
       AnalyticsService.logEvent("login", { method: "email" });
       return cred.user;
-    } catch (error: any) {
-      throw new Error("Email atau password salah.");
+    } catch (error: unknown) {
+      throw new Error(MESSAGES.AUTH.LOGIN_FAILED);
     }
   },
 
@@ -47,8 +51,8 @@ export const AuthService = {
         photoURL: "",
       });
       AnalyticsService.logEvent("sign_up", { method: "email" });
-    } catch (error: any) {
-      throw new Error(error.message || "Gagal mendaftar.");
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error));
     }
   },
 
@@ -62,18 +66,19 @@ export const AuthService = {
       await AuthService._handleSocialUser(user);
       AnalyticsService.logEvent("login", { method: "google" });
       return user;
-    } catch (error: any) {
-      throw new Error("Gagal login Google: " + error.message);
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error);
+      throw new Error(MESSAGES.AUTH.GOOGLE_LOGIN_FAILED + msg);
     }
   },
 
-  _handleSocialUser: async (user: any) => {
-    const userDocRef = doc(db, "users", user.uid);
+  _handleSocialUser: async (user: User) => {
+    const userDocRef = doc(db, COLLECTIONS.USERS, user.uid);
     const userDoc = await getDoc(userDocRef);
 
     if (!userDoc.exists()) {
       await AuthService._createUserProfile(user.uid, {
-        email: user.email,
+        email: user.email || "",
         displayName: user.displayName || "User",
         photoURL: user.photoURL || "",
       });
@@ -82,8 +87,11 @@ export const AuthService = {
     }
   },
 
-  _createUserProfile: async (uid: string, data: any) => {
-    await setDoc(doc(db, "users", uid), {
+  _createUserProfile: async (
+    uid: string,
+    data: Pick<UserProfile, "email" | "displayName" | "photoURL">,
+  ) => {
+    await setDoc(doc(db, COLLECTIONS.USERS, uid), {
       uid,
       ...data,
       emailVerified: true,
@@ -94,15 +102,17 @@ export const AuthService = {
   },
 
   _updateLastLogin: async (uid: string) => {
-    await updateDoc(doc(db, "users", uid), { lastLoginAt: Date.now() });
+    await updateDoc(doc(db, COLLECTIONS.USERS, uid), {
+      lastLoginAt: Date.now(),
+    });
   },
 
   ensureEmailVerified: async (uid: string) => {
-    await updateDoc(doc(db, "users", uid), { emailVerified: true });
+    await updateDoc(doc(db, COLLECTIONS.USERS, uid), { emailVerified: true });
   },
 
   updatePushToken: async (uid: string, token: string) => {
-    await updateDoc(doc(db, "users", uid), { pushToken: token });
+    await updateDoc(doc(db, COLLECTIONS.USERS, uid), { pushToken: token });
   },
 
   logout: async () => {
@@ -110,7 +120,7 @@ export const AuthService = {
   },
 
   getUserProfile: async (uid: string): Promise<UserProfile> => {
-    const userDocRef = doc(db, "users", uid);
+    const userDocRef = doc(db, COLLECTIONS.USERS, uid);
 
     for (let i = 0; i < 3; i++) {
       const userDoc = await getDoc(userDocRef);
@@ -121,7 +131,7 @@ export const AuthService = {
 
       if (i < 2) await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    throw new Error("Profil akun tidak ditemukan.");
+    throw new Error(MESSAGES.AUTH.USER_NOT_FOUND);
   },
 
   /**
@@ -131,7 +141,7 @@ export const AuthService = {
   deleteAccount: async (): Promise<void> => {
     const user = auth.currentUser;
     if (!user) {
-      throw new Error("Tidak ada user yang login.");
+      throw new Error(MESSAGES.AUTH.NO_USER_LOGGED_IN);
     }
 
     const uid = user.uid;
@@ -139,13 +149,13 @@ export const AuthService = {
     try {
       // Collections to delete (all user data)
       const collectionsToDelete = [
-        "transactions",
-        "wallets",
-        "subscriptions",
-        "debts",
-        "wishlists",
-        "templates",
-        "categories",
+        COLLECTIONS.TRANSACTIONS,
+        COLLECTIONS.WALLETS,
+        COLLECTIONS.SUBSCRIPTIONS,
+        COLLECTIONS.DEBTS,
+        COLLECTIONS.WISHLISTS,
+        COLLECTIONS.TEMPLATES,
+        COLLECTIONS.CATEGORIES,
       ];
 
       // Delete all documents in each collection that belong to this user
@@ -179,21 +189,26 @@ export const AuthService = {
       }
 
       // Delete user profile document
-      await deleteDoc(doc(db, "users", uid));
+      await deleteDoc(doc(db, COLLECTIONS.USERS, uid));
 
       // Clear local security data (PIN, biometric settings)
       await SecurityService.clearAll();
 
       // Delete the Firebase Auth user account
       await deleteUser(user);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If deletion fails due to requiring recent authentication
-      if (error.code === "auth/requires-recent-login") {
-        throw new Error(
-          "Untuk keamanan, silakan logout dan login kembali sebelum menghapus akun.",
-        );
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code: string }).code === "auth/requires-recent-login"
+      ) {
+        throw new Error(MESSAGES.AUTH.REAUTH_REQUIRED);
       }
-      throw new Error("Gagal menghapus akun: " + error.message);
+      throw new Error(
+        MESSAGES.AUTH.DELETE_ACCOUNT_FAILED + getErrorMessage(error),
+      );
     }
   },
 };

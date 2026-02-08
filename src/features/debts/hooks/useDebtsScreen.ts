@@ -62,7 +62,7 @@ export const useDebtsScreen = () => {
 
     try {
       await Share.share({ message });
-    } catch (error) {
+    } catch (error: unknown) {
       // ignore
     }
   };

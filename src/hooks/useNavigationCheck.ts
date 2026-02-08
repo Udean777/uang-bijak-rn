@@ -21,7 +21,7 @@ export const useNavigationCheck = (
         const inSetupPin = currentPath.includes("(auth)/setup-pin");
 
         if (!hasPin && !inSetupPin) {
-          router.replace("/(auth)/setup-pin" as any);
+          router.replace("/(auth)/setup-pin");
         }
         setIsCheckingPin(false);
       } else if (!isAuthLoading && !user) {

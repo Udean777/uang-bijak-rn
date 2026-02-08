@@ -43,7 +43,7 @@ export const useWishlistStore = create<WishlistState>((set) => ({
   updateStatus: async (id, status) => {
     try {
       await WishlistService.updateStatus(id, status);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },
@@ -51,7 +51,7 @@ export const useWishlistStore = create<WishlistState>((set) => ({
   deleteWishlist: async (id) => {
     try {
       await WishlistService.deleteWishlist(id);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },

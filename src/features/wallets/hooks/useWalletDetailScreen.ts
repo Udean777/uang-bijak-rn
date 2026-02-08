@@ -3,6 +3,7 @@ import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { TransactionService } from "@/src/services/transactionService";
 import { Transaction } from "@/src/types/transaction";
 import { Wallet } from "@/src/types/wallet";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
@@ -103,8 +104,8 @@ export const useWalletDetailScreen = () => {
       Toast.show({ type: "success", text1: "Dompet dihapus" });
       setShowDeleteDialog(false);
       router.replace("/(tabs)");
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
+    } catch (error: unknown) {
+      Toast.show({ type: "error", text1: getErrorMessage(error) });
       setIsLoading(false);
     }
   };

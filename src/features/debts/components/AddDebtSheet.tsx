@@ -47,7 +47,7 @@ export const AddDebtSheet = ({ visible, onClose }: AddDebtSheetProps) => {
 
     let bgColor = colors.surface;
     let borderColor = colors.border;
-    let textColor: any = "default";
+    let textColor: string = colors.text;
 
     if (isSelected) {
       if (isReceivable) {

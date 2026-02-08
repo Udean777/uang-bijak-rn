@@ -2,6 +2,8 @@ import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useBudgetStore } from "@/src/features/budgets/store/useBudgetStore";
 import { useTransactionStore } from "@/src/features/transactions/store/useTransactionStore";
 import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
+import { BudgetWithSpending } from "@/src/types/budget";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -34,7 +36,9 @@ export const useBudgetsScreen = () => {
   const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
 
   // Edit State
-  const [editingBudget, setEditingBudget] = useState<any | null>(null);
+  const [editingBudget, setEditingBudget] = useState<BudgetWithSpending | null>(
+    null,
+  );
 
   // Form State
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -117,7 +121,7 @@ export const useBudgetsScreen = () => {
     setAddModalVisible(true);
   };
 
-  const handleEditBudget = (item: any) => {
+  const handleEditBudget = (item: BudgetWithSpending) => {
     setEditingBudget(item);
     setSelectedCategory(item.categoryName);
     setLimit(item.limitAmount.toLocaleString("id-ID"));
@@ -143,8 +147,8 @@ export const useBudgetsScreen = () => {
       setAddModalVisible(false);
       resetForm();
       Toast.show({ type: "success", text1: "Budget berhasil diatur!" });
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
+    } catch (error: unknown) {
+      Toast.show({ type: "error", text1: getErrorMessage(error) });
     }
   };
 
@@ -158,8 +162,8 @@ export const useBudgetsScreen = () => {
     try {
       await deleteBudget(budgetToDelete);
       Toast.show({ type: "success", text1: "Budget dihapus" });
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
+    } catch (error: unknown) {
+      Toast.show({ type: "error", text1: getErrorMessage(error) });
     } finally {
       setConfirmDeleteVisible(false);
       setBudgetToDelete(null);

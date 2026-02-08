@@ -3,147 +3,171 @@ import {
   setUser as setSentryUser,
 } from "@/src/config/sentry";
 import { AuthService } from "@/src/services/authService";
-import { UserProfile } from "@/src/types/user";
+import { RegisterPayload, UserProfile } from "@/src/types/user";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "firebase/auth";
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 interface AuthState {
   user: User | null;
   userProfile: UserProfile | null;
   isLoading: boolean;
   isInitialized: boolean;
+  isHydrated: boolean;
   hasSeenOnboarding: boolean | null;
 
   // Actions
   setUser: (user: User | null) => void;
   setUserProfile: (profile: UserProfile | null) => void;
   setIsLoading: (loading: boolean) => void;
-  setHasSeenOnboarding: (seen: boolean) => Promise<void>;
+  setHasSeenOnboarding: (seen: boolean) => void;
+  setHydrated: (hydrated: boolean) => void;
   initializeAuth: () => () => void;
   refreshProfile: () => Promise<void>;
   login: (email: string, password: string) => Promise<User>;
   loginWithGoogle: (idToken: string) => Promise<User>;
-  register: (payload: any) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  userProfile: null,
-  isLoading: true,
-  isInitialized: false,
-  hasSeenOnboarding: null,
-  setUser: (user) => {
-    if (user) {
-      setSentryUser(user.uid, user.email || undefined);
-    } else {
-      clearSentryUser();
-    }
-    set({ user });
-  },
-  setUserProfile: (userProfile) => set({ userProfile }),
-  setIsLoading: (isLoading) => set({ isLoading }),
-  setHasSeenOnboarding: async (seen: boolean) => {
-    try {
-      await AsyncStorage.setItem("hasSeenOnboarding", seen.toString());
-      set({ hasSeenOnboarding: seen });
-    } catch (e) {
-      console.error("Gagal simpan onboarding status", e);
-    }
-  },
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      userProfile: null,
+      isLoading: true,
+      isInitialized: false,
+      isHydrated: false,
+      hasSeenOnboarding: null,
 
-  initializeAuth: () => {
-    const { setUser, setUserProfile, setIsLoading } = get();
+      setUser: (user) => {
+        if (user) {
+          setSentryUser(user.uid, user.email || undefined);
+        } else {
+          clearSentryUser();
+        }
+        set({ user });
+      },
 
-    AsyncStorage.getItem("hasSeenOnboarding").then((value) => {
-      set({ hasSeenOnboarding: value === "true" });
-    });
+      setUserProfile: (userProfile) => set({ userProfile }),
 
-    const { auth } = require("@/src/config/firebase");
-    const { onAuthStateChanged } = require("firebase/auth");
+      setIsLoading: (isLoading) => set({ isLoading }),
 
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      async (currentUser: User | null) => {
-        setIsLoading(true);
-        setUser(currentUser);
+      setHasSeenOnboarding: (seen) => {
+        set({ hasSeenOnboarding: seen });
+      },
+      setHydrated: (hydrated) => set({ isHydrated: hydrated }),
 
-        if (currentUser) {
-          try {
-            const profile = await AuthService.getUserProfile(currentUser.uid);
+      initializeAuth: () => {
+        const { setUser, setUserProfile, setIsLoading } = get();
+        const { auth } = require("@/src/config/firebase");
+        const { onAuthStateChanged } = require("firebase/auth");
 
-            if (profile && profile.emailVerified === false) {
-              await AuthService.ensureEmailVerified(currentUser.uid);
-              profile.emailVerified = true;
+        const unsubscribe = onAuthStateChanged(
+          auth,
+          async (currentUser: User | null) => {
+            setIsLoading(true);
+            setUser(currentUser);
+
+            if (currentUser) {
+              try {
+                const profile = await AuthService.getUserProfile(
+                  currentUser?.uid,
+                );
+
+                if (profile && profile.emailVerified === false) {
+                  await AuthService.ensureEmailVerified(currentUser.uid);
+                  profile.emailVerified = true;
+                }
+
+                setUserProfile(profile);
+              } catch (error: unknown) {
+                console.error("[useAuthStore] Failed to fetch profile", error);
+              }
+            } else {
+              setUserProfile(null);
             }
 
-            setUserProfile(profile);
-          } catch (error: any) {
-            console.error("[useAuthStore] Failed to fetch profile", error);
-          }
-        } else {
-          setUserProfile(null);
-        }
+            set({ isLoading: false, isInitialized: true });
+          },
+        );
 
-        set({ isLoading: false, isInitialized: true });
+        return unsubscribe;
       },
-    );
 
-    return unsubscribe;
-  },
-  refreshProfile: async () => {
-    const { user } = get();
+      refreshProfile: async () => {
+        const { user } = get();
 
-    if (user) {
-      try {
-        const profile = await AuthService.getUserProfile(user.uid);
+        if (user) {
+          try {
+            const profile = await AuthService.getUserProfile(user.uid);
 
-        set({ userProfile: profile });
-      } catch (error) {
-        console.error("Failed to refresh profile", error);
-      }
-    }
-  },
-  login: async (email, password) => {
-    set({ isLoading: true });
+            set({ userProfile: profile });
+          } catch (error: unknown) {
+            console.error("Failed to refresh profile", error);
+          }
+        }
+      },
 
-    try {
-      const user = await AuthService.login(email, password);
+      login: async (email, password) => {
+        set({ isLoading: true });
 
-      return user;
-    } catch (error) {
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-  loginWithGoogle: async (idToken) => {
-    set({ isLoading: true });
+        try {
+          const user = await AuthService.login(email, password);
 
-    try {
-      const user = await AuthService.loginWithGoogle(idToken);
+          return user;
+        } catch (error) {
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
 
-      return user;
-    } catch (error) {
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-  register: async (payload) => {
-    set({ isLoading: true });
+      loginWithGoogle: async (idToken) => {
+        set({ isLoading: true });
 
-    try {
-      await AuthService.register(payload);
-    } catch (error) {
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-  logout: () => {
-    clearSentryUser();
-    set({ user: null, userProfile: null });
-  },
-}));
+        try {
+          const user = await AuthService.loginWithGoogle(idToken);
+
+          return user;
+        } catch (error) {
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      register: async (payload: RegisterPayload) => {
+        set({ isLoading: true });
+
+        try {
+          await AuthService.register(payload);
+        } catch (error) {
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      logout: () => {
+        clearSentryUser();
+        set({ user: null, userProfile: null });
+      },
+    }),
+    {
+      name: "auth-storage",
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({ hasSeenOnboarding: state.hasSeenOnboarding }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setHydrated(true);
+
+          if (state.hasSeenOnboarding === null) {
+            state.setHasSeenOnboarding(false);
+          }
+        }
+      },
+    },
+  ),
+);

@@ -8,7 +8,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 
 export const useInitializeApp = () => {
-  const { initializeAuth, isInitialized, hasSeenOnboarding } = useAuthStore();
+  const { initializeAuth, isInitialized, hasSeenOnboarding, isHydrated } =
+    useAuthStore();
 
   const { initializeSettings } = useSettingsStore();
   const [isMounted, setIsMounted] = useState(false);
@@ -53,12 +54,13 @@ export const useInitializeApp = () => {
         isMounted &&
         fontsLoaded &&
         isInitialized &&
+        isHydrated &&
         hasSeenOnboarding !== null
       ) {
         try {
           await SplashScreen.hideAsync();
-        } catch (e) {
-          console.warn("Error hiding splash screen:", e);
+        } catch (error: unknown) {
+          console.warn("Error hiding splash screen:", error);
         }
       }
     };

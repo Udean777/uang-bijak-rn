@@ -35,8 +35,8 @@ export const SecurityService = {
         console.log("Biometric Failed Reason:", result.error);
       }
       return result.success;
-    } catch (error) {
-      console.error("Biometric Error Exception:", error);
+    } catch (error: unknown) {
+      console.error("[SecurityService] Failed to check PIN:", error);
       return false;
     }
   },

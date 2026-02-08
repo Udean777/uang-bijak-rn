@@ -2,8 +2,10 @@ import { cacheDirectory, writeAsStringAsync } from "expo-file-system/legacy";
 import { isAvailableAsync, shareAsync } from "expo-sharing";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { COLLECTIONS } from "../constants/firebaseCollections";
 import { Transaction } from "../types/transaction";
 import { Wallet } from "../types/wallet";
+import { getErrorMessage } from "../utils/errorUtils";
 
 export const ExportService = {
   /**
@@ -17,7 +19,7 @@ export const ExportService = {
     try {
       // Fetch transactions
       let q = query(
-        collection(db, "transactions"),
+        collection(db, COLLECTIONS.TRANSACTIONS),
         where("userId", "==", userId),
         orderBy("date", "desc"),
       );
@@ -40,7 +42,10 @@ export const ExportService = {
 
       // Fetch wallets for wallet names
       const walletsSnapshot = await getDocs(
-        query(collection(db, "wallets"), where("userId", "==", userId)),
+        query(
+          collection(db, COLLECTIONS.WALLETS),
+          where("userId", "==", userId),
+        ),
       );
       const wallets: Record<string, string> = {};
       walletsSnapshot.docs.forEach((doc) => {
@@ -109,9 +114,9 @@ export const ExportService = {
       } else {
         throw new Error("Sharing tidak tersedia di perangkat ini");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Export failed:", error);
-      throw new Error("Gagal export data: " + error.message);
+      throw new Error(getErrorMessage(error, "Gagal export data"));
     }
   },
 
@@ -129,7 +134,7 @@ export const ExportService = {
 
       // Fetch transactions for the month
       const q = query(
-        collection(db, "transactions"),
+        collection(db, COLLECTIONS.TRANSACTIONS),
         where("userId", "==", userId),
         orderBy("date", "desc"),
       );
@@ -158,6 +163,11 @@ export const ExportService = {
           } else if (t.classification === "want") {
             wantsTotal += t.amount;
           }
+        }
+      });
+
+      transactions.forEach((t) => {
+        if (t.type === "expense" && t.category) {
           categoryTotals[t.category] =
             (categoryTotals[t.category] || 0) + t.amount;
         }
@@ -220,8 +230,8 @@ export const ExportService = {
       } else {
         throw new Error("Sharing tidak tersedia");
       }
-    } catch (error: any) {
-      throw new Error("Gagal export laporan: " + error.message);
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error, "Gagal export laporan"));
     }
   },
 };

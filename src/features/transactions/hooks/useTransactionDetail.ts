@@ -1,5 +1,6 @@
 import { db } from "@/src/config/firebase";
 import { Transaction } from "@/src/types/transaction";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
@@ -68,8 +69,12 @@ export const useTransactionDetail = () => {
         text2: "Saldo dikembalikan.",
       });
       router.back();
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Gagal", text2: error.message });
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal",
+        text2: getErrorMessage(error),
+      });
     } finally {
       setIsLoading(false);
     }

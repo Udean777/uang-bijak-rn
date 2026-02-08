@@ -43,7 +43,7 @@ export const useDebtStore = create<DebtState>((set) => ({
   updateStatus: async (id, status) => {
     try {
       await DebtService.updateStatus(id, status);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },
@@ -51,7 +51,7 @@ export const useDebtStore = create<DebtState>((set) => ({
   deleteDebt: async (id) => {
     try {
       await DebtService.deleteDebt(id);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },

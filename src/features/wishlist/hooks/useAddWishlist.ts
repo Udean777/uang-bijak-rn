@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
 import { useWishlistStore } from "../store/useWishlistStore";
@@ -35,8 +36,12 @@ export const useAddWishlist = (onClose: () => void) => {
       setPrice("");
       setDuration(7);
       onClose();
-    } catch (e) {
-      Toast.show({ type: "error", text1: "Gagal menyimpan" });
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal Menyimpan",
+        text2: getErrorMessage(error),
+      });
     } finally {
       setIsLoading(false);
     }

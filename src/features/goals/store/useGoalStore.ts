@@ -45,7 +45,7 @@ export const useGoalStore = create<GoalState>((set) => ({
   updateProgress: async (goalId, amount) => {
     try {
       await GoalService.updateGoalProgress(goalId, amount);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },
@@ -53,7 +53,7 @@ export const useGoalStore = create<GoalState>((set) => ({
   updateStatus: async (goalId, status) => {
     try {
       await GoalService.updateGoalStatus(goalId, status);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },
@@ -70,7 +70,7 @@ export const useGoalStore = create<GoalState>((set) => ({
   deleteGoal: async (goalId) => {
     try {
       await GoalService.deleteGoal(goalId);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },

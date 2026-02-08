@@ -37,7 +37,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
   deleteTemplate: async (id) => {
     try {
       await TemplateService.deleteTemplate(id);
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   },

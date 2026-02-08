@@ -1,3 +1,5 @@
+import { registerSchema } from "@/src/schemas/authSchema";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import Toast from "react-native-toast-message";
@@ -13,21 +15,21 @@ export const useRegister = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegister = async () => {
-    if (!fullName || !email || !password) {
-      Toast.show({
-        type: "error",
-        text1: "Gagal!",
-        text2: "Mohon isi semua kolom.",
-      });
-      return;
-    }
+    const validation = registerSchema.safeParse({
+      fullName,
+      email,
+      password,
+    });
 
-    if (password.length < 6) {
+    if (!validation.success) {
+      const errorMessage = validation.error.issues[0].message;
+
       Toast.show({
         type: "error",
         text1: "Gagal!",
-        text2: "Password minimal 6 karakter.",
+        text2: errorMessage,
       });
+
       return;
     }
 
@@ -46,15 +48,14 @@ export const useRegister = () => {
         text2: "Akun Anda telah dibuat.",
       });
 
-      // Redirect ke main tabs (layout will redirect to PIN setup if needed)
       router.replace("/(tabs)");
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsSubmitting(false);
 
       Toast.show({
         type: "error",
         text1: "Gagal!",
-        text2: error.message,
+        text2: getErrorMessage(error),
       });
     }
   };

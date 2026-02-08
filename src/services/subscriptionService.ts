@@ -3,20 +3,22 @@ import {
   CreateSubscriptionPayload,
   Subscription,
 } from "@/src/types/subscription";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import {
   addDoc,
   collection,
   deleteDoc,
   doc,
+  FirestoreError,
   onSnapshot,
   orderBy,
   query,
   updateDoc,
   where,
 } from "firebase/firestore";
+import { COLLECTIONS } from "../constants/firebaseCollections";
+import { MESSAGES } from "../constants/messages";
 import { NotificationService } from "./NotificationService";
-
-const COLLECTION = "subscriptions";
 
 const calculateInitialNextPayment = (day: number): number => {
   const now = new Date();
@@ -73,23 +75,27 @@ export const SubscriptionService = {
   },
 
   addSubscription: async (userId: string, data: CreateSubscriptionPayload) => {
-    const nextPayment = calculateInitialNextPayment(data.dueDate);
+    try {
+      const nextPayment = calculateInitialNextPayment(data.dueDate);
 
-    await addDoc(collection(db, COLLECTION), {
-      userId,
-      ...data,
-      nextPaymentDate: nextPayment,
-      isActive: true,
-      createdAt: Date.now(),
-    });
+      await addDoc(collection(db, COLLECTIONS.SUBSCRIPTIONS), {
+        userId,
+        ...data,
+        nextPaymentDate: nextPayment,
+        isActive: true,
+        createdAt: Date.now(),
+      });
 
-    // Send confirmation notification
-    const enabled = await NotificationService.isNotificationsEnabled();
-    if (enabled) {
-      await NotificationService.sendLocalNotification(
-        "Langganan Ditambahkan 📥",
-        `${data.name} telah berhasil ditambahkan ke daftar langganan Anda.`,
-      );
+      // Send confirmation notification
+      const enabled = await NotificationService.isNotificationsEnabled();
+      if (enabled) {
+        await NotificationService.sendLocalNotification(
+          MESSAGES.SUBSCRIPTION.ADDED_TITLE,
+          `${data.name} ${MESSAGES.SUBSCRIPTION.ADDED_BODY}`,
+        );
+      }
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error));
     }
   },
 
@@ -98,7 +104,7 @@ export const SubscriptionService = {
     callback: (data: Subscription[]) => void,
   ) => {
     const q = query(
-      collection(db, COLLECTION),
+      collection(db, COLLECTIONS.SUBSCRIPTIONS),
       where("userId", "==", userId),
       orderBy("cost", "desc"),
     );
@@ -115,14 +121,18 @@ export const SubscriptionService = {
         );
         callback(subs);
       },
-      (error) => {
+      (error: FirestoreError) => {
         console.error("[SubscriptionService] Snapshot error:", error);
       },
     );
   },
 
   deleteSubscription: async (id: string) => {
-    await deleteDoc(doc(db, COLLECTION, id));
+    try {
+      await deleteDoc(doc(db, COLLECTIONS.SUBSCRIPTIONS, id));
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error));
+    }
   },
 
   renewSubscription: async (
@@ -131,7 +141,7 @@ export const SubscriptionService = {
     fixedDay: number,
   ) => {
     try {
-      const subRef = doc(db, COLLECTION, id);
+      const subRef = doc(db, COLLECTIONS.SUBSCRIPTIONS, id);
       const newDate = getNextMonthDate(currentNextPayment, fixedDay);
 
       await updateDoc(subRef, {
@@ -142,13 +152,13 @@ export const SubscriptionService = {
       const enabled = await NotificationService.isNotificationsEnabled();
       if (enabled) {
         await NotificationService.sendLocalNotification(
-          "Langganan Diperbarui 🔄",
-          `Pembayaran telah dikonfirmasi dan jatuh tempo berikutnya diperbarui.`,
+          MESSAGES.SUBSCRIPTION.RENEWED_TITLE,
+          MESSAGES.SUBSCRIPTION.RENEWED_BODY,
         );
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      throw error;
+      throw new Error(getErrorMessage(error));
     }
   },
 
@@ -157,8 +167,8 @@ export const SubscriptionService = {
     data: Partial<CreateSubscriptionPayload>,
   ) => {
     try {
-      const subRef = doc(db, COLLECTION, id);
-      const updateData: any = { ...data };
+      const subRef = doc(db, COLLECTIONS.SUBSCRIPTIONS, id);
+      const updateData: Record<string, unknown> = { ...data };
 
       // If dueDate changed, we might need to recalculate nextPaymentDate.
       // However, usually editing implies correcting data.
@@ -172,9 +182,9 @@ export const SubscriptionService = {
       }
 
       await updateDoc(subRef, updateData);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      throw error;
+      throw new Error(getErrorMessage(error));
     }
   },
 };

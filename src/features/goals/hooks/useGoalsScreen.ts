@@ -2,6 +2,8 @@ import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useGoalStore } from "@/src/features/goals/store/useGoalStore";
 import { useWalletStore } from "@/src/features/wallets/store/useWalletStore";
 import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
+import { Goal } from "@/src/types/goal";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -26,7 +28,7 @@ export const useGoalsScreen = () => {
   const [goalToDelete, setGoalToDelete] = useState<string | null>(null);
 
   // Edit State
-  const [editingGoal, setEditingGoal] = useState<any | null>(null);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
 
   // Form State
   const [name, setName] = useState("");
@@ -79,7 +81,7 @@ export const useGoalsScreen = () => {
     setAddModalVisible(true);
   };
 
-  const handleEditGoal = (goal: any) => {
+  const handleEditGoal = (goal: Goal) => {
     setEditingGoal(goal);
     setName(goal.name);
     setTarget(goal.targetAmount.toLocaleString("id-ID"));
@@ -116,8 +118,8 @@ export const useGoalsScreen = () => {
       }
       setAddModalVisible(false);
       resetForm();
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
+    } catch (error: unknown) {
+      Toast.show({ type: "error", text1: getErrorMessage(error) });
     }
   };
 
@@ -131,8 +133,8 @@ export const useGoalsScreen = () => {
     try {
       await deleteGoal(goalToDelete);
       Toast.show({ type: "success", text1: "Goal dihapus" });
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: error.message });
+    } catch (error: unknown) {
+      Toast.show({ type: "error", text1: getErrorMessage(error) });
     } finally {
       setConfirmDeleteVisible(false);
       setGoalToDelete(null);
@@ -146,7 +148,7 @@ export const useGoalsScreen = () => {
     router.push({
       pathname: "/(modals)/add-wallet",
       params: { type: "savings" },
-    } as any);
+    });
   };
 
   return {

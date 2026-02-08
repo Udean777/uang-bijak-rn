@@ -1,5 +1,6 @@
 import { parseCurrency } from "@/src/hooks/useCurrencyFormat";
 import { Wallet, WalletType } from "@/src/types/wallet";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useCallback, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import { useWalletStore } from "../store/useWalletStore";
@@ -53,15 +54,15 @@ export const useEditWallet = ({
         type: selectedType,
         color: selectedColor,
         balance: parseCurrency(balance),
-      } as any);
+      });
 
       Toast.show({ type: "success", text1: "Dompet Berhasil Diupdate" });
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
         text1: "Gagal Update",
-        text2: error.message,
+        text2: getErrorMessage(error),
       });
     } finally {
       setIsLoading(false);

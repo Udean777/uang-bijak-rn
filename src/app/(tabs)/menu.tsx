@@ -66,7 +66,7 @@ export default function MenuScreen() {
             iconBgColor={isDark ? "rgba(16, 185, 129, 0.15)" : "#D1FAE5"}
             title="Target Menabung"
             description="Mencapai tujuan finansialmu"
-            onPress={() => router.push("/(sub)/goals" as any)}
+            onPress={() => router.push("/(sub)/goals")}
           />
           <MenuListItem
             icon="pie-chart"
@@ -74,7 +74,7 @@ export default function MenuScreen() {
             iconBgColor={isDark ? "rgba(245, 158, 11, 0.15)" : "#FEF3C7"}
             title="Budget Kategori"
             description="Atur batasan pengeluaran"
-            onPress={() => router.push("/(sub)/budgets" as any)}
+            onPress={() => router.push("/(sub)/budgets")}
           />
           <MenuListItem
             icon="heart"
@@ -98,7 +98,7 @@ export default function MenuScreen() {
             iconBgColor={isDark ? "rgba(139, 92, 246, 0.15)" : "#EDE9FE"}
             title="Transaksi Berulang"
             description="Otomasi pemasukan & pengeluaran"
-            onPress={() => router.push("/(sub)/recurring" as any)}
+            onPress={() => router.push("/(sub)/recurring")}
           />
           <MenuListItem
             icon="flash"
@@ -125,7 +125,7 @@ export default function MenuScreen() {
             iconBgColor={isDark ? "rgba(59, 130, 246, 0.15)" : "#DBEAFE"}
             title="Laporan Bulanan"
             description="Ringkasan keuangan per bulan"
-            onPress={() => router.push("/(sub)/reports" as any)}
+            onPress={() => router.push("/(sub)/reports")}
           />
           <MenuListItem
             icon="download-outline"
@@ -149,7 +149,7 @@ export default function MenuScreen() {
               router.push({
                 pathname: "/(sub)/legal",
                 params: { type: "privacy" },
-              } as any)
+              })
             }
           />
           <MenuListItem
@@ -162,7 +162,7 @@ export default function MenuScreen() {
               router.push({
                 pathname: "/(sub)/legal",
                 params: { type: "terms" },
-              } as any)
+              })
             }
           />
         </MenuSection>

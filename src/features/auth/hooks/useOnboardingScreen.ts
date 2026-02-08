@@ -1,7 +1,12 @@
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { Dimensions, FlatList } from "react-native";
+import {
+  Dimensions,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from "react-native";
 
 const { width } = Dimensions.get("window");
 
@@ -42,7 +47,7 @@ export const useOnboardingScreen = () => {
     try {
       await setHasSeenOnboarding(true);
       router.replace("/(auth)/login");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Gagal menyimpan status onboarding", error);
       router.replace("/(auth)/login");
     }
@@ -56,7 +61,9 @@ export const useOnboardingScreen = () => {
     }
   };
 
-  const onMomentumScrollEnd = (event: any) => {
+  const onMomentumScrollEnd = (
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+  ) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / width);
     setCurrentIndex(index);
   };

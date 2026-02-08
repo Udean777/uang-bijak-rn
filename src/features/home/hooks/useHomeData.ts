@@ -7,6 +7,7 @@ import { TransactionService } from "@/src/services/transactionService";
 import { TransactionTemplate } from "@/src/types/template";
 import { Transaction } from "@/src/types/transaction";
 import { WalletType } from "@/src/types/wallet";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 
@@ -165,8 +166,12 @@ export const useHomeData = () => {
       });
       Toast.show({ type: "success", text1: "Tersimpan!" });
       setConfirmVisible(false);
-    } catch (e) {
-      Toast.show({ type: "error", text1: "Gagal menyimpan" });
+    } catch (error: unknown) {
+      Toast.show({
+        type: "error",
+        text1: "Gagal",
+        text2: getErrorMessage(error),
+      });
     } finally {
       setConfirmLoading(false);
     }

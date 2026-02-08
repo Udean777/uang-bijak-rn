@@ -41,7 +41,7 @@ export const TransactionHistorySheet = ({
     return transactions.filter((t) => {
       const query = searchQuery.toLowerCase();
       const matchSearch =
-        t.category.toLowerCase().includes(query) ||
+        (t.category?.toLowerCase() || "").includes(query) ||
         (t.note && t.note.toLowerCase().includes(query));
 
       const matchType = filterType === "all" || t.type === filterType;

@@ -1,3 +1,5 @@
+import { loginSchema } from "@/src/schemas/authSchema";
+import { getErrorMessage } from "@/src/utils/errorUtils";
 import * as Google from "expo-auth-session/providers/google";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
@@ -18,7 +20,7 @@ export const useLogin = () => {
     if (response?.type === "success") {
       const { id_token } = response.params;
       if (id_token) {
-        handleGoogleSignIn(id_token);
+        handleGoogleLogin(id_token);
       }
     } else if (response?.type === "error") {
       Toast.show({
@@ -30,34 +32,37 @@ export const useLogin = () => {
   }, [response]);
 
   const handleEmailLogin = async () => {
-    if (!email || !password) {
+    const validation = loginSchema.safeParse({ email, password });
+
+    if (!validation.success) {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "Mohon isi email dan password",
+        text2: validation.error.issues[0].message,
       });
+
       return;
     }
 
     try {
       await login(email, password);
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
-        text1: "Gagal Masuk",
-        text2: error.message,
+        text1: "Login Gagal",
+        text2: getErrorMessage(error),
       });
     }
   };
 
-  const handleGoogleSignIn = async (token: string) => {
+  const handleGoogleLogin = async (token: string) => {
     try {
       await loginWithGoogle(token);
-    } catch (error: any) {
+    } catch (error: unknown) {
       Toast.show({
         type: "error",
-        text1: "Google Error",
-        text2: error.message,
+        text1: "Login Gagal",
+        text2: getErrorMessage(error),
       });
     }
   };
