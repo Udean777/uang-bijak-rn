@@ -29,13 +29,17 @@ jest.mock("expo-constants", () => ({
 // Mock React Native Platform
 jest.mock("react-native", () => ({ Platform: { OS: "ios" } }));
 
+import { Subscription } from "@/src/types/subscription";
 import * as Notifications from "expo-notifications";
 import { NotificationService } from "../src/services/NotificationService";
 
 describe("NotificationService", () => {
-  const mockSubscription = {
+  const mockSubscription: Subscription = {
     id: "sub1",
+    userId: "user123",
     name: "Spotify",
+    dueDate: 1,
+    color: "#1DB954",
     cost: 50000,
     nextPaymentDate: new Date().getTime() + 86400000 * 2, // 2 days from now
     isActive: true,
@@ -60,7 +64,7 @@ describe("NotificationService", () => {
       (
         Notifications.scheduleNotificationAsync as jest.Mock
       ).mockResolvedValueOnce("notif1");
-      await NotificationService.scheduleBillReminder(mockSubscription as any);
+      await NotificationService.scheduleBillReminder(mockSubscription);
       expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
     });
   });

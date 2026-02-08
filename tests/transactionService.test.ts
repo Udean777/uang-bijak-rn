@@ -28,6 +28,7 @@ jest.mock("@/src/config/firebase", () => ({
   db: {},
 }));
 
+import { Transaction } from "@/src/types/transaction";
 import { runTransaction } from "firebase/firestore";
 import { TransactionService } from "../src/services/transactionService";
 
@@ -51,7 +52,13 @@ describe("TransactionService", () => {
     note: "Lunch",
   };
 
-  let mockTx: any;
+  // Use a more specific type for the mocked transaction object
+  let mockTx: {
+    get: jest.Mock;
+    update: jest.Mock;
+    set: jest.Mock;
+    delete: jest.Mock;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -137,11 +144,15 @@ describe("TransactionService", () => {
 
   describe("deleteTransaction", () => {
     it("should reverse an expense correctly", async () => {
-      const oldData: any = {
+      const oldData: Transaction = {
         id: "tx1",
+        userId: userId,
         walletId: mockWalletId,
         amount: 50000,
         type: "expense",
+        classification: "need",
+        date: Date.now(),
+        createdAt: Date.now(),
       };
 
       mockTx.get.mockResolvedValueOnce({

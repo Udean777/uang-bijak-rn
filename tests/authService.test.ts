@@ -91,11 +91,15 @@ describe("AuthService", () => {
       expect(profile).toEqual(mockData);
     });
 
-    it("should throw if user doesn't exist", async () => {
-      (getDoc as jest.Mock).mockResolvedValueOnce({ exists: () => false });
+    it("should throw if user doesn't exist after 3 attempts", async () => {
+      // Mock all 3 attempts to return exists: false
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
+
       await expect(AuthService.getUserProfile("uid123")).rejects.toThrow(
         "Profil akun tidak ditemukan.",
       );
+
+      expect(getDoc).toHaveBeenCalledTimes(3);
     });
   });
 });

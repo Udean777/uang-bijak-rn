@@ -26,6 +26,7 @@ jest.mock("../src/services/NotificationService", () => ({
   },
 }));
 
+import { Subscription } from "@/src/types/subscription";
 import { addDoc } from "firebase/firestore";
 import { SubscriptionService } from "../src/services/subscriptionService";
 
@@ -68,11 +69,43 @@ describe("SubscriptionService", () => {
         1,
       ).getTime();
 
-      const subs: any[] = [
-        { cost: 100000, nextPaymentDate: now.getTime(), isActive: true },
-        { cost: 50000, nextPaymentDate: now.getTime(), isActive: true },
-        { cost: 200000, nextPaymentDate: nextMonth, isActive: true }, // Out of current month
-        { cost: 300000, nextPaymentDate: now.getTime(), isActive: false }, // Inactive
+      const subs: Subscription[] = [
+        {
+          id: "s1",
+          userId,
+          name: "S1",
+          dueDate: 1,
+          cost: 100000,
+          nextPaymentDate: now.getTime(),
+          isActive: true,
+        },
+        {
+          id: "s2",
+          userId,
+          name: "S2",
+          dueDate: 1,
+          cost: 50000,
+          nextPaymentDate: now.getTime(),
+          isActive: true,
+        },
+        {
+          id: "s3",
+          userId,
+          name: "S3",
+          dueDate: 1,
+          cost: 200000,
+          nextPaymentDate: nextMonth,
+          isActive: true,
+        },
+        {
+          id: "s4",
+          userId,
+          name: "S4",
+          dueDate: 1,
+          cost: 300000,
+          nextPaymentDate: now.getTime(),
+          isActive: false,
+        },
       ];
 
       const total = SubscriptionService.getPendingBillsTotal(subs);

@@ -21,14 +21,15 @@ jest.mock("@/src/config/firebase", () => ({ db: {} }));
 
 import { addDoc, updateDoc } from "firebase/firestore";
 import { DebtService } from "../src/services/debtService";
+import { Debt } from "../src/types/debt";
 
 describe("DebtService", () => {
   const userId = "user123";
-  const debtData = {
-    title: "Car Loan",
+  const debtData: Omit<Debt, "id" | "createdAt" | "status" | "userId"> = {
+    personName: "Bank ABC",
     amount: 50000000,
-    lender: "Bank ABC",
     dueDate: new Date().getTime(),
+    type: "payable",
   };
 
   beforeEach(() => {
@@ -37,12 +38,12 @@ describe("DebtService", () => {
 
   describe("addDebt", () => {
     it("should add debt with unpaid status", async () => {
-      await DebtService.addDebt(userId, debtData as any);
+      await DebtService.addDebt(userId, debtData);
       expect(addDoc).toHaveBeenCalledWith(
         undefined,
         expect.objectContaining({
           userId,
-          title: "Car Loan",
+          personName: "Bank ABC",
           status: "unpaid",
         }),
       );
